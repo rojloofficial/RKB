@@ -5,6 +5,7 @@ import {
   issueUserSession,
   normalizeEmail,
   toPublicUser,
+  updateUserFields,
 } from "@/lib/models/user";
 import { generateJWT } from "@/lib/jwt";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
@@ -42,7 +43,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const storedHash = String(user.passwordHash || (user as any).password || "").trim();
+    let valid = false;
+
+    if (
+      storedHash.startsWith("$2a$") ||
+      storedHash.startsWith("$2b$") ||
+      storedHash.startsWith("$2y$")
+    ) {
+      try {
+        valid = await bcrypt.compare(password, storedHash);
+      } catch {
+        valid = false;
+      }
+    }
+
+    if (!valid && (storedHash === password || storedHash === password.trim())) {
+      valid = true;
+      try {
+        const newHash = await bcrypt.hash(password, 10);
+        await updateUserFields(String(user._id), { passwordHash: newHash }, user.email);
+      } catch (err) {
+        console.error("[login] Failed to auto-upgrade plain password hash:", err);
+      }
+    }
+
     if (!valid) {
       return NextResponse.json(
         { error: "Invalid email or password." },
@@ -50,13 +75,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const userIdStr = String(user._id || "");
     const publicUser = toPublicUser(user);
-    const sessionToken = user._id ? await issueUserSession(user._id) : null;
+    const sessionToken = userIdStr ? await issueUserSession(userIdStr) : null;
 
     // Generate JWT token
-    const jwtToken = user._id
+    const jwtToken = userIdStr
       ? generateJWT({
-          _id: user._id,
+          _id: userIdStr,
           email: user.email,
           name: user.name,
         })
@@ -64,7 +90,10 @@ export async function POST(request: NextRequest) {
 
     const response = NextResponse.json({
       message: "Logged in successfully.",
-      user: publicUser,
+      user: {
+        ...publicUser,
+        _id: userIdStr,
+      },
       token: jwtToken, // JWT token in response
     });
 

@@ -52,26 +52,50 @@ async function memoryFindByEmail(email: string): Promise<User | null> {
   if (!normalized) return null;
 
   const store = await readStore();
-  return (
-    (store.users.find(
-      (u) => normalizeEmail(String(u.email)) === normalized
-    ) as unknown as User) ?? null
-  );
+  const rawClean = email.trim().toLowerCase();
+  const user = store.users.find((u) => {
+    const uEmail = String(u.email || "").trim().toLowerCase();
+    return uEmail === normalized || uEmail === rawClean || normalizeEmail(uEmail) === normalized;
+  }) as unknown as User | undefined;
+
+  if (user) {
+    return {
+      ...user,
+      _id: String(user._id || ""),
+      email: String(user.email || normalized).toLowerCase(),
+    };
+  }
+  return null;
 }
 
 async function memoryFindById(id: string): Promise<User | null> {
+  if (!id) return null;
   const store = await readStore();
-  return (store.users.find((u) => u._id === id) as unknown as User) ?? null;
+  const user = store.users.find((u) => String(u._id) === String(id)) as unknown as User | undefined;
+  if (user) {
+    return {
+      ...user,
+      _id: String(user._id || ""),
+      email: String(user.email || "").toLowerCase(),
+    };
+  }
+  return null;
 }
 
 async function memoryFindBySessionToken(
   token: string
 ): Promise<User | null> {
+  if (!token) return null;
   const store = await readStore();
-  return (
-    (store.users.find((u) => u.sessionToken === token) as unknown as User) ??
-    null
-  );
+  const user = store.users.find((u) => u.sessionToken === token) as unknown as User | undefined;
+  if (user) {
+    return {
+      ...user,
+      _id: String(user._id || ""),
+      email: String(user.email || "").toLowerCase(),
+    };
+  }
+  return null;
 }
 
 async function memoryCreateUser(
@@ -120,8 +144,25 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   try {
     const collection = await getUsersCollection();
     if (collection) {
-      const doc = await collection.findOne({ email: normalized });
-      if (doc) return doc as unknown as User;
+      const emailEscaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const rawClean = email.trim().toLowerCase();
+      const rawEscaped = rawClean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const doc = await collection.findOne({
+        $or: [
+          { email: normalized },
+          { email: rawClean },
+          { email: email.trim() },
+          { email: { $regex: new RegExp(`^${emailEscaped}$`, "i") } },
+          { email: { $regex: new RegExp(`^${rawEscaped}$`, "i") } },
+        ],
+      });
+      if (doc) {
+        return {
+          ...(doc as unknown as User),
+          _id: doc._id?.toString(),
+          email: String(doc.email || normalized).toLowerCase(),
+        };
+      }
     }
   } catch (err) {
     console.warn("[user.ts] findUserByEmail MongoDB error, falling back to store:", err);
@@ -135,10 +176,19 @@ export async function findUserById(id: string): Promise<User | null> {
 
   try {
     const collection = await getUsersCollection();
-    if (collection && ObjectId.isValid(id)) {
-      const _id = new ObjectId(id);
-      const doc = await collection.findOne({ _id });
-      if (doc) return doc as unknown as User;
+    if (collection) {
+      let query: Record<string, unknown> = { _id: id };
+      if (ObjectId.isValid(id)) {
+        query = { $or: [{ _id: new ObjectId(id) }, { _id: id }] };
+      }
+      const doc = await collection.findOne(query);
+      if (doc) {
+        return {
+          ...(doc as unknown as User),
+          _id: doc._id?.toString(),
+          email: String(doc.email || "").toLowerCase(),
+        };
+      }
     }
   } catch (err) {
     console.warn("[user.ts] findUserById MongoDB error, falling back to store:", err);
@@ -156,7 +206,13 @@ export async function findUserBySessionToken(
     const collection = await getUsersCollection();
     if (collection) {
       const doc = await collection.findOne({ sessionToken: token });
-      if (doc) return doc as unknown as User;
+      if (doc) {
+        return {
+          ...(doc as unknown as User),
+          _id: doc._id?.toString(),
+          email: String(doc.email || "").toLowerCase(),
+        };
+      }
     }
   } catch (err) {
     console.warn("[user.ts] findUserBySessionToken MongoDB error, falling back to store:", err);
@@ -170,7 +226,7 @@ export async function createUser(
 ): Promise<PublicUser> {
   const normalized = normalizeEmail(user.email);
   const now = new Date();
-  const doc = {
+  const doc: User = {
     ...user,
     email: normalized,
     coins: Number((user as User).coins ?? 0),
@@ -178,21 +234,16 @@ export async function createUser(
     updatedAt: now,
   };
 
+  let insertedId: string | null = null;
   try {
     const collection = await getUsersCollection();
     if (collection) {
       try {
-        const result = await collection.insertOne(doc);
-        return {
-          _id: result.insertedId.toString(),
-          name: doc.name,
-          email: doc.email,
-          phone: doc.phone,
-          service: doc.service,
-          coins: Number(doc.coins ?? 0),
-          createdAt: doc.createdAt,
-          updatedAt: doc.updatedAt,
-        };
+        const result = await collection.insertOne(doc as unknown as Document);
+        if (result?.insertedId) {
+          insertedId = result.insertedId.toString();
+          doc._id = insertedId;
+        }
       } catch (insertErr: unknown) {
         const errMsg = String(insertErr);
         if (errMsg.includes("E11000") || errMsg.includes("duplicate")) {
@@ -208,7 +259,27 @@ export async function createUser(
     console.warn("[user.ts] createUser collection error, falling back to store:", err);
   }
 
-  return memoryCreateUser({ ...user, email: normalized });
+  // Always also write to store.users so in-memory store and MongoDB stay 100% in sync
+  try {
+    const store = await readStore();
+    if (!doc._id) {
+      doc._id = `mem_${store.users.length + 1}_${Date.now()}`;
+    }
+    const existingIdx = store.users.findIndex((u) => {
+      const uEmail = String(u.email || "").trim().toLowerCase();
+      return uEmail === normalized || normalizeEmail(uEmail) === normalized;
+    });
+    if (existingIdx >= 0) {
+      store.users[existingIdx] = doc as unknown as (typeof store.users)[number];
+    } else {
+      store.users.push(doc as unknown as (typeof store.users)[number]);
+    }
+    await writeStore(store);
+  } catch (err) {
+    console.warn("[user.ts] createUser store sync error:", err);
+  }
+
+  return toPublicUser(doc);
 }
 
 export async function issueUserSession(userId: string): Promise<string | null> {
@@ -221,12 +292,19 @@ export async function setUserSession(
   userId: string,
   token: string
 ): Promise<boolean> {
+  let mongoSuccess = false;
   try {
     const collection = await getUsersCollection();
-    if (collection && ObjectId.isValid(userId)) {
-      const _id = new ObjectId(userId);
+    if (collection) {
+      const filters: Record<string, unknown>[] = [];
+      if (ObjectId.isValid(userId)) {
+        filters.push({ _id: new ObjectId(userId) });
+      }
+      filters.push({ _id: userId });
+
+      const query = filters.length === 1 ? filters[0] : { $or: filters };
       const result = await collection.findOneAndUpdate(
-        { _id },
+        query,
         {
           $set: {
             sessionToken: token,
@@ -235,19 +313,27 @@ export async function setUserSession(
         },
         { returnDocument: "after" }
       );
-      if (result) return true;
+      if (result) mongoSuccess = true;
     }
   } catch (err) {
     console.warn("[user.ts] setUserSession MongoDB error, falling back to store:", err);
   }
 
-  const store = await readStore();
-  const user = store.users.find((u) => u._id === userId) as User | undefined;
-  if (!user) return false;
-  user.sessionToken = token;
-  user.updatedAt = new Date();
-  await writeStore(store);
-  return true;
+  let storeSuccess = false;
+  try {
+    const store = await readStore();
+    const user = store.users.find((u) => String(u._id) === String(userId)) as User | undefined;
+    if (user) {
+      user.sessionToken = token;
+      user.updatedAt = new Date();
+      await writeStore(store);
+      storeSuccess = true;
+    }
+  } catch (err) {
+    console.warn("[user.ts] setUserSession store error:", err);
+  }
+
+  return mongoSuccess || storeSuccess;
 }
 
 export async function clearUserSession(token: string): Promise<void> {
@@ -383,31 +469,62 @@ export const deleteUser = deleteUserById;
 
 export async function updateUserFields(
   userId: string,
-  fields: Record<string, unknown>
+  fields: Record<string, unknown>,
+  userEmail?: string
 ): Promise<boolean> {
-  if (!userId) return false;
+  if (!userId && !userEmail) return false;
 
+  let mongoSuccess = false;
   try {
     const collection = await getUsersCollection();
-    if (collection && ObjectId.isValid(userId)) {
-      const _id = new ObjectId(userId);
-      const result = await collection.findOneAndUpdate(
-        { _id },
-        { $set: { ...fields, updatedAt: new Date() } },
-        { returnDocument: "after" }
-      );
-      if (result) return true;
+    if (collection) {
+      const filters: Record<string, unknown>[] = [];
+      if (userId) {
+        if (ObjectId.isValid(userId)) {
+          filters.push({ _id: new ObjectId(userId) });
+        }
+        filters.push({ _id: userId });
+      }
+      if (userEmail) {
+        filters.push({ email: normalizeEmail(userEmail) });
+      }
+      if (fields.email) {
+        filters.push({ email: normalizeEmail(String(fields.email)) });
+      }
+
+      if (filters.length > 0) {
+        const query = filters.length === 1 ? filters[0] : { $or: filters };
+        const result = await collection.findOneAndUpdate(
+          query,
+          { $set: { ...fields, updatedAt: new Date() } },
+          { returnDocument: "after" }
+        );
+        if (result) mongoSuccess = true;
+      }
     }
   } catch (err) {
-    console.warn("[user.ts] updateUserFields MongoDB error, falling back to store:", err);
+    console.warn("[user.ts] updateUserFields MongoDB error:", err);
   }
 
-  const store = await readStore();
-  const user = store.users.find((u) => u._id === userId) as User | undefined;
-  if (!user) return false;
-  Object.assign(user, fields, { updatedAt: new Date() });
-  await writeStore(store);
-  return true;
+  let storeSuccess = false;
+  try {
+    const store = await readStore();
+    const user = store.users.find(
+      (u) =>
+        (userId && String(u._id) === String(userId)) ||
+        (userEmail && normalizeEmail(String(u.email)) === normalizeEmail(userEmail)) ||
+        (fields.email && normalizeEmail(String(u.email)) === normalizeEmail(String(fields.email)))
+    ) as User | undefined;
+    if (user) {
+      Object.assign(user, fields, { updatedAt: new Date() });
+      await writeStore(store);
+      storeSuccess = true;
+    }
+  } catch (err) {
+    console.warn("[user.ts] updateUserFields store error:", err);
+  }
+
+  return mongoSuccess || storeSuccess;
 }
 
 /**
@@ -555,7 +672,7 @@ export async function setUserEmailVerified(
 
 export function toPublicUser(user: User): PublicUser {
   return {
-    _id: user._id,
+    _id: user._id ? String(user._id) : "",
     name: user.name,
     email: user.email,
     phone: user.phone,

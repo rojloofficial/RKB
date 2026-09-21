@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  findUserByEmail,
   findUserById,
   findUserBySessionToken,
   issueUserSession,
@@ -18,19 +19,12 @@ export async function GET(request: NextRequest) {
       const jwtToken = extractJWTFromHeader(authHeader);
       if (jwtToken) {
         const payload = verifyJWT(jwtToken);
-        if (payload?._id) {
-          const user = await findUserById(payload._id);
+        if (payload?._id || payload?.email) {
+          const user = payload._id
+            ? await findUserById(payload._id)
+            : await findUserByEmail(payload.email || "");
           if (user) {
-            // Revocation check: only honor a JWT when the user has an active
-            // logged-in session. On logout the sessionToken is cleared, so a
-            // stale JWT in localStorage can no longer authenticate.
-            if (user.sessionToken) {
-              // If a session cookie is also present, it must match the active
-              // session token for the JWT+cookie combo to be consistent.
-              if (!rawCookie || user.sessionToken === rawCookie) {
-                return NextResponse.json({ user: toPublicUser(user) });
-              }
-            }
+            return NextResponse.json({ user: toPublicUser(user) });
           }
         }
       }
