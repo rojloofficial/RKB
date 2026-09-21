@@ -468,9 +468,6 @@ function AuthPage() {
                   if (clean && clean !== email) {
                     setEmail(clean);
                   }
-                  if (mode === "signup" && clean) {
-                    checkEmailExists(clean);
-                  }
                 }}
                 placeholder="you@example.com"
                 className="flex-1 min-w-0"
@@ -482,8 +479,12 @@ function AuthPage() {
                   variant={otpSent ? "soft" : "solid"}
                   size="sm"
                   disabled={sending || resendIn > 0 || Boolean(emailWarning)}
+                  onMouseDown={(e) => {
+                    // Prevent blur race condition so single click triggers immediately
+                    e.preventDefault();
+                  }}
                   onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                  className="!text-white whitespace-nowrap w-full sm:w-auto shrink-0"
+                  className="!text-white whitespace-nowrap w-full sm:w-auto shrink-0 font-semibold"
                 >
                   {sending
                     ? "Sending..."
@@ -592,6 +593,7 @@ function AuthPage() {
                     ) : (
                       <button
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
                         className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
                       >

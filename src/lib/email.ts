@@ -5,10 +5,22 @@ export type EmailPayload = {
   subject: string;
   text: string;
   html?: string;
+  headers?: Record<string, string>;
 };
 
 function cleanEnv(val?: string): string {
   return (val ?? "").trim().replace(/^['"]|['"]$/g, "");
+}
+
+function cleanFromHeader(rawFrom: string | undefined, siteName: string, user: string): string {
+  const cleaned = (rawFrom ?? "").replace(/\\"/g, '"').replace(/^["']|["']$/g, "").trim();
+  if (cleaned && cleaned.includes("<") && cleaned.includes(">")) {
+    return cleaned;
+  }
+  if (cleaned && cleaned.includes("@")) {
+    return `"${siteName}" <${cleaned}>`;
+  }
+  return `"${siteName}" <${user}>`;
 }
 
 export type EmailResult =
@@ -30,6 +42,9 @@ function createDirectTransporter(
     port,
     secure,
     auth: { user, pass },
+    tls: {
+      rejectUnauthorized: false,
+    },
     connectionTimeout: 8000,
     greetingTimeout: 8000,
     socketTimeout: 15000,
@@ -54,7 +69,7 @@ function sanitizeDestinationEmail(val: string): string {
   return s;
 }
 
-export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
+export async function sendEmail({ to, subject, text, html, headers }: EmailPayload): Promise<EmailResult> {
   const cleanTo = sanitizeDestinationEmail(to);
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "465");
@@ -66,8 +81,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const pass = (rawPass && rawPass !== "vanni12") ? rawPass : FALLBACK_PASS;
 
   const siteName = cleanEnv(process.env.NEXT_PUBLIC_SITE_NAME) || "RKB";
-  const customFrom = cleanEnv(process.env.SMTP_FROM);
-  const from = customFrom || `"${siteName}" <${user}>`;
+  const from = cleanFromHeader(process.env.SMTP_FROM, siteName, user);
 
   if (!host || !user || !pass) {
     console.warn("[email] SMTP credentials not configured. Email skipped for:", cleanTo);
@@ -89,6 +103,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       subject,
       text,
       html: html ?? text,
+      headers,
     });
 
     console.log(`[email] Email sent successfully to ${cleanTo} via ${host}:${port}`);
@@ -102,13 +117,15 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       console.warn("[email] Retrying email delivery with official verified Gmail credentials (port 465)...");
       try {
         const fallbackTransporter = createDirectTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
+        const fallbackFrom = `"${siteName}" <${FALLBACK_USER}>`;
         await fallbackTransporter.sendMail({
-          from: `"${siteName}" <${FALLBACK_USER}>`,
+          from: fallbackFrom,
           to: cleanTo,
           replyTo: FALLBACK_USER,
           subject,
           text,
           html: html ?? text,
+          headers,
         });
 
         console.log(`[email] Email delivered successfully to ${cleanTo} using verified Gmail credentials (port 465)`);
@@ -123,13 +140,15 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     console.warn("[email] Attempting delivery via Gmail port 587 (STARTTLS)...");
     try {
       const port587Transporter = createDirectTransporter("smtp.gmail.com", 587, FALLBACK_USER, FALLBACK_PASS, false);
+      const fallbackFrom = `"${siteName}" <${FALLBACK_USER}>`;
       await port587Transporter.sendMail({
-        from: `"${siteName}" <${FALLBACK_USER}>`,
+        from: fallbackFrom,
         to: cleanTo,
         replyTo: FALLBACK_USER,
         subject,
         text,
         html: html ?? text,
+        headers,
       });
 
       console.log(`[email] Email delivered successfully to ${cleanTo} via port 587 STARTTLS`);
@@ -206,7 +225,17 @@ export function sendOtpEmail({
     `</html>`,
   ].join("");
 
-  return sendEmail({ to, subject, text, html });
+  return sendEmail({
+    to,
+    subject,
+    text,
+    html,
+    headers: {
+      "X-Priority": "1",
+      "X-MSMail-Priority": "High",
+      Importance: "high",
+    },
+  });
 }
 
 export function sendVipInviteEmail({
