@@ -13,7 +13,7 @@ const base =
   "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none";
 
 const variants: Record<Variant, string> = {
-  solid: "bg-black text-white hover:bg-neutral-800 active:scale-[0.98] shadow-sm",
+  solid: "bg-black !text-white text-white hover:bg-neutral-800 active:scale-[0.98] shadow-sm",
   soft: "border border-neutral-300 bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:scale-[0.98]",
   outline: "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
   ghost: "text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
@@ -27,7 +27,7 @@ const sizes: Record<Size, string> = {
 };
 
 const activeClass =
-  "bg-black text-white shadow-sm hover:bg-neutral-800";
+  "bg-black !text-white text-white shadow-sm hover:bg-neutral-800";
 
 type CommonProps = {
   variant?: Variant;
@@ -95,13 +95,21 @@ export default function Button(props: ButtonProps) {
 
   const isDisabled = Boolean(disabled || loading);
 
+  const hasLightBg = className && /(bg-white|bg-neutral-100|bg-neutral-200|bg-transparent)/.test(className);
+  const isDark =
+    !hasLightBg &&
+    (variant === "solid" ||
+      active ||
+      Boolean(className && /(bg-(black|neutral-950|neutral-900|neutral-800|red-950))/.test(className)));
+
   const classes = cn(
     base,
     active ? activeClass : variants[variant],
     sizes[size],
     fullWidth && "w-full",
     loading && "pointer-events-none opacity-70",
-    className
+    className,
+    isDark && "!text-white text-white"
   );
 
   const content = (

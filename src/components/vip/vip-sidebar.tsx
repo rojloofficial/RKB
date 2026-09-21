@@ -111,7 +111,7 @@ export default function VipSidebar({ isOpen = true, onClose }: VipSidebarProps) 
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-neutral-800 transition-colors"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-white hover:bg-neutral-800 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
