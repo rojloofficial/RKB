@@ -27,7 +27,23 @@ export interface User {
 export type PublicUser = Omit<User, "passwordHash">;
 
 export function normalizeEmail(email: string | null | undefined): string {
-  return String(email ?? "").trim().toLowerCase();
+  let val = String(email ?? "").trim().toLowerCase();
+  if (!val) return "";
+  // Auto-correct common domain typos (e.g. .ocm -> .com, gamil -> gmail)
+  val = val.replace(/@gmail\.ocm$/i, "@gmail.com");
+  val = val.replace(/@gamil\.com$/i, "@gmail.com");
+  val = val.replace(/@gmai\.com$/i, "@gmail.com");
+  val = val.replace(/@gmial\.com$/i, "@gmail.com");
+  val = val.replace(/@gmaill\.com$/i, "@gmail.com");
+  val = val.replace(/@gmail\.co$/i, "@gmail.com");
+  val = val.replace(/@yahoo\.ocm$/i, "@yahoo.com");
+  val = val.replace(/@yaho\.com$/i, "@yahoo.com");
+  val = val.replace(/@hotmail\.ocm$/i, "@hotmail.com");
+  val = val.replace(/@hotmial\.com$/i, "@hotmail.com");
+  val = val.replace(/\.ocm$/i, ".com");
+  val = val.replace(/\.con$/i, ".com");
+  val = val.replace(/\.cmo$/i, ".com");
+  return val;
 }
 
 // --- File-backed fallback (used when MongoDB is unreachable) ---
@@ -365,34 +381,32 @@ export async function setUserOtp(
   const now = new Date();
   const collection = await getUsersCollection();
 
-  if (collection) {
-    let _id: ObjectId;
+  if (collection && ObjectId.isValid(userId)) {
     try {
-      _id = new ObjectId(userId);
-    } catch {
-      return false;
-    }
-
-    const result = await collection.findOneAndUpdate(
-      { _id },
-      {
-        $set: {
-          otpHash,
-          otpExpires: expiresAt,
-          otpAttempts: 0,
-          otpLastSentAt: now,
-          updatedAt: now,
-        },
-        $push: {
-          otpHashes: {
-            $each: [otpHash],
-            $slice: -3,
+      const _id = new ObjectId(userId);
+      const result = await collection.findOneAndUpdate(
+        { _id },
+        {
+          $set: {
+            otpHash,
+            otpExpires: expiresAt,
+            otpAttempts: 0,
+            otpLastSentAt: now,
+            updatedAt: now,
           },
-        } as unknown as Document,
-      },
-      { returnDocument: "after" }
-    );
-    return Boolean(result);
+          $push: {
+            otpHashes: {
+              $each: [otpHash],
+              $slice: -3,
+            },
+          } as unknown as Document,
+        },
+        { returnDocument: "after" }
+      );
+      if (result) return true;
+    } catch {
+      // Fallback to store
+    }
   }
 
   const store = await readStore();
@@ -417,28 +431,26 @@ export async function clearUserOtp(userId: string): Promise<boolean> {
   const collection = await getUsersCollection();
   const now = new Date();
 
-  if (collection) {
-    let _id: ObjectId;
+  if (collection && ObjectId.isValid(userId)) {
     try {
-      _id = new ObjectId(userId);
-    } catch {
-      return false;
-    }
-
-    const result = await collection.findOneAndUpdate(
-      { _id },
-      {
-        $set: {
-          otpHash: null,
-          otpHashes: [],
-          otpExpires: null,
-          otpAttempts: 0,
-          updatedAt: now,
+      const _id = new ObjectId(userId);
+      const result = await collection.findOneAndUpdate(
+        { _id },
+        {
+          $set: {
+            otpHash: null,
+            otpHashes: [],
+            otpExpires: null,
+            otpAttempts: 0,
+            updatedAt: now,
+          },
         },
-      },
-      { returnDocument: "after" }
-    );
-    return Boolean(result);
+        { returnDocument: "after" }
+      );
+      if (result) return true;
+    } catch {
+      // Fallback to store
+    }
   }
 
   const store = await readStore();
@@ -459,33 +471,33 @@ export async function clearUserOtp(userId: string): Promise<boolean> {
  */
 export async function incrementUserOtpAttempts(userId: string): Promise<number> {
   const collection = await getUsersCollection();
-  if (!collection) {
-    const store = await readStore();
-    const user = store.users.find((u) => u._id === userId) as
-      | User
-      | undefined;
-    if (!user) return 0;
-    const attempts = Number(user.otpAttempts ?? 0) + 1;
-    user.otpAttempts = attempts;
-    user.updatedAt = new Date();
-    await writeStore(store);
-    return attempts;
+
+  if (collection && ObjectId.isValid(userId)) {
+    try {
+      const _id = new ObjectId(userId);
+      const result = await collection.findOneAndUpdate(
+        { _id },
+        { $inc: { otpAttempts: 1 }, $set: { updatedAt: new Date() } },
+        { returnDocument: "after" }
+      );
+      if (result && typeof result.otpAttempts === "number") {
+        return result.otpAttempts;
+      }
+    } catch {
+      // Fallback to store
+    }
   }
 
-  let _id: ObjectId;
-  try {
-    _id = new ObjectId(userId);
-  } catch {
-    return -1;
-  }
-
-  const result = await collection.findOneAndUpdate(
-    { _id },
-    { $inc: { otpAttempts: 1 }, $set: { updatedAt: new Date() } },
-    { returnDocument: "after" }
-  );
-  const doc = result as unknown as { otpAttempts?: number } | null;
-  return Number(doc?.otpAttempts ?? 1);
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as
+    | User
+    | undefined;
+  if (!user) return 0;
+  const attempts = Number(user.otpAttempts ?? 0) + 1;
+  user.otpAttempts = attempts;
+  user.updatedAt = new Date();
+  await writeStore(store);
+  return attempts;
 }
 
 /**

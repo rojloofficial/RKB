@@ -12,6 +12,24 @@ const serviceOptions = Object.values(serviceNames);
 const OTP_TTL_SECONDS = 10 * 60; // 10 minutes
 const RESEND_COOLDOWN_SECONDS = 60;
 
+function sanitizeEmail(val: string): string {
+  let s = String(val || "").trim().toLowerCase();
+  s = s.replace(/@gmail\.ocm$/i, "@gmail.com");
+  s = s.replace(/@gamil\.com$/i, "@gmail.com");
+  s = s.replace(/@gmai\.com$/i, "@gmail.com");
+  s = s.replace(/@gmial\.com$/i, "@gmail.com");
+  s = s.replace(/@gmaill\.com$/i, "@gmail.com");
+  s = s.replace(/@gmail\.co$/i, "@gmail.com");
+  s = s.replace(/@yahoo\.ocm$/i, "@yahoo.com");
+  s = s.replace(/@yaho\.com$/i, "@yahoo.com");
+  s = s.replace(/@hotmail\.ocm$/i, "@hotmail.com");
+  s = s.replace(/@hotmial\.com$/i, "@hotmail.com");
+  s = s.replace(/\.ocm$/i, ".com");
+  s = s.replace(/\.con$/i, ".com");
+  s = s.replace(/\.cmo$/i, ".com");
+  return s;
+}
+
 function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,25 +56,33 @@ function AuthPage() {
   const [sending, setSending] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [expiresIn, setExpiresIn] = useState(OTP_TTL_SECONDS);
+  const [timerTrigger, setTimerTrigger] = useState(0);
   const digitRefs = useRef<Array<HTMLInputElement | null>>([]);
   const [serviceOpen, setServiceOpen] = useState(false);
   const serviceRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    if (!otpSent) return;
-    const timer = setInterval(() => {
-      setExpiresIn((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [otpSent]);
+  const expiresUntilRef = useRef<number>(0);
+  const resendUntilRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!otpSent || resendIn <= 0) return;
-    const cooldown = setInterval(() => {
-      setResendIn((s) => (s > 0 ? s - 1 : 0));
-    }, 1000);
-    return () => clearInterval(cooldown);
-  }, [otpSent, resendIn]);
+    if (!otpSent) return;
+
+    function tick() {
+      const now = Date.now();
+      if (expiresUntilRef.current > 0) {
+        const remExpires = Math.max(0, Math.ceil((expiresUntilRef.current - now) / 1000));
+        setExpiresIn(remExpires);
+      }
+      if (resendUntilRef.current > 0) {
+        const remResend = Math.max(0, Math.ceil((resendUntilRef.current - now) / 1000));
+        setResendIn(remResend);
+      }
+    }
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [otpSent, timerTrigger]);
 
   useEffect(() => {
     function onClick(e: MouseEvent) {
@@ -82,6 +108,9 @@ function AuthPage() {
     setDigits(["", "", "", "", "", ""]);
     setResendIn(0);
     setExpiresIn(OTP_TTL_SECONDS);
+    expiresUntilRef.current = 0;
+    resendUntilRef.current = 0;
+    setTimerTrigger(0);
   }
 
   useEffect(() => {
@@ -102,7 +131,7 @@ function AuthPage() {
 
   async function checkEmailExists(checkVal: string) {
     if (mode !== "signup") return;
-    const clean = checkVal.trim().toLowerCase();
+    const clean = sanitizeEmail(checkVal);
     if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return;
 
     try {
@@ -165,7 +194,11 @@ function AuthPage() {
     setError("");
     if (resendIn > 0 || sending) return;
 
-    const cleanEmail = email.trim().toLowerCase();
+    const cleanEmail = sanitizeEmail(email);
+    if (cleanEmail !== email) {
+      setEmail(cleanEmail);
+    }
+
     if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
       setError("Enter a valid email address to send the OTP.");
       return;
@@ -191,11 +224,22 @@ function AuthPage() {
           setEmailWarning(data.error || "Use other email, this email already have account.");
           setError("");
           resetOtp();
+        } else if (res.status === 429 && data.resendInMs) {
+          // Cooldown active: a code was already sent and is still valid!
+          setOtpSent(true);
+          setOtpEmail(cleanEmail);
+          const cooldownSecs = Math.ceil(data.resendInMs / 1000);
+          resendUntilRef.current = Date.now() + data.resendInMs;
+          if (expiresUntilRef.current <= Date.now()) {
+            expiresUntilRef.current = Date.now() + OTP_TTL_SECONDS * 1000;
+          }
+          setResendIn(cooldownSecs);
+          setTimerTrigger((prev) => prev + 1);
+          setError(data.error || `Please wait ${cooldownSecs}s before requesting a new code. You can enter the code already sent to your email.`);
         } else {
           setError(data.error || data.message || "Unable to send the verification code.");
           setOtpSent(false);
         }
-        if (data.resendInMs) setResendIn(Math.ceil(data.resendInMs / 1000));
         setSending(false);
         return;
       }
@@ -211,8 +255,11 @@ function AuthPage() {
       setOtpSent(true);
       setOtpEmail(cleanEmail);
       setDigits(["", "", "", "", "", ""]);
+      expiresUntilRef.current = Date.now() + OTP_TTL_SECONDS * 1000;
+      resendUntilRef.current = Date.now() + RESEND_COOLDOWN_SECONDS * 1000;
       setExpiresIn(OTP_TTL_SECONDS);
       setResendIn(RESEND_COOLDOWN_SECONDS);
+      setTimerTrigger((prev) => prev + 1);
       digitRefs.current[0]?.focus();
     } catch {
       setError("Network error. Please try again.");
@@ -417,7 +464,13 @@ function AuthPage() {
                   if (otpSent && otpEmail !== e.target.value) resetOtp();
                 }}
                 onBlur={() => {
-                  if (mode === "signup") checkEmailExists(email);
+                  const clean = sanitizeEmail(email);
+                  if (clean && clean !== email) {
+                    setEmail(clean);
+                  }
+                  if (mode === "signup" && clean) {
+                    checkEmailExists(clean);
+                  }
                 }}
                 placeholder="you@example.com"
                 className="flex-1 min-w-0"
@@ -511,31 +564,41 @@ function AuthPage() {
                 ))}
               </div>
               <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
-                {expiresIn > 0 ? (
-                  <span>
-                    Code expires in:{" "}
-                    <span className="font-semibold text-neutral-900">
-                      {expiresMins}:{expiresSecs}
+                {otpSent ? (
+                  expiresIn > 0 ? (
+                    <span>
+                      Code expires in:{" "}
+                      <span className="font-bold text-neutral-900 font-mono">
+                        {expiresMins}:{expiresSecs}
+                      </span>
                     </span>
-                  </span>
+                  ) : (
+                    <span className="font-semibold text-rose-600">
+                      Code has expired.
+                    </span>
+                  )
                 ) : (
-                  <span className="font-medium text-neutral-700">
-                    This code has expired.
-                  </span>
+                  <span>Code will be valid for 10 minutes once sent</span>
                 )}
-                <span aria-hidden="true">•</span>
-                {sending ? (
-                  <span>Sending...</span>
-                ) : resendIn > 0 ? (
-                  <span>Resend in {resendIn}s</span>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                    className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
-                  >
-                    Resend OTP
-                  </button>
+                {otpSent && (
+                  <>
+                    <span aria-hidden="true">•</span>
+                    {sending ? (
+                      <span>Sending...</span>
+                    ) : resendIn > 0 ? (
+                      <span className="font-medium text-neutral-600 font-mono">
+                        Resend in {resendIn}s
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
+                        className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
+                      >
+                        Resend OTP
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>

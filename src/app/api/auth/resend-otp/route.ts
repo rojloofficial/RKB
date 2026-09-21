@@ -13,11 +13,12 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 15);
+    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 60);
     if (!rate.ok) {
       return NextResponse.json(
         {
           error: "Too many requests. Please try again in a few minutes.",
+          resendInMs: rate.retryAfterMs || 60000,
         },
         { status: 429 }
       );

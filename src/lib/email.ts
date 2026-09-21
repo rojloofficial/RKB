@@ -30,14 +30,32 @@ function createDirectTransporter(
     port,
     secure,
     auth: { user, pass },
-    connectionTimeout: 15000,
-    greetingTimeout: 15000,
-    socketTimeout: 25000,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 15000,
   });
 }
 
+function sanitizeDestinationEmail(val: string): string {
+  let s = String(val || "").trim().toLowerCase();
+  s = s.replace(/@gmail\.ocm$/i, "@gmail.com");
+  s = s.replace(/@gamil\.com$/i, "@gmail.com");
+  s = s.replace(/@gmai\.com$/i, "@gmail.com");
+  s = s.replace(/@gmial\.com$/i, "@gmail.com");
+  s = s.replace(/@gmaill\.com$/i, "@gmail.com");
+  s = s.replace(/@gmail\.co$/i, "@gmail.com");
+  s = s.replace(/@yahoo\.ocm$/i, "@yahoo.com");
+  s = s.replace(/@yaho\.com$/i, "@yahoo.com");
+  s = s.replace(/@hotmail\.ocm$/i, "@hotmail.com");
+  s = s.replace(/@hotmial\.com$/i, "@hotmail.com");
+  s = s.replace(/\.ocm$/i, ".com");
+  s = s.replace(/\.con$/i, ".com");
+  s = s.replace(/\.cmo$/i, ".com");
+  return s;
+}
+
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
-  const cleanTo = to.trim().toLowerCase();
+  const cleanTo = sanitizeDestinationEmail(to);
   const host = cleanEnv(process.env.SMTP_HOST) || "smtp.gmail.com";
   const port = Number(cleanEnv(process.env.SMTP_PORT) || "465");
   const rawUser = cleanEnv(process.env.SMTP_USER);
