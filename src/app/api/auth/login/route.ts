@@ -76,7 +76,23 @@ export async function POST(request: NextRequest) {
     }
 
     const userIdStr = String(user._id || "");
-    const publicUser = toPublicUser(user);
+    const loginDate = new Date();
+
+    // Save login date to database and store
+    try {
+      await updateUserFields(
+        userIdStr,
+        { lastLogin: loginDate },
+        user.email
+      );
+    } catch (loginDateErr) {
+      console.warn("[login] Notice: could not update lastLogin date:", loginDateErr);
+    }
+
+    const publicUser = toPublicUser({
+      ...user,
+      lastLogin: loginDate,
+    });
     const sessionToken = userIdStr ? await issueUserSession(userIdStr) : null;
 
     // Generate JWT token
@@ -93,6 +109,7 @@ export async function POST(request: NextRequest) {
       user: {
         ...publicUser,
         _id: userIdStr,
+        lastLogin: loginDate.toISOString(),
       },
       token: jwtToken, // JWT token in response
     });

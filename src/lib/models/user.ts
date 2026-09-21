@@ -20,6 +20,7 @@ export interface User {
   otpExpires?: Date;
   otpAttempts?: number;
   otpLastSentAt?: Date;
+  lastLogin?: Date | string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -141,9 +142,11 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  try {
-    const collection = await getUsersCollection();
-    if (collection) {
+  let foundUser: User | null = null;
+  const collection = await getUsersCollection().catch(() => null);
+
+  if (collection) {
+    try {
       const emailEscaped = normalized.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const rawClean = email.trim().toLowerCase();
       const rawEscaped = rawClean.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -157,44 +160,99 @@ export async function findUserByEmail(email: string): Promise<User | null> {
         ],
       });
       if (doc) {
-        return {
+        foundUser = {
           ...(doc as unknown as User),
           _id: doc._id?.toString(),
           email: String(doc.email || normalized).toLowerCase(),
         };
       }
+    } catch (err) {
+      console.warn("[user.ts] findUserByEmail MongoDB error, falling back to store:", err);
     }
-  } catch (err) {
-    console.warn("[user.ts] findUserByEmail MongoDB error, falling back to store:", err);
   }
 
-  return memoryFindByEmail(normalized);
+  if (!foundUser) {
+    foundUser = await memoryFindByEmail(normalized);
+    // If found in store but was missing from MongoDB collection, auto-sync to MongoDB!
+    if (foundUser && collection) {
+      try {
+        const { _id, ...toInsert } = foundUser;
+        void _id;
+        collection
+          .insertOne({
+            ...toInsert,
+            email: normalized,
+            createdAt: foundUser.createdAt ? new Date(foundUser.createdAt) : new Date(),
+            updatedAt: new Date(),
+          } as unknown as Document)
+          .then((res) => {
+            if (res?.insertedId && foundUser) {
+              foundUser._id = res.insertedId.toString();
+            }
+          })
+          .catch(() => {});
+      } catch {}
+    }
+  } else {
+    // If found in MongoDB, ensure it's in store.users
+    try {
+      const store = await readStore();
+      const idx = store.users.findIndex(
+        (u) => String((u as any).email || "").trim().toLowerCase() === normalized
+      );
+      if (idx === -1) {
+        store.users.push(foundUser as unknown as (typeof store.users)[number]);
+        await writeStore(store);
+      }
+    } catch {}
+  }
+
+  return foundUser;
 }
 
 export async function findUserById(id: string): Promise<User | null> {
   if (!id) return null;
 
-  try {
-    const collection = await getUsersCollection();
-    if (collection) {
+  let foundUser: User | null = null;
+  const collection = await getUsersCollection().catch(() => null);
+
+  if (collection) {
+    try {
       let query: Record<string, unknown> = { _id: id };
       if (ObjectId.isValid(id)) {
         query = { $or: [{ _id: new ObjectId(id) }, { _id: id }] };
       }
       const doc = await collection.findOne(query);
       if (doc) {
-        return {
+        foundUser = {
           ...(doc as unknown as User),
           _id: doc._id?.toString(),
           email: String(doc.email || "").toLowerCase(),
         };
       }
+    } catch (err) {
+      console.warn("[user.ts] findUserById MongoDB error, falling back to store:", err);
     }
-  } catch (err) {
-    console.warn("[user.ts] findUserById MongoDB error, falling back to store:", err);
   }
 
-  return memoryFindById(id);
+  if (!foundUser) {
+    foundUser = await memoryFindById(id);
+    if (foundUser && collection) {
+      try {
+        const { _id, ...toInsert } = foundUser;
+        void _id;
+        collection
+          .insertOne({
+            ...toInsert,
+            createdAt: foundUser.createdAt ? new Date(foundUser.createdAt) : new Date(),
+            updatedAt: new Date(),
+          } as unknown as Document)
+          .catch(() => {});
+      } catch {}
+    }
+  }
+
+  return foundUser;
 }
 
 export async function findUserBySessionToken(
@@ -202,23 +260,37 @@ export async function findUserBySessionToken(
 ): Promise<User | null> {
   if (!token) return null;
 
-  try {
-    const collection = await getUsersCollection();
-    if (collection) {
+  let foundUser: User | null = null;
+  const collection = await getUsersCollection().catch(() => null);
+
+  if (collection) {
+    try {
       const doc = await collection.findOne({ sessionToken: token });
       if (doc) {
-        return {
+        foundUser = {
           ...(doc as unknown as User),
           _id: doc._id?.toString(),
           email: String(doc.email || "").toLowerCase(),
         };
       }
+    } catch (err) {
+      console.warn("[user.ts] findUserBySessionToken MongoDB error, falling back to store:", err);
     }
-  } catch (err) {
-    console.warn("[user.ts] findUserBySessionToken MongoDB error, falling back to store:", err);
   }
 
-  return memoryFindBySessionToken(token);
+  if (!foundUser) {
+    foundUser = await memoryFindBySessionToken(token);
+    if (foundUser && collection) {
+      try {
+        const query = ObjectId.isValid(String(foundUser._id))
+          ? { $or: [{ _id: new ObjectId(String(foundUser._id)) }, { email: foundUser.email }] }
+          : { email: foundUser.email };
+        collection.updateOne(query, { $set: { sessionToken: token, updatedAt: new Date() } }).catch(() => {});
+      } catch {}
+    }
+  }
+
+  return foundUser;
 }
 
 export async function createUser(
@@ -367,16 +439,88 @@ export async function clearUserSession(token: string): Promise<void> {
 }
 
 export async function listUsers(): Promise<PublicUser[]> {
+  const mergedMap = new Map<string, PublicUser>();
+
+  // 1. Load from MongoDB users collection
   const collection = await getUsersCollection();
-  if (!collection) {
-    const store = await readStore();
-    return store.users.map(
-      (u) => toPublicUser(u as unknown as User)
-    );
+  if (collection) {
+    try {
+      const docs = await collection.find({}).sort({ createdAt: -1 }).toArray();
+      for (const doc of docs) {
+        const u = toPublicUser(doc as unknown as User);
+        const key = (u.email || "").trim().toLowerCase();
+        if (key) mergedMap.set(key, u);
+      }
+    } catch (err) {
+      console.warn("[user.ts] listUsers MongoDB error:", err);
+    }
   }
 
-  const docs = await collection.find({}).sort({ createdAt: -1 }).toArray();
-  return docs.map((doc) => toPublicUser(doc as unknown as User));
+  // 2. Merge with store.users and auto-heal missing users
+  try {
+    const store = await readStore();
+    for (const rawUser of store.users) {
+      const u = rawUser as unknown as User;
+      const key = (u.email || "").trim().toLowerCase();
+      if (!key) continue;
+
+      if (!mergedMap.has(key)) {
+        const publicUser = toPublicUser(u);
+        mergedMap.set(key, publicUser);
+
+        // Auto-heal: insert missing user into MongoDB users collection
+        if (collection) {
+          try {
+            const { _id, ...toInsert } = u;
+            void _id;
+            collection.insertOne({
+              ...toInsert,
+              email: key,
+              createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
+              updatedAt: u.updatedAt ? new Date(u.updatedAt) : new Date(),
+            } as unknown as Document).then((res) => {
+              if (res?.insertedId) {
+                u._id = res.insertedId.toString();
+              }
+            }).catch(() => {});
+          } catch {}
+        }
+      } else {
+        const existing = mergedMap.get(key)!;
+        if (!existing.lastLogin && u.lastLogin) {
+          existing.lastLogin = u.lastLogin;
+        }
+      }
+    }
+
+    // Also ensure any MongoDB users are synced to store.users
+    let storeUpdated = false;
+    for (const publicUser of mergedMap.values()) {
+      const key = (publicUser.email || "").trim().toLowerCase();
+      const inStore = store.users.some(
+        (su) => String((su as any).email || "").trim().toLowerCase() === key
+      );
+      if (!inStore) {
+        store.users.push({
+          ...publicUser,
+          passwordHash: "",
+        } as unknown as (typeof store.users)[number]);
+        storeUpdated = true;
+      }
+    }
+    if (storeUpdated) {
+      await writeStore(store);
+    }
+  } catch (err) {
+    console.warn("[user.ts] listUsers store merge error:", err);
+  }
+
+  const result = Array.from(mergedMap.values());
+  return result.sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
+  });
 }
 
 export async function updateUserCoins(
@@ -684,6 +828,11 @@ export function toPublicUser(user: User): PublicUser {
     phone: user.phone,
     service: user.service,
     coins: Number(user.coins ?? 0),
+    lastLogin: user.lastLogin
+      ? user.lastLogin instanceof Date
+        ? user.lastLogin.toISOString()
+        : String(user.lastLogin)
+      : undefined,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -698,47 +847,68 @@ export interface ExportUserData {
   coins: number;
   service?: string;
   emailVerified?: boolean;
+  lastLogin?: string;
   createdAt: string;
   updatedAt?: string;
 }
 
 export async function exportAllUsers(): Promise<ExportUserData[]> {
-  const collection = await getUsersCollection();
+  const map = new Map<string, ExportUserData>();
+
+  const collection = await getUsersCollection().catch(() => null);
   if (collection) {
     try {
       const docs = await collection.find({}).sort({ createdAt: -1 }).toArray();
-      return docs.map((doc) => ({
-        id: doc._id?.toString(),
-        name: String(doc.name || ""),
-        email: String(doc.email || ""),
-        phone: String(doc.phone || ""),
-        password: String(doc.passwordHash || ""),
-        coins: Number(doc.coins || 0),
-        service: doc.service ? String(doc.service) : undefined,
-        emailVerified: Boolean(doc.emailVerified),
-        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || ""),
-        updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt ? String(doc.updatedAt) : undefined),
-      }));
+      for (const doc of docs) {
+        const item: ExportUserData = {
+          id: doc._id?.toString(),
+          name: String(doc.name || ""),
+          email: String(doc.email || ""),
+          phone: String(doc.phone || ""),
+          password: String(doc.passwordHash || ""),
+          coins: Number(doc.coins || 0),
+          service: doc.service ? String(doc.service) : undefined,
+          emailVerified: Boolean(doc.emailVerified),
+          lastLogin: doc.lastLogin instanceof Date ? doc.lastLogin.toISOString() : (doc.lastLogin ? String(doc.lastLogin) : undefined),
+          createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || ""),
+          updatedAt: doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : (doc.updatedAt ? String(doc.updatedAt) : undefined),
+        };
+        const key = item.email.trim().toLowerCase();
+        if (key) map.set(key, item);
+      }
     } catch (err) {
       console.error("[user] exportAllUsers MongoDB query failed:", err);
     }
   }
 
-  const store = await readStore();
-  return (store.users || []).map((u) => {
-    const user = u as unknown as User;
-    return {
-      id: user._id,
-      name: String(user.name || ""),
-      email: String(user.email || ""),
-      phone: String(user.phone || ""),
-      password: String(user.passwordHash || ""),
-      coins: Number(user.coins || 0),
-      service: user.service ? String(user.service) : undefined,
-      emailVerified: Boolean(user.emailVerified),
-      createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : String(user.createdAt || ""),
-      updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : (user.updatedAt ? String(user.updatedAt) : undefined),
-    };
+  try {
+    const store = await readStore();
+    for (const u of store.users || []) {
+      const user = u as unknown as User;
+      const key = String(user.email || "").trim().toLowerCase();
+      if (!key) continue;
+      if (!map.has(key)) {
+        map.set(key, {
+          id: user._id,
+          name: String(user.name || ""),
+          email: String(user.email || ""),
+          phone: String(user.phone || ""),
+          password: String(user.passwordHash || ""),
+          coins: Number(user.coins || 0),
+          service: user.service ? String(user.service) : undefined,
+          emailVerified: Boolean(user.emailVerified),
+          lastLogin: user.lastLogin instanceof Date ? user.lastLogin.toISOString() : (user.lastLogin ? String(user.lastLogin) : undefined),
+          createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : String(user.createdAt || ""),
+          updatedAt: user.updatedAt instanceof Date ? user.updatedAt.toISOString() : (user.updatedAt ? String(user.updatedAt) : undefined),
+        });
+      }
+    }
+  } catch {}
+
+  return Array.from(map.values()).sort((a, b) => {
+    const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return tb - ta;
   });
 }
 

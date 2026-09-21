@@ -7,6 +7,7 @@ import {
   normalizeEmail,
   setUserEmailVerified,
   toPublicUser,
+  updateUserFields,
 } from "@/lib/models/user";
 import { OTP_MAX_ATTEMPTS } from "@/lib/otp";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
@@ -111,6 +112,11 @@ export async function POST(request: NextRequest) {
 
     // If this is an existing user who already set up a password, log them in immediately!
     if (user.passwordHash) {
+      const loginDate = new Date();
+      try {
+        await updateUserFields(String(user._id), { lastLogin: loginDate, emailVerified: true }, user.email);
+      } catch {}
+
       const sessionToken = await issueUserSession(String(user._id));
       const jwtToken = generateJWT({
         _id: String(user._id),
@@ -122,7 +128,7 @@ export async function POST(request: NextRequest) {
         message: "Logged in successfully.",
         otpVerified: true,
         isNewUser: false,
-        user: toPublicUser({ ...user, emailVerified: true }),
+        user: toPublicUser({ ...user, emailVerified: true, lastLogin: loginDate }),
         token: jwtToken,
       });
 

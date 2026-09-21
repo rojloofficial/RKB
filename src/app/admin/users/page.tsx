@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 import { useAdminContext } from "@/components/admin/use-admin-context";
+import { formatDisplayDateTime } from "@/lib/date";
 
 type User = {
   _id?: string;
@@ -12,6 +13,7 @@ type User = {
   phone?: string;
   coins?: number;
   adCount?: number;
+  lastLogin?: string | Date;
   createdAt: string | Date;
 };
 
@@ -138,20 +140,21 @@ export default function AdminUsers() {
 
       {loading ? (
         <AdminTableSkeleton
-          headers={["Name", "Email", "Phone", "Coins", "Actions", "Ads"]}
-          minWidth="min-w-[600px]"
+          headers={["Name", "Email", "Phone", "Coins", "Last Login", "Actions", "Ads"]}
+          minWidth="min-w-[700px]"
         />
       ) : users.length === 0 ? (
         <p className="mt-6 text-red-900">No users found.</p>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
-          <table className="w-full min-w-[600px] text-left text-sm">
+          <table className="w-full min-w-[700px] text-left text-sm">
             <thead className="bg-pink-50 text-red-950">
               <tr>
                 <th className="px-4 py-4 font-semibold">Name</th>
                 <th className="px-4 py-4 font-semibold">Email</th>
                 <th className="px-4 py-4 font-semibold">Phone</th>
                 <th className="px-4 py-4 font-semibold">Coins</th>
+                <th className="px-4 py-4 font-semibold">Last Login</th>
                 <th className="px-4 py-4 font-semibold">Actions</th>
                 <th className="px-4 py-4 text-right font-semibold">Ads</th>
               </tr>
@@ -170,6 +173,9 @@ export default function AdminUsers() {
                     <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-900">
                       {Number(user.coins ?? 0)}
                     </span>
+                  </td>
+                  <td className="px-4 py-4 text-xs text-red-900 whitespace-nowrap">
+                    {user.lastLogin ? formatDisplayDateTime(user.lastLogin) : "Never"}
                   </td>
                   <td className="px-4 py-4">
                     <button

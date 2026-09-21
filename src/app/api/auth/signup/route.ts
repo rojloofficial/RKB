@@ -78,10 +78,13 @@ export async function POST(request: NextRequest) {
 
     const passwordHash = await bcrypt.hash(password, 10);
 
+    const loginDate = new Date();
     const updated = await updateUserFields(existing._id, {
       name: String(name).trim(),
       passwordHash,
       service: service ? String(service).trim() : undefined,
+      lastLogin: loginDate,
+      emailVerified: true,
     });
     await setUserEmailVerified(existing._id, true);
     if (!updated) {
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const publicUser = toPublicUser({ ...user, emailVerified: true });
+    const publicUser = toPublicUser({ ...user, emailVerified: true, lastLogin: loginDate });
     const sessionToken = await issueUserSession(user._id);
     const jwtToken = generateJWT({
       _id: user._id,
