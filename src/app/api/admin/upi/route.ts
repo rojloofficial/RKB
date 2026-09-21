@@ -27,21 +27,9 @@ export async function GET(request: NextRequest) {
     }
 
     const upis = await listUPIs();
-    const defaultUpi = {
-      _id: "default-upi",
-      upiId: "surajkumar40407@ybl",
-      name: "suraj",
-      qrCode: "/surajkumar40407@ybl.jpeg",
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-
-    const hasDefaultUpi = upis.some(
-      (upi) => upi.upiId.toLowerCase() === defaultUpi.upiId.toLowerCase()
-    );
 
     return NextResponse.json({
-      upis: hasDefaultUpi ? upis : [defaultUpi, ...upis],
+      upis,
       success: true,
     });
   } catch (error) {
@@ -105,6 +93,7 @@ export async function POST(request: NextRequest) {
         qrCode: qrCodeUrl || undefined,
         active,
       });
+      return NextResponse.json({ success: true, upi }, { status: 200 });
     } else {
       // Create new UPI
       upi = await createUPI({
@@ -113,9 +102,8 @@ export async function POST(request: NextRequest) {
         qrCode: qrCodeUrl,
         active,
       });
+      return NextResponse.json({ success: true, upi }, { status: 201 });
     }
-
-    return NextResponse.json({ success: true, upi }, { status: 201 });
   } catch (error) {
     console.error("createUPI/updateUPI failed:", error);
     return NextResponse.json(

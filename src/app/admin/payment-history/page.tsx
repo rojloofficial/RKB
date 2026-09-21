@@ -162,7 +162,7 @@ export default function PaymentHistoryPage() {
     return nameValue.includes(searchValue) || emailValue.includes(searchValue);
   });
 
-  const totalAmount = filteredHistory.reduce((sum, p) => sum + p.amount, 0);
+  const totalAmount = filteredHistory.reduce((sum, p) => sum + (p.finalAmount ?? p.amount), 0);
   const totalCoins = filteredHistory.reduce((sum, p) => sum + p.coins, 0);
   const totalDiscount = filteredHistory.reduce((sum, p) => sum + (p.discount || 0), 0);
 

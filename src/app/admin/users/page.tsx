@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import { useAdminContext } from "@/components/admin/use-admin-context";
 
 type User = {
   _id?: string;
@@ -14,6 +16,8 @@ type User = {
 };
 
 export default function AdminUsers() {
+  const router = useRouter();
+  const me = useAdminContext();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -22,7 +26,7 @@ export default function AdminUsers() {
   async function handleDownloadData() {
     try {
       setDownloading(true);
-      const res = await fetch("/api/admin/users/export");
+      const res = await fetch("/api/admin/users/export", { credentials: "include" });
       if (!res.ok) {
         throw new Error("Failed to export user data");
       }
@@ -47,20 +51,33 @@ export default function AdminUsers() {
   const load = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const res = await fetch("/api/admin/users", { cache: "no-store" }).then((r) => r.json());
-      setUsers(res.users ?? []);
+      const res = await fetch("/api/admin/users", {
+        cache: "no-store",
+        credentials: "include",
+      });
+      if (res.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      const data = await res.json();
+      setUsers(data.users ?? []);
     } catch (err) {
       console.error("Failed to load users:", err);
     } finally {
       if (!silent) setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
+    if (me === null) return;
+    if (!me.authenticated) {
+      router.replace("/admin/login");
+      return;
+    }
     queueMicrotask(() => {
       void load(false);
     });
-  }, [load]);
+  }, [load, me, router]);
 
   async function remove(id?: string) {
     if (!id || deletingId) return;
@@ -70,10 +87,13 @@ export default function AdminUsers() {
       const res = await fetch("/api/admin/users", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ id }),
       });
       if (res.ok) {
         setUsers((prev) => prev.filter((u) => u._id !== id));
+      } else {
+        alert("Failed to delete user. Please try again.");
       }
       void load(true);
     } catch (err) {

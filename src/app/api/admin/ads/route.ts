@@ -8,8 +8,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const ads = await listAllAds();
-  return NextResponse.json({ ads });
+  try {
+    const ads = await listAllAds();
+    return NextResponse.json({ ads });
+  } catch (error) {
+    console.error("[admin/ads] GET error:", error);
+    return NextResponse.json({ error: "Unable to load ads." }, { status: 500 });
+  }
 }
 
 export async function DELETE(request: NextRequest) {

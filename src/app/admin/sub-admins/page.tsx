@@ -23,14 +23,19 @@ export default function SubAdminList() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/subadmins").then((r) => r.json());
-      setAdmins(res.admins ?? []);
+      const res = await fetch("/api/admin/subadmins", { credentials: "include" });
+      if (res.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      setAdmins(data.admins ?? []);
     } catch {
       setAdmins([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (me && me.authenticated && me.role !== "main") {
@@ -46,12 +51,22 @@ export default function SubAdminList() {
 
   async function remove(id: string) {
     if (!confirm("Delete this sub-admin?")) return;
-    await fetch("/api/admin/subadmins", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    load();
+    try {
+      const res = await fetch("/api/admin/subadmins", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to delete sub-admin.");
+        return;
+      }
+      void load();
+    } catch {
+      alert("Network error. Please try again.");
+    }
   }
 
   return (

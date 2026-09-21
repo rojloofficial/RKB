@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDisplayDate } from "@/lib/date";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import { useAdminContext } from "@/components/admin/use-admin-context";
 
 type SeoInfo = {
   hasSeo: boolean;
@@ -85,6 +86,8 @@ function fuzzyMatch(target: string, query: string): boolean {
 }
 
 export default function AdminCities() {
+  const router = useRouter();
+  const me = useAdminContext();
   const [allLocations, setAllLocations] = useState<AdminLocation[]>([]);
   const [seoMap, setSeoMap] = useState<Record<string, SeoInfo>>({});
   const [loading, setLoading] = useState(true);
@@ -94,7 +97,6 @@ export default function AdminCities() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [citiesWithCustomSeo, setCitiesWithCustomSeo] = useState<Set<string>>(new Set());
   const loadRef = useRef(0);
-  const router = useRouter();
 
   // 300ms Debounce
   useEffect(() => {
@@ -225,16 +227,25 @@ export default function AdminCities() {
 
       setAllLocations(deduped);
       setSelectedIds(new Set());
+      if (citiesRes.status === 401 || areasRes.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
     } finally {
       if (loadRef.current === loadId) setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
+    if (me === null) return;
+    if (!me.authenticated) {
+      router.replace("/admin/login");
+      return;
+    }
     queueMicrotask(() => {
       void load();
     });
-  }, [load]);
+  }, [load, me, router]);
 
   async function remove(item: AdminLocation) {
     if (!item.id) return;

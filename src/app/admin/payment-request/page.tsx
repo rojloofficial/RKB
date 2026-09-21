@@ -147,8 +147,8 @@ export default function PaymentRequestPage() {
     setProcessingIds((prev) => ({ ...prev, [reqId]: "confirm" }));
 
     const upi = upis[0] ?? {
-      upiId: "surajkumar40407@ybl",
-      name: "suraj",
+      upiId: "",
+      name: "",
     };
 
     try {
@@ -204,6 +204,14 @@ export default function PaymentRequestPage() {
     const reqId = request._id;
     if (!reqId || processingIds[reqId]) return;
 
+    const customReason = window.prompt(
+      "Enter decline reason (or click OK for default 'Wrong Transaction ID'):",
+      "Wrong Transaction ID"
+    );
+    if (customReason === null) return;
+
+    const reasonToUse = customReason.trim() || "Wrong Transaction ID";
+
     setProcessingIds((prev) => ({ ...prev, [reqId]: "decline" }));
 
     try {
@@ -214,7 +222,7 @@ export default function PaymentRequestPage() {
         body: JSON.stringify({
           action: "decline",
           id: reqId,
-          reason: "Wrong Transaction ID",
+          reason: reasonToUse,
         }),
       });
 
@@ -228,7 +236,7 @@ export default function PaymentRequestPage() {
       setRequests((prev) =>
         prev.map((r) =>
           r._id === reqId
-            ? { ...r, status: "declined", declinedReason: "Wrong Transaction ID" }
+            ? { ...r, status: "declined", declinedReason: reasonToUse }
             : r
         )
       );

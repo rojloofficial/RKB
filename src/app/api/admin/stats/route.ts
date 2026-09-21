@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
           db.collection("ads").countDocuments({ status: { $ne: "deleted" } }).catch(() => 0),
           listAllCities().catch(() => []),
           listStates().catch(() => []),
-          db.collection("admin_users").countDocuments().catch(() => 0),
+          listSubAdmins().then((a) => a.length).catch(() => 0),
           db.collection("upis").countDocuments().catch(() => 0),
           db.collection("coupons").find({}, { projection: { active: 1 } }).toArray().catch(() => []),
           db.collection("payment_requests").aggregate([

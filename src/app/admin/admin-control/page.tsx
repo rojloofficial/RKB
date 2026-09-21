@@ -55,6 +55,7 @@ export default function AdminControl() {
       const res = await fetch("/api/admin/subadmins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ email, password, permissions }),
       });
       const data = await res.json().catch(() => ({}));

@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminStateHierarchySkeleton } from "@/components/skeletons/admin-skeletons";
+import { useAdminContext } from "@/components/admin/use-admin-context";
 
 type StateRecord = {
   _id?: string;
@@ -81,6 +83,8 @@ function fuzzyMatch(target: string, query: string): boolean {
 }
 
 export default function AdminStates() {
+  const router = useRouter();
+  const me = useAdminContext();
   const [states, setStates] = useState<StateRecord[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
   const [allLocalAreas, setAllLocalAreas] = useState<LocalAreaRow[]>([]);
@@ -140,6 +144,10 @@ export default function AdminStates() {
         fetch("/api/admin/cities", { credentials: "include" }),
         fetch("/api/admin/local-areas", { credentials: "include" }),
       ]);
+      if (sRes.status === 401 || cRes.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
       if (sRes.ok) setStates((await sRes.json()).states ?? []);
       if (cRes.ok) setCities((await cRes.json()).cities ?? []);
       if (aRes.ok) setAllLocalAreas((await aRes.json()).localAreas ?? []);
@@ -148,13 +156,18 @@ export default function AdminStates() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
+    if (me === null) return;
+    if (!me.authenticated) {
+      router.replace("/admin/login");
+      return;
+    }
     queueMicrotask(() => {
       void load();
     });
-  }, [load]);
+  }, [load, me, router]);
 
   // State Collapse Toggle
   function toggleState(stateKey: string) {

@@ -360,8 +360,9 @@ export async function confirmPaymentRequest(
       if (ok) {
         targetDoc.credited = true;
         if (col) {
-          const updateQuery = mongoId
-            ? { _id: mongoId }
+          const updateDocId = targetDoc._id && ObjectId.isValid(targetDoc._id) ? new ObjectId(targetDoc._id) : mongoId;
+          const updateQuery = updateDocId
+            ? { $or: [{ _id: updateDocId }, { transactionId: targetDoc.transactionId }] }
             : { $or: [{ _id: targetDoc._id as unknown as ObjectId }, { transactionId: targetDoc.transactionId }] };
           await col.updateOne(updateQuery, { $set: { credited: true, updatedAt: new Date() } });
         }

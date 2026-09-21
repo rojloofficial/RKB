@@ -399,7 +399,13 @@ export async function updateUserCoins(
         filters.push({ _id: userId });
       }
       if (userEmail) {
-        filters.push({ email: normalizeEmail(userEmail) });
+        const cleanEmail = normalizeEmail(userEmail);
+        if (cleanEmail) {
+          filters.push({ email: cleanEmail });
+          filters.push({
+            email: { $regex: new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+          });
+        }
       }
 
       if (filters.length > 0) {

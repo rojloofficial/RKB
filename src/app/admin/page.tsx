@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminStatSkeleton } from "@/components/skeletons/admin-skeletons";
+import { useAdminContext } from "@/components/admin/use-admin-context";
 
 type Stats = {
   users: number;
@@ -20,6 +22,8 @@ type Stats = {
 };
 
 export default function AdminDashboard() {
+  const router = useRouter();
+  const me = useAdminContext();
   const [stats, setStats] = useState<Stats>({
     users: 0,
     ads: 0,
@@ -37,9 +41,22 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (me === null) return;
+    if (!me.authenticated) {
+      router.replace("/admin/login");
+      return;
+    }
+
     fetch("/api/admin/stats", { credentials: "include" })
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 401) {
+          router.replace("/admin/login");
+          return null;
+        }
+        return r.json();
+      })
       .then((data) => {
+        if (!data) return;
         setStats({
           users: data.users ?? 0,
           ads: data.ads ?? 0,
@@ -72,7 +89,7 @@ export default function AdminDashboard() {
         });
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [me, router]);
 
   const baseCards = [
     { label: "Users", value: stats.users, href: "/admin/users" },

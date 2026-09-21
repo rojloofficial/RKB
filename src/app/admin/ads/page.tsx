@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
+import { useAdminContext } from "@/components/admin/use-admin-context";
 
 type Ad = {
   _id?: string;
@@ -22,39 +24,51 @@ type CityOption = {
 };
 
 export default function AdminAds() {
+  const router = useRouter();
+  const me = useAdminContext();
   const [ads, setAds] = useState<Ad[]>([]);
   const [cities, setCities] = useState<CityOption[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string>("");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  async function loadAds() {
-    const res = await fetch("/api/admin/ads", { credentials: "include" }).then(
-      (r) => r.json()
-    );
-    setAds(res.ads ?? []);
-    setLoading(false);
-  }
+  const loadAds = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/ads", { credentials: "include" });
+      if (res.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      const data = await res.json();
+      setAds(data.ads ?? []);
+    } catch (err) {
+      console.error("Failed to load ads:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
 
   useEffect(() => {
+    if (me === null) return;
+    if (!me.authenticated) {
+      router.replace("/admin/login");
+      return;
+    }
+
     let active = true;
-    fetch("/api/admin/ads", { credentials: "include" })
-      .then((r) => r.json())
-      .then((res) => {
-        if (!active) return;
-        setAds(res.ads ?? []);
-        setLoading(false);
-      });
+    void loadAds();
+
     fetch("/api/admin/cities", { credentials: "include" })
       .then((r) => r.json())
       .then((data) => {
         if (active) setCities(data.cities ?? []);
       })
       .catch(() => {});
+
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadAds, me, router]);
 
   function matchesCity(ad: Ad, city: CityOption): boolean {
     const ac = (ad.city || "").toLowerCase().trim();
@@ -83,25 +97,43 @@ export default function AdminAds() {
 
   async function toggleStatus(ad: Ad) {
     const next = ad.status === "Active" ? "Inactive" : "Active";
-    await fetch("/api/admin/ads", {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: ad._id, status: next }),
-    });
-    loadAds();
+    try {
+      const res = await fetch("/api/admin/ads", {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: ad._id, status: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to update ad status.");
+        return;
+      }
+      void loadAds();
+    } catch {
+      alert("Network error updating ad status.");
+    }
   }
 
   async function remove(id?: string) {
     if (!id) return;
     if (!confirm("Delete this ad?")) return;
-    await fetch("/api/admin/ads", {
-      method: "DELETE",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    loadAds();
+    try {
+      const res = await fetch("/api/admin/ads", {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "Failed to delete ad.");
+        return;
+      }
+      void loadAds();
+    } catch {
+      alert("Network error deleting ad.");
+    }
   }
 
   return (
