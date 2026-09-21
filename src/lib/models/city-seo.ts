@@ -96,11 +96,29 @@ function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
   };
 }
 
-export async function getAllCitySeo(): Promise<CitySeo[]> {
+import { LRUCache } from "../lru-cache";
+
+let citySeoIndexesCreated = false;
+
+async function getCitySeoCollection() {
   const db = await getDb();
-  if (db) {
+  if (!db) return null;
+  const col = db.collection("city_seo");
+  if (!citySeoIndexesCreated) {
+    citySeoIndexesCreated = true;
+    col.createIndexes([
+      { key: { slug: 1 }, name: "city_seo_slug_idx" },
+      { key: { urlSlug: 1 }, name: "city_seo_urlSlug_idx" },
+    ]).catch(() => {});
+  }
+  return col;
+}
+
+export async function getAllCitySeo(): Promise<CitySeo[]> {
+  const col = await getCitySeoCollection();
+  if (col) {
     try {
-      const docs = await db.collection("city_seo").find({}).toArray();
+      const docs = await col.find({}).toArray();
       if (docs && docs.length > 0) {
         return docs.map((d) => normalizeSeoDoc(d as unknown as Record<string, unknown>));
       }
@@ -113,14 +131,13 @@ export async function getAllCitySeo(): Promise<CitySeo[]> {
   return ((store.citySeo ?? []) as unknown as Record<string, unknown>[]).map(normalizeSeoDoc);
 }
 
-const seoCache = new Map<string, { data: CitySeo | null; expiresAt: number }>();
-const SEO_CACHE_TTL_MS = 60_000;
+const citySeoLruCache = new LRUCache<string, CitySeo | null>(200, 60_000);
 
 export function invalidateCitySeoCache(slug?: string): void {
   if (slug) {
-    seoCache.delete(slug.toLowerCase().trim());
+    citySeoLruCache.delete(slug.toLowerCase().trim());
   } else {
-    seoCache.clear();
+    citySeoLruCache.clear();
   }
 }
 
@@ -130,27 +147,33 @@ export const getCitySeo = cache(async function (
   const target = String(slug || "").trim().toLowerCase();
   if (!target) return null;
 
-  const now = Date.now();
-  const cached = seoCache.get(target);
-  if (cached && now < cached.expiresAt) {
-    return cached.data;
+  const cached = citySeoLruCache.get(target);
+  if (cached !== null) {
+    return cached;
   }
 
   let result: CitySeo | null = null;
-  const db = await getDb();
-  if (db) {
+  const col = await getCitySeoCollection();
+  if (col) {
     try {
-      const doc = await db.collection("city_seo").findOne({
-        $or: [
-          { slug: target },
-          { urlSlug: target },
-          { slug: new RegExp(`^${target}$`, "i") },
-          { urlSlug: new RegExp(`^${target}$`, "i") },
-          { slug: new RegExp(`^${target}-`, "i") },
-          { urlSlug: new RegExp(`^${target}-`, "i") },
-          { name: new RegExp(`^${target}$`, "i") },
-        ],
+      // 1. Fast indexed exact match query (O(log N))
+      let doc = await col.findOne({
+        $or: [{ slug: target }, { urlSlug: target }],
       });
+
+      // 2. Fallback to case-insensitive or prefix match if exact match not found
+      if (!doc) {
+        doc = await col.findOne({
+          $or: [
+            { slug: new RegExp(`^${target}$`, "i") },
+            { urlSlug: new RegExp(`^${target}$`, "i") },
+            { slug: new RegExp(`^${target}-`, "i") },
+            { urlSlug: new RegExp(`^${target}-`, "i") },
+            { name: new RegExp(`^${target}$`, "i") },
+          ],
+        });
+      }
+
       if (doc) {
         result = normalizeSeoDoc(doc as unknown as Record<string, unknown>);
       }
@@ -180,7 +203,7 @@ export const getCitySeo = cache(async function (
     }
   }
 
-  seoCache.set(target, { data: result, expiresAt: now + SEO_CACHE_TTL_MS });
+  citySeoLruCache.set(target, result);
   return result;
 });
 

@@ -49,7 +49,8 @@ import {
   getAllDefaultLocalAreas,
   type LocalAreaEntry,
 } from "../local-areas-data";
-import { cityPlaces } from "../places";
+import { cityPlaces, getCityBySlug } from "../places";
+import { LRUCache } from "../lru-cache";
 
 export type LocalAreaDetail = {
   name: string;
@@ -61,11 +62,23 @@ export type LocalAreaDetail = {
   highlights?: string[];
 };
 
+const localAreasLruCache = new LRUCache<string, LocalAreaRecord[]>(100, 60_000);
+const localAreaByCityAndSlugCache = new LRUCache<string, LocalAreaDetail | null>(300, 60_000);
+
+export function invalidateLocalAreaCache(): void {
+  localAreasLruCache.clear();
+  localAreaByCityAndSlugCache.clear();
+}
+
 export const listLocalAreas = cache(async function (filters?: {
   cityName?: string;
   citySlug?: string;
   stateName?: string;
 }): Promise<LocalAreaRecord[]> {
+  const cacheKey = `${filters?.cityName || ""}:${filters?.citySlug || ""}:${filters?.stateName || ""}`;
+  const cached = localAreasLruCache.get(cacheKey);
+  if (cached) return cached;
+
   const store = await readStore();
   const deletedAreaIds = new Set(
     (store.deletedLocalAreas ?? []).map((s: string) => String(s).toLowerCase().trim())
@@ -92,11 +105,9 @@ export const listLocalAreas = cache(async function (filters?: {
     );
   });
 
-  // Convert default areas to LocalAreaRecord format
+  // Convert default areas to LocalAreaRecord format using O(1) hash map lookup
   const convertedDefaults: LocalAreaRecord[] = defaultAreas.map((d) => {
-    const city = cityPlaces.find(
-      (c) => c.slug === d.citySlug || slugify(c.name) === d.citySlug
-    );
+    const city = getCityBySlug(d.citySlug);
     return {
       _id: `def_${d.citySlug}_${d.slug}`,
       name: d.name,
@@ -147,9 +158,11 @@ export const listLocalAreas = cache(async function (filters?: {
     );
   }
 
-  return [...areas].sort((a, b) =>
+  const result = [...areas].sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
   );
+  localAreasLruCache.set(cacheKey, result);
+  return result;
 });
 
 export const getLocalAreaByCityAndSlug = cache(async function (
@@ -158,6 +171,10 @@ export const getLocalAreaByCityAndSlug = cache(async function (
 ): Promise<LocalAreaDetail | null> {
   const normCity = slugify(citySlug);
   const normArea = slugify(areaSlug);
+  const cacheKey = `${normCity}::${normArea}`;
+
+  const cached = localAreaByCityAndSlugCache.get(cacheKey);
+  if (cached !== null) return cached;
 
   // 1. Check custom database/store local areas first
   const store = await readStore();
@@ -171,7 +188,7 @@ export const getLocalAreaByCityAndSlug = cache(async function (
 
   if (foundStored) {
     const defaultInfo = findDefaultLocalArea(normCity, normArea);
-    return {
+    const detail: LocalAreaDetail = {
       name: foundStored.name,
       slug: foundStored.slug,
       cityName: foundStored.cityName,
@@ -180,12 +197,14 @@ export const getLocalAreaByCityAndSlug = cache(async function (
       description: defaultInfo?.description,
       highlights: defaultInfo?.highlights,
     };
+    localAreaByCityAndSlugCache.set(cacheKey, detail);
+    return detail;
   }
 
   // 2. Check static default local areas
   const defaultArea = findDefaultLocalArea(normCity, normArea);
   if (defaultArea) {
-    return {
+    const detail: LocalAreaDetail = {
       name: defaultArea.name,
       slug: defaultArea.slug,
       cityName: defaultArea.cityName,
@@ -193,8 +212,11 @@ export const getLocalAreaByCityAndSlug = cache(async function (
       description: defaultArea.description,
       highlights: defaultArea.highlights,
     };
+    localAreaByCityAndSlugCache.set(cacheKey, detail);
+    return detail;
   }
 
+  localAreaByCityAndSlugCache.set(cacheKey, null);
   return null;
 });
 
@@ -245,6 +267,7 @@ export async function createLocalArea(data: {
       existing.stateSlug = stateSlug;
     }
     await writeStore(store);
+    invalidateLocalAreaCache();
     return existing;
   }
 
@@ -261,6 +284,7 @@ export async function createLocalArea(data: {
 
   store.localAreas.push(localArea as unknown as (typeof store.localAreas)[number]);
   await writeStore(store);
+  invalidateLocalAreaCache();
   return localArea;
 }
 
@@ -328,6 +352,7 @@ export async function deleteLocalArea(id: string): Promise<boolean> {
 
   if (found) {
     await writeStore(store);
+    invalidateLocalAreaCache();
     return true;
   }
   return false;
@@ -613,6 +638,7 @@ export async function importLocationsJson(json: unknown): Promise<{
   }
 
   await writeStore(store);
+  invalidateLocalAreaCache();
 
   return {
     success: true,

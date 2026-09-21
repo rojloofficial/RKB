@@ -292,13 +292,31 @@ function filterPlaces(
     }
   }
 
-  // 3. Local area search match
+  // 3. Local area search match (Trie fast-path + fuzzy fallback)
   const matchedAreas: PlaceLocalAreaItem[] = [];
+  const matchedAreaKeys = new Set<string>();
+
+  // Trie prefix search fast-path (O(K))
+  if (index) {
+    const trieMatches = index.areaPrefixTrie.searchPrefix(q);
+    for (const a of trieMatches) {
+      const key = `${a.citySlug}:${a.slug}`;
+      if (!matchedAreaKeys.has(key)) {
+        matchedAreaKeys.add(key);
+        matchedAreas.push(a);
+      }
+    }
+  }
+
   for (const area of localAreas) {
+    const key = `${area.citySlug}:${area.slug}`;
+    if (matchedAreaKeys.has(key)) continue;
+
     const nameScore = getFuzzyScore(q, area.name);
     const slugScore = getFuzzyScore(q, area.slug);
     const combinedScore = getFuzzyScore(q, `${area.cityName} ${area.name}`);
     if (Math.max(nameScore, slugScore, combinedScore) >= 0.55) {
+      matchedAreaKeys.add(key);
       matchedAreas.push(area);
     }
   }

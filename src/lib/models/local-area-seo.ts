@@ -82,22 +82,36 @@ function normalizeLocalAreaSeo(raw: Record<string, unknown>): LocalAreaSeo {
   };
 }
 
-const localAreaSeoCache = new Map<string, { data: LocalAreaSeo | null; expiresAt: number }>();
-const CACHE_TTL_MS = 60_000;
+import { LRUCache } from "../lru-cache";
+
+let localAreaSeoIndexesCreated = false;
+
+async function getLocalAreaSeoCollection() {
+  const db = await getDb();
+  if (!db) return null;
+  const col = db.collection("local_area_seo");
+  if (!localAreaSeoIndexesCreated) {
+    localAreaSeoIndexesCreated = true;
+    col.createIndex({ citySlug: 1, areaSlug: 1 }, { name: "city_area_slug_idx" }).catch(() => {});
+  }
+  return col;
+}
+
+const localAreaSeoLruCache = new LRUCache<string, LocalAreaSeo | null>(300, 60_000);
 
 export function invalidateLocalAreaSeoCache(citySlug?: string, areaSlug?: string): void {
   if (citySlug && areaSlug) {
-    localAreaSeoCache.delete(compoundKey(citySlug, areaSlug));
+    localAreaSeoLruCache.delete(compoundKey(citySlug, areaSlug));
   } else {
-    localAreaSeoCache.clear();
+    localAreaSeoLruCache.clear();
   }
 }
 
 export async function getAllLocalAreaSeo(): Promise<LocalAreaSeo[]> {
-  const db = await getDb();
-  if (db) {
+  const col = await getLocalAreaSeoCollection();
+  if (col) {
     try {
-      const docs = await db.collection("local_area_seo").find({}).toArray();
+      const docs = await col.find({}).toArray();
       if (docs && docs.length > 0) {
         return docs.map((d) => normalizeLocalAreaSeo(d as unknown as Record<string, unknown>));
       }
@@ -119,17 +133,16 @@ export const getLocalAreaSeo = cache(async function (
   const key = compoundKey(citySlug, areaSlug);
   if (!key || key === "::") return null;
 
-  const now = Date.now();
-  const cached = localAreaSeoCache.get(key);
-  if (cached && now < cached.expiresAt) {
-    return cached.data;
+  const cached = localAreaSeoLruCache.get(key);
+  if (cached !== null) {
+    return cached;
   }
 
   let result: LocalAreaSeo | null = null;
-  const db = await getDb();
-  if (db) {
+  const col = await getLocalAreaSeoCollection();
+  if (col) {
     try {
-      const doc = await db.collection("local_area_seo").findOne({
+      const doc = await col.findOne({
         citySlug: citySlug.toLowerCase().trim(),
         areaSlug: areaSlug.toLowerCase().trim(),
       });
@@ -154,7 +167,7 @@ export const getLocalAreaSeo = cache(async function (
     }
   }
 
-  localAreaSeoCache.set(key, { data: result, expiresAt: now + CACHE_TTL_MS });
+  localAreaSeoLruCache.set(key, result);
   return result;
 });
 
@@ -180,8 +193,11 @@ export async function getEffectiveLocalAreaSeo(
   status: "draft" | "published";
   isIndividual: boolean;
 }> {
-  const custom = await getLocalAreaSeo(citySlug, areaSlug);
-  const citySeo = await getCitySeo(citySlug);
+  // Parallel fetch of local area and city SEO (concurrency optimization)
+  const [custom, citySeo] = await Promise.all([
+    getLocalAreaSeo(citySlug, areaSlug),
+    getCitySeo(citySlug),
+  ]);
 
   const aName = custom?.areaName || areaNameFallback || areaSlug;
   const cName = custom?.cityName || cityNameFallback || citySeo?.name || citySlug;

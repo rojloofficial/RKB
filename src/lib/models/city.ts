@@ -154,13 +154,21 @@ export function invalidateCityCache(): void {
   cityLruCache.clear();
 }
 
+let inFlightListAllCitiesPromise: Promise<CombinedCity[]> | null = null;
+
 export async function listAllCities(): Promise<CombinedCity[]> {
   const now = Date.now();
   if (cachedCombinedCities && now < cachedCombinedCitiesExpiresAt) {
     return cachedCombinedCities;
   }
 
-  const store = await readStore();
+  if (inFlightListAllCitiesPromise) {
+    return inFlightListAllCitiesPromise;
+  }
+
+  inFlightListAllCitiesPromise = (async () => {
+    try {
+      const store = await readStore();
   const deleted = new Set(
     (store.deletedCities ?? []).map((s: string) => s.trim().toLowerCase())
   );
@@ -177,6 +185,9 @@ export async function listAllCities(): Promise<CombinedCity[]> {
       (c) => `${slugify(c.state ?? "")}:${c.slug.toLowerCase()}`
     )
   );
+  const customCitySlugs = new Set(
+    customCities.map((c) => c.slug.toLowerCase())
+  );
 
   const staticCities: CombinedCity[] = cityPlaces
     .filter((c) => {
@@ -191,7 +202,7 @@ export async function listAllCities(): Promise<CombinedCity[]> {
         return false;
       }
       const key = `${stateSlug}:${slug}`;
-      if (customCityKeys.has(key) || customCities.some((cc) => cc.slug.toLowerCase() === slug)) return false;
+      if (customCityKeys.has(key) || customCitySlugs.has(slug)) return false;
       return true;
     })
     .map((c) => ({
@@ -215,9 +226,15 @@ export async function listAllCities(): Promise<CombinedCity[]> {
     deduped.push(c);
   }
 
-  cachedCombinedCities = deduped;
-  cachedCombinedCitiesExpiresAt = now + COMBINED_CITIES_CACHE_TTL_MS;
-  return deduped;
+    cachedCombinedCities = deduped;
+    cachedCombinedCitiesExpiresAt = Date.now() + COMBINED_CITIES_CACHE_TTL_MS;
+    return deduped;
+  } finally {
+    inFlightListAllCitiesPromise = null;
+  }
+})();
+
+  return inFlightListAllCitiesPromise;
 }
 
 export async function createCity(data: {

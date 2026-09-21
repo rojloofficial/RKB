@@ -441,76 +441,73 @@ export const POPULAR_LOCAL_AREAS_MAP: Record<
   ],
 };
 
+// Precomputed O(1) Hash Maps and Static Array for Instant Retrieval
+const POPULAR_LOCAL_AREAS_BY_CITY_MAP = new Map<string, LocalAreaEntry[]>();
+const POPULAR_LOCAL_AREAS_BY_SLUG_MAP = new Map<string, LocalAreaEntry>();
+const ALL_DEFAULT_LOCAL_AREAS_CACHE: LocalAreaEntry[] = [];
+
+for (const [citySlug, areas] of Object.entries(POPULAR_LOCAL_AREAS_MAP)) {
+  const normCity = slugify(citySlug);
+  const cityNameFormatted = citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
+  const cityEntries: LocalAreaEntry[] = [];
+
+  for (const a of areas) {
+    const entry: LocalAreaEntry = {
+      name: a.name,
+      slug: a.slug,
+      cityName: cityNameFormatted,
+      citySlug: normCity,
+      description: a.description,
+      highlights: a.highlights,
+    };
+
+    cityEntries.push(entry);
+    ALL_DEFAULT_LOCAL_AREAS_CACHE.push(entry);
+
+    // Index by both exact slug and slugified name
+    const key1 = `${normCity}::${a.slug.toLowerCase().trim()}`;
+    const key2 = `${normCity}::${slugify(a.name)}`;
+    POPULAR_LOCAL_AREAS_BY_SLUG_MAP.set(key1, entry);
+    POPULAR_LOCAL_AREAS_BY_SLUG_MAP.set(key2, entry);
+  }
+
+  POPULAR_LOCAL_AREAS_BY_CITY_MAP.set(normCity, cityEntries);
+  POPULAR_LOCAL_AREAS_BY_CITY_MAP.set(citySlug.toLowerCase().trim(), cityEntries);
+}
+
 /**
  * Get all default local areas for a given city slug or name.
+ * Constant-time O(1) Hash Map lookup.
  */
 export function getDefaultLocalAreasForCity(citySlugOrName: string): LocalAreaEntry[] {
+  if (!citySlugOrName) return [];
   const normalized = slugify(citySlugOrName);
-  const areas = POPULAR_LOCAL_AREAS_MAP[normalized];
-  if (!areas) return [];
-
-  const cityNameFormatted =
-    citySlugOrName.charAt(0).toUpperCase() + citySlugOrName.slice(1);
-
-  return areas.map((a) => ({
-    name: a.name,
-    slug: a.slug,
-    cityName: cityNameFormatted,
-    citySlug: normalized,
-    description: a.description,
-    highlights: a.highlights,
-  }));
+  return (
+    POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(normalized) ??
+    POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(citySlugOrName.toLowerCase().trim()) ??
+    []
+  );
 }
 
 /**
  * Find a specific default local area by city slug and area slug.
+ * Constant-time O(1) composite key Hash Map lookup.
  */
 export function findDefaultLocalArea(
   citySlug: string,
   areaSlug: string
 ): LocalAreaEntry | null {
+  if (!citySlug || !areaSlug) return null;
   const normCity = slugify(citySlug);
   const normArea = slugify(areaSlug);
-
-  const areas = POPULAR_LOCAL_AREAS_MAP[normCity];
-  if (!areas) return null;
-
-  const found = areas.find(
-    (a) => a.slug === normArea || slugify(a.name) === normArea
-  );
-  if (!found) return null;
-
-  const cityNameFormatted =
-    citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
-
-  return {
-    name: found.name,
-    slug: found.slug,
-    cityName: cityNameFormatted,
-    citySlug: normCity,
-    description: found.description,
-    highlights: found.highlights,
-  };
+  const key = `${normCity}::${normArea}`;
+  return POPULAR_LOCAL_AREAS_BY_SLUG_MAP.get(key) ?? null;
 }
 
 /**
  * Returns all default local areas across all cities.
+ * Zero-allocation precomputed array reference in O(1) time.
  */
 export function getAllDefaultLocalAreas(): LocalAreaEntry[] {
-  const results: LocalAreaEntry[] = [];
-  for (const [citySlug, areas] of Object.entries(POPULAR_LOCAL_AREAS_MAP)) {
-    const cityNameFormatted =
-      citySlug.charAt(0).toUpperCase() + citySlug.slice(1);
-    for (const a of areas) {
-      results.push({
-        name: a.name,
-        slug: a.slug,
-        cityName: cityNameFormatted,
-        citySlug,
-        description: a.description,
-        highlights: a.highlights,
-      });
-    }
-  }
-  return results;
+  return ALL_DEFAULT_LOCAL_AREAS_CACHE;
 }

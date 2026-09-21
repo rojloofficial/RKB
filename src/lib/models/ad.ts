@@ -5,6 +5,7 @@ import { readStore, writeStore } from "../persist";
 import type { ServiceRate } from "@/components/post-ad/types";
 import { getActiveVipPhoneOverride, VipPhoneOverride } from "./vip";
 import { sortAdsWithPromotions, isAdPromotionActive } from "../promo-shifts";
+import { LRUCache } from "../lru-cache";
 
 export interface Ad {
   _id?: string;
@@ -42,6 +43,15 @@ export interface Ad {
 
 export type PublicAd = Omit<Ad, never>;
 
+const publicAdLruCache = new LRUCache<string, PublicAd | null>(300, 30_000);
+const cityAdsLruCache = new LRUCache<string, PublicAd[]>(100, 15_000);
+
+export function invalidateAdCaches(): void {
+  publicAdLruCache.clear();
+  cityAdsLruCache.clear();
+  invalidateAdCountsCache();
+}
+
 // --- File-backed fallback (used when MongoDB is unreachable) ---
 async function memoryListByUser(userId: string): Promise<Ad[]> {
   const store = await readStore();
@@ -73,14 +83,9 @@ async function collectionFindById(
   collection: Collection<Document>,
   id: string
 ): Promise<Ad | null> {
-  for (const candidate of buildAdIdCandidates(id)) {
-    const doc = await collection.findOne({ _id: candidate } as MongoQuery);
-    if (doc) {
-      return doc as unknown as Ad;
-    }
-  }
-
-  return null;
+  const candidates = buildAdIdCandidates(id);
+  const doc = await collection.findOne({ _id: { $in: candidates } } as MongoQuery);
+  return (doc as unknown as Ad) ?? null;
 }
 
 async function collectionListByUser(userId: string): Promise<Ad[]> {
@@ -175,6 +180,7 @@ async function getAdsCollection(): Promise<Collection<Document> | null> {
         { key: { userId: 1 }, name: "user_idx" },
         { key: { userId: 1, _id: 1 }, name: "user_ad_idx" },
         { key: { city: 1, status: 1, createdAt: -1 }, name: "city_status_created_idx" },
+        { key: { city: 1, localArea: 1, status: 1 }, name: "city_localArea_status_idx" },
         { key: { status: 1, createdAt: -1 }, name: "status_created_idx" },
       ])
       .catch(() => {});
@@ -330,6 +336,10 @@ export async function listAds(userId: string): Promise<PublicAd[]> {
 }
 
 export async function listAdsByCity(city: string): Promise<PublicAd[]> {
+  const cityKey = city.trim().toLowerCase();
+  const cached = cityAdsLruCache.get(cityKey);
+  if (cached) return cached;
+
   const [collection, override] = await Promise.all([
     getAdsCollection(),
     getActiveVipPhoneOverride(city),
@@ -337,7 +347,7 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
 
   if (!collection) {
     const store = await readStore();
-    const normalized = city.trim().toLowerCase();
+    const normalized = cityKey;
     const memoryAds = store.ads
       .filter(
         (ad) =>
@@ -351,13 +361,17 @@ export async function listAdsByCity(city: string): Promise<PublicAd[]> {
       ) as unknown as Ad[];
     const visibleMemoryAds = await filterVisibleCityAds(memoryAds);
     const sortedMemoryAds = sortAdsWithPromotions(visibleMemoryAds);
-    return sortedMemoryAds.map((a) => toPublicAd(a, override));
+    const result = sortedMemoryAds.map((a) => toPublicAd(a, override));
+    cityAdsLruCache.set(cityKey, result);
+    return result;
   }
 
   const docs = await collectionListByCity(city);
   const visibleAds = await filterVisibleCityAds(docs);
   const sorted = sortAdsWithPromotions(visibleAds);
-  return sorted.map((a) => toPublicAd(a, override));
+  const result = sorted.map((a) => toPublicAd(a, override));
+  cityAdsLruCache.set(cityKey, result);
+  return result;
 }
 
 export async function listAdsByCityAndLocalArea(
@@ -446,16 +460,16 @@ export async function getAdById(
     return ad && ad.userId === userId ? ad : null;
   }
 
-  for (const candidate of buildAdIdCandidates(id)) {
-    const doc = await collection.findOne({ _id: candidate, userId } as MongoQuery);
-    if (doc) return doc as unknown as Ad;
-  }
+  const candidates = buildAdIdCandidates(id);
+  const doc = await collection.findOne({ _id: { $in: candidates }, userId } as MongoQuery);
+  if (doc) return doc as unknown as Ad;
 
   const ad = await memoryFindById(id);
   return ad && ad.userId === userId ? ad : null;
 }
 
 let adCountsCache: { counts: Record<string, number>; expiresAt: number } | null = null;
+let inFlightAdCountsPromise: Promise<Record<string, number>> | null = null;
 const AD_COUNTS_CACHE_TTL_MS = 60_000;
 
 export function invalidateAdCountsCache(): void {
@@ -468,81 +482,93 @@ export async function getAdCountsByCity(): Promise<Record<string, number>> {
     return adCountsCache.counts;
   }
 
-  const collection = await getAdsCollection();
-  const counts: Record<string, number> = {};
+  if (inFlightAdCountsPromise) {
+    return inFlightAdCountsPromise;
+  }
 
-  let allAds: Ad[] = [];
-  if (collection) {
+  inFlightAdCountsPromise = (async () => {
     try {
-      const docs = await collection
-        .find(
-          { status: { $nin: ["deleted", "suspended"] } },
-          {
-            projection: {
-              _id: 1,
-              userId: 1,
-              city: 1,
-              status: 1,
-              createdAt: 1,
-              promoted: 1,
-              isPromoted: 1,
-              promotedUntil: 1,
-              promoShift: 1,
-              promoPackage: 1,
-              promoTier: 1,
-            },
-          }
-        )
-        .toArray();
-      allAds = docs.map((d) => d as unknown as Ad);
-    } catch (err) {
-      console.error("[ad] getAdCountsByCity find failed:", err);
-    }
-  }
+      const collection = await getAdsCollection();
+      const counts: Record<string, number> = {};
 
-  const store = await readStore();
-  const memoryAds = (store.ads ?? []).filter((ad) => isVisibleAd(ad as unknown as Ad)) as unknown as Ad[];
-  const merged = mergeAds(allAds, memoryAds);
-
-  // Compute free ads in-memory from merged without an extra DB round-trip
-  const nowDate = new Date(now);
-  const userAdsMap = new Map<string, Ad[]>();
-  for (const ad of merged) {
-    if (!ad.userId) continue;
-    const uid = String(ad.userId);
-    let list = userAdsMap.get(uid);
-    if (!list) {
-      list = [];
-      userAdsMap.set(uid, list);
-    }
-    list.push(ad);
-  }
-
-  const freeAdIds = new Set<string>();
-  for (const list of userAdsMap.values()) {
-    list.sort(
-      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-    );
-    for (const ad of list) {
-      if (!isAdPromotionActive(ad, nowDate)) {
-        if (ad._id) freeAdIds.add(String(ad._id));
-        break;
+      let allAds: Ad[] = [];
+      if (collection) {
+        try {
+          const docs = await collection
+            .find(
+              { status: { $nin: ["deleted", "suspended"] } },
+              {
+                projection: {
+                  _id: 1,
+                  userId: 1,
+                  city: 1,
+                  status: 1,
+                  createdAt: 1,
+                  promoted: 1,
+                  isPromoted: 1,
+                  promotedUntil: 1,
+                  promoShift: 1,
+                  promoPackage: 1,
+                  promoTier: 1,
+                },
+              }
+            )
+            .toArray();
+          allAds = docs.map((d) => d as unknown as Ad);
+        } catch (err) {
+          console.error("[ad] getAdCountsByCity find failed:", err);
+        }
       }
-    }
-  }
 
-  for (const ad of merged) {
-    if (!ad.city || !ad._id) continue;
-    const isPromoted = isAdPromotionActive(ad, nowDate);
-    const isFree = freeAdIds.has(String(ad._id));
-    if (isPromoted || isFree) {
-      const key = String(ad.city).trim().toLowerCase();
-      counts[key] = (counts[key] ?? 0) + 1;
-    }
-  }
+      const store = await readStore();
+      const memoryAds = (store.ads ?? []).filter((ad) => isVisibleAd(ad as unknown as Ad)) as unknown as Ad[];
+      const merged = mergeAds(allAds, memoryAds);
 
-  adCountsCache = { counts, expiresAt: now + AD_COUNTS_CACHE_TTL_MS };
-  return counts;
+      // Compute free ads in-memory from merged without an extra DB round-trip
+      const nowDate = new Date();
+      const userAdsMap = new Map<string, Ad[]>();
+      for (const ad of merged) {
+        if (!ad.userId) continue;
+        const uid = String(ad.userId);
+        let list = userAdsMap.get(uid);
+        if (!list) {
+          list = [];
+          userAdsMap.set(uid, list);
+        }
+        list.push(ad);
+      }
+
+      const freeAdIds = new Set<string>();
+      for (const list of userAdsMap.values()) {
+        list.sort(
+          (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+        for (const ad of list) {
+          if (!isAdPromotionActive(ad, nowDate)) {
+            if (ad._id) freeAdIds.add(String(ad._id));
+            break;
+          }
+        }
+      }
+
+      for (const ad of merged) {
+        if (!ad.city || !ad._id) continue;
+        const isPromoted = isAdPromotionActive(ad, nowDate);
+        const isFree = freeAdIds.has(String(ad._id));
+        if (isPromoted || isFree) {
+          const key = String(ad.city).trim().toLowerCase();
+          counts[key] = (counts[key] ?? 0) + 1;
+        }
+      }
+
+      adCountsCache = { counts, expiresAt: Date.now() + AD_COUNTS_CACHE_TTL_MS };
+      return counts;
+    } finally {
+      inFlightAdCountsPromise = null;
+    }
+  })();
+
+  return inFlightAdCountsPromise;
 }
 
 export type CityPhoneStats = {
@@ -621,21 +647,30 @@ export async function getCityPhoneStats(): Promise<Record<string, CityPhoneStats
 export const getPublicAdById = cache(async function (
   id: string
 ): Promise<PublicAd | null> {
+  const cleanId = id.trim();
+  const cached = publicAdLruCache.get(cleanId);
+  if (cached !== null) return cached;
+
   const collection = await getAdsCollection();
   let ad: Ad | null = null;
 
   if (!collection) {
-    ad = await memoryFindById(id);
+    ad = await memoryFindById(cleanId);
   } else {
-    ad = await collectionFindById(collection, id);
+    ad = await collectionFindById(collection, cleanId);
     if (!ad) {
-      ad = await memoryFindById(id);
+      ad = await memoryFindById(cleanId);
     }
   }
 
-  if (!ad) return null;
+  if (!ad) {
+    publicAdLruCache.set(cleanId, null);
+    return null;
+  }
   const override = ad.city ? await getActiveVipPhoneOverride(ad.city) : null;
-  return toPublicAd(ad, override);
+  const publicAd = toPublicAd(ad, override);
+  publicAdLruCache.set(cleanId, publicAd);
+  return publicAd;
 });
 
 export async function createAd(
@@ -645,7 +680,7 @@ export async function createAd(
   const now = new Date();
   const ad: Ad = { ...data, createdAt: now, updatedAt: now };
 
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   if (!collection) {
     return toPublicAd(await memoryUpsert(ad));
   }
@@ -661,7 +696,7 @@ export async function updateAd(
 ): Promise<PublicAd | null> {
   const collection = await getAdsCollection();
   const now = new Date();
-  invalidateAdCountsCache();
+  invalidateAdCaches();
 
   if (!collection) {
     const existing = await memoryFindById(id);
@@ -693,7 +728,7 @@ export async function deleteAd(
   id: string,
   userId: string
 ): Promise<boolean> {
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   const collection = await getAdsCollection();
   if (!collection) return await memoryDelete(id, userId);
 
@@ -709,7 +744,7 @@ export async function softDeleteAd(
   id: string,
   userId: string
 ): Promise<boolean> {
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   const collection = await getAdsCollection();
   if (!collection) {
     const store = await readStore();
@@ -738,7 +773,7 @@ export async function restoreAd(
   id: string,
   userId: string
 ): Promise<boolean> {
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   const collection = await getAdsCollection();
   if (!collection) {
     const store = await readStore();
@@ -797,7 +832,7 @@ export async function setAdStatus(
   id: string,
   status: string
 ): Promise<PublicAd | null> {
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   const collection = await getAdsCollection();
   const now = new Date();
 
@@ -830,7 +865,7 @@ export async function setAdStatus(
 }
 
 export async function adminDeleteAd(id: string): Promise<boolean> {
-  invalidateAdCountsCache();
+  invalidateAdCaches();
   const collection = await getAdsCollection();
 
   if (!collection) {
