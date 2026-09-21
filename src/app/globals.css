@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --surface: #ffffff;
+  --surface-strong: #f4f4f5;
+  --accent: #18181b;
+  --accent-hover: #27272a;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "Courier New", Courier, monospace;
+}
+
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-pink-50: #f9fafb;
+  --color-pink-100: #f4f4f5;
+  --color-pink-200: #e4e4e7;
+  --color-pink-300: #d4d4d8;
+  --color-red-50: #fafafa;
+  --color-red-100: #f4f4f5;
+  --color-red-200: #e4e4e7;
+  --color-red-300: #d4d4d8;
+  --color-red-400: #a1a1aa;
+  --color-red-500: #71717a;
+  --color-red-600: #18181b;
+  --color-red-700: #27272a;
+  --color-red-800: #18181b;
+  --color-red-900: #27272a;
+  --color-red-950: #09090b;
+}
+
+html {
+  background: var(--background);
+  overflow-x: clip;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: clip;
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+img,
+video {
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Hide scrollbar while keeping scroll functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;             /* Chrome, Safari, Opera */
+}
