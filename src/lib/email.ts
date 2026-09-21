@@ -30,36 +30,26 @@ export type EmailResult =
 const FALLBACK_USER = "rojloofficial@gmail.com";
 const FALLBACK_PASS = "svsgsykzenlxtpmw";
 
-const transporterPool = new Map<string, nodemailer.Transporter>();
-
-function getPooledTransporter(
+function createEmailTransporter(
   host: string,
   port: number,
   user: string,
   pass: string,
   secure: boolean
 ): nodemailer.Transporter {
-  const key = `${host}:${port}:${user}:${secure}`;
-  let transporter = transporterPool.get(key);
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-      host,
-      port,
-      secure,
-      auth: { user, pass },
-      tls: {
-        rejectUnauthorized: false,
-      },
-      connectionTimeout: 8000,
-      greetingTimeout: 8000,
-      socketTimeout: 15000,
-    });
-    transporterPool.set(key, transporter);
-  }
-  return transporter;
+  // Direct SMTP connection without persistent pooling prevents stale socket drops in serverless environments.
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+    tls: {
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 7000,
+    greetingTimeout: 7000,
+    socketTimeout: 12000,
+  });
 }
 
 function sanitizeDestinationEmail(val: string): string {
@@ -106,7 +96,7 @@ export async function sendEmail({ to, subject, text, html, headers }: EmailPaylo
   // Attempt 1: Send using primary configuration
   try {
     const isPort465 = port === 465;
-    const transporter = getPooledTransporter(host, port, user, pass, isPort465);
+    const transporter = createEmailTransporter(host, port, user, pass, isPort465);
     await transporter.sendMail({
       from,
       to: cleanTo,
@@ -127,7 +117,7 @@ export async function sendEmail({ to, subject, text, html, headers }: EmailPaylo
     if (user !== FALLBACK_USER || pass !== FALLBACK_PASS || host !== "smtp.gmail.com" || port !== 465) {
       console.warn("[email] Retrying email delivery with official verified Gmail credentials (port 465)...");
       try {
-        const fallbackTransporter = getPooledTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
+        const fallbackTransporter = createEmailTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
         const fallbackFrom = `"${siteName}" <${FALLBACK_USER}>`;
         await fallbackTransporter.sendMail({
           from: fallbackFrom,
@@ -150,7 +140,7 @@ export async function sendEmail({ to, subject, text, html, headers }: EmailPaylo
     // Attempt 3: Alternative port 587 (STARTTLS) with verified credentials (bypasses ISP port 465 blocking)
     console.warn("[email] Attempting delivery via Gmail port 587 (STARTTLS)...");
     try {
-      const port587Transporter = getPooledTransporter("smtp.gmail.com", 587, FALLBACK_USER, FALLBACK_PASS, false);
+      const port587Transporter = createEmailTransporter("smtp.gmail.com", 587, FALLBACK_USER, FALLBACK_PASS, false);
       const fallbackFrom = `"${siteName}" <${FALLBACK_USER}>`;
       await port587Transporter.sendMail({
         from: fallbackFrom,

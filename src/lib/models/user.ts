@@ -344,61 +344,57 @@ export async function updateUserCoins(
   return true;
 }
 
-export async function deleteUser(id: string): Promise<boolean> {
-  const collection = await getUsersCollection();
-  if (!collection) {
-    const store = await readStore();
-    const index = store.users.findIndex((u) => u._id === id);
-    if (index < 0) return false;
-    store.users.splice(index, 1);
-    await writeStore(store);
-    return true;
-  }
+export async function deleteUserById(id: string): Promise<boolean> {
+  if (!id) return false;
 
-  let _id: ObjectId;
   try {
-    _id = new ObjectId(id);
-  } catch {
-    return false;
+    const collection = await getUsersCollection();
+    if (collection && ObjectId.isValid(id)) {
+      const _id = new ObjectId(id);
+      const result = await collection.deleteOne({ _id });
+      if (result.deletedCount > 0) return true;
+    }
+  } catch (err) {
+    console.warn("[user.ts] deleteUserById MongoDB error, falling back to store:", err);
   }
 
-  const result = await collection.deleteOne({ _id });
-  return result.deletedCount > 0;
+  const store = await readStore();
+  const index = store.users.findIndex((u) => u._id === id);
+  if (index < 0) return false;
+  store.users.splice(index, 1);
+  await writeStore(store);
+  return true;
 }
 
-export function updateUserFields(
+export const deleteUser = deleteUserById;
+
+export async function updateUserFields(
   userId: string,
   fields: Record<string, unknown>
 ): Promise<boolean> {
-  const collectionPromise = getUsersCollection();
+  if (!userId) return false;
 
-  return collectionPromise.then((collection) => {
-    if (!collection) {
-      return readStore().then((store) => {
-        const user = store.users.find((u) => u._id === userId) as
-          | User
-          | undefined;
-        if (!user) return false;
-        Object.assign(user, fields, { updatedAt: new Date() });
-        return writeStore(store).then(() => true);
-      });
-    }
-
-    let _id: ObjectId;
-    try {
-      _id = new ObjectId(userId);
-    } catch {
-      return false;
-    }
-
-    return collection
-      .findOneAndUpdate(
+  try {
+    const collection = await getUsersCollection();
+    if (collection && ObjectId.isValid(userId)) {
+      const _id = new ObjectId(userId);
+      const result = await collection.findOneAndUpdate(
         { _id },
         { $set: { ...fields, updatedAt: new Date() } },
         { returnDocument: "after" }
-      )
-      .then((result) => Boolean(result));
-  });
+      );
+      if (result) return true;
+    }
+  } catch (err) {
+    console.warn("[user.ts] updateUserFields MongoDB error, falling back to store:", err);
+  }
+
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  if (!user) return false;
+  Object.assign(user, fields, { updatedAt: new Date() });
+  await writeStore(store);
+  return true;
 }
 
 /**

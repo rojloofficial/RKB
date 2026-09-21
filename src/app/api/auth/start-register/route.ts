@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
     // Check if user already has an established account
     if (
       existing &&
-      ((existing.passwordHash && existing.passwordHash.trim().length > 0) || existing.emailVerified)
+      existing.passwordHash &&
+      existing.passwordHash.trim().length > 0
     ) {
       return NextResponse.json(
         {

@@ -477,10 +477,6 @@ function AuthPage() {
                 <button
                   type="button"
                   disabled={sending || resendIn > 0 || Boolean(emailWarning)}
-                  onPointerDown={(e) => {
-                    // Prevent input blur before click so button fires in a single click
-                    e.preventDefault();
-                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     void handleSendCode();
@@ -606,7 +602,6 @@ function AuthPage() {
                     ) : (
                       <button
                         type="button"
-                        onMouseDown={(e) => e.preventDefault()}
                         onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
                         className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
                       >

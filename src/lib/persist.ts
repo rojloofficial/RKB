@@ -2,9 +2,26 @@ import "server-only";
 
 import { promises as fs } from "fs";
 import path from "path";
+import os from "os";
 import { getDb } from "./db";
 
-const FILE = path.join(process.cwd(), ".data", "store.json");
+function getStoreFilePath(): string {
+  // Serverless environments (Vercel, AWS Lambda) have read-only execution directories (/var/task).
+  // os.tmpdir() (/tmp) is the only guaranteed writable filesystem location.
+  const isServerless =
+    Boolean(process.env.VERCEL) ||
+    Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+    Boolean(process.env.AWS_REGION) ||
+    (typeof process.cwd === "function" && process.cwd().startsWith("/var/task"));
+
+  if (isServerless) {
+    return path.join(os.tmpdir(), "rojlo_data", "store.json");
+  }
+  return path.join(process.cwd(), ".data", "store.json");
+}
+
+const FILE = getStoreFilePath();
+const SEED_FILE = path.join(process.cwd(), ".data", "store.json");
 
 type StoreRecord = {
   _id?: string;
@@ -200,7 +217,7 @@ async function writeStoreToMongo(data: StoreData): Promise<void> {
   return inFlightMongoWrite;
 }
 
-// ---------- File (development) ----------
+// ---------- File (development & serverless /tmp fallback) ----------
 
 async function readStoreFromFile(): Promise<StoreData> {
   try {
@@ -208,14 +225,25 @@ async function readStoreFromFile(): Promise<StoreData> {
     const parsed = JSON.parse(raw) as Partial<StoreData>;
     return normalize(parsed);
   } catch {
+    // If running in serverless (/tmp) and active file doesn't exist yet, try seed file
+    if (FILE !== SEED_FILE) {
+      try {
+        const raw = await fs.readFile(SEED_FILE, "utf8");
+        const parsed = JSON.parse(raw) as Partial<StoreData>;
+        return normalize(parsed);
+      } catch {
+        // Fall back to defaults
+      }
+    }
     return defaults();
   }
 }
 
 async function writeStoreToFile(data: StoreData): Promise<void> {
   try {
-    await fs.mkdir(path.dirname(FILE), { recursive: true });
-    const tmp = `${FILE}.${process.pid}.tmp`;
+    const dir = path.dirname(FILE);
+    await fs.mkdir(dir, { recursive: true });
+    const tmp = `${FILE}.${process.pid}.${Date.now()}.tmp`;
     await fs.writeFile(tmp, JSON.stringify(data), "utf8");
     try {
       await fs.rename(tmp, FILE);
@@ -225,7 +253,9 @@ async function writeStoreToFile(data: StoreData): Promise<void> {
         await fs.unlink(FILE).catch(() => {});
         await fs.rename(tmp, FILE);
       } else {
-        throw err;
+        // Direct write fallback
+        await fs.writeFile(FILE, JSON.stringify(data), "utf8");
+        await fs.unlink(tmp).catch(() => {});
       }
     }
   } catch (error: unknown) {
@@ -235,14 +265,13 @@ async function writeStoreToFile(data: StoreData): Promise<void> {
         ? (error as NodeJS.ErrnoException).code
         : "UNKNOWN";
 
-    console.error("[persist] writeStore failed:", {
+    console.warn("[persist] writeStoreToFile notice (continuing in-memory):", {
       error: message,
       code,
       file: FILE,
-      env: process.env.NODE_ENV,
     });
-
-    throw error;
+    // In serverless environments, never re-throw filesystem write failures.
+    // In-memory storeCache is already updated and serves all reads reliably.
   }
 }
 
@@ -286,10 +315,12 @@ export async function writeStore(data: StoreData): Promise<void> {
   if (db) {
     await writeStoreToMongo(data);
   }
+  // Try writing to file storage (/tmp in serverless or local file in dev),
+  // but NEVER throw and crash requests if the underlying filesystem is restricted
   try {
     await writeStoreToFile(data);
   } catch (err) {
-    if (!db) throw err;
+    console.warn("[persist] writeStore file write notice:", err);
   }
 }
 

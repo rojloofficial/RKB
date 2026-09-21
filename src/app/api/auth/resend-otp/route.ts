@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
     // If an established account already exists, prompt user to use another email
     if (
       existing &&
-      ((existing.passwordHash && existing.passwordHash.trim().length > 0) || existing.emailVerified)
+      existing.passwordHash &&
+      existing.passwordHash.trim().length > 0
     ) {
       return NextResponse.json(
         {

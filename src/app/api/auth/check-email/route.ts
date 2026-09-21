@@ -14,7 +14,8 @@ export async function POST(request: NextRequest) {
     const user = await findUserByEmail(normalizedEmail);
     const exists = Boolean(
       user &&
-      ((user.passwordHash && user.passwordHash.trim().length > 0) || user.emailVerified)
+      user.passwordHash &&
+      user.passwordHash.trim().length > 0
     );
 
     return NextResponse.json({

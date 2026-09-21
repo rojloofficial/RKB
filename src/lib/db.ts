@@ -15,7 +15,7 @@ const uri = process.env.MONGODB_URI?.trim().replace(/^['"]|['"]$/g, "");
 const dbName = (process.env.MONGODB_DB || "rojlo")
   .trim()
   .replace(/^['"]|['"]$/g, "");
-const retryAfterMs = 15_000;
+const retryAfterMs = 5_000;
 
 let resolvedUri: string | null = null;
 
@@ -139,11 +139,16 @@ export async function getDb(): Promise<Db | null> {
 
       // Helper to attempt connection with a given URI
       async function tryConnect(targetUri: string) {
+        const isServerless =
+          Boolean(process.env.VERCEL) ||
+          Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+          Boolean(process.env.AWS_REGION);
+
         const client = new MongoClient(targetUri, {
           maxPoolSize: 20,
-          minPoolSize: isProduction ? 2 : 0,
+          minPoolSize: isServerless ? 0 : (isProduction ? 2 : 0),
           maxIdleTimeMS: 60000,
-          socketTimeoutMS: 20000,
+          socketTimeoutMS: 15000,
           serverSelectionTimeoutMS: 5000,
           connectTimeoutMS: 5000,
           tls: true,
