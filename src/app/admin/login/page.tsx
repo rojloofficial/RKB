@@ -25,7 +25,8 @@ export default function AdminLogin() {
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        credentials: "include",
+        body: JSON.stringify({ email: email.trim(), password }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -33,7 +34,7 @@ export default function AdminLogin() {
         return;
       }
       await refresh();
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch {
       setError("Network error. Please try again.");
     } finally {

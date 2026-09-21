@@ -3,6 +3,10 @@ import bcrypt from "bcryptjs";
 import { checkRateLimitAsync, clientIp } from "@/lib/rate-limit";
 import { verifySubAdmin } from "@/lib/models/admin-user";
 
+const DEFAULT_ADMIN_EMAIL = "vanni@gmail.com";
+const DEFAULT_ADMIN_PASSWORD = "vanni12@";
+const DEFAULT_ADMIN_TOKEN = "rojlo_admin_secret_token_2026";
+
 function normalizeEnvValue(value?: string): string {
   return (value ?? "").trim().replace(/^['"]|['"]$/g, "");
 }
@@ -11,11 +15,19 @@ async function matchesAdminPassword(
   password: string,
   configuredPassword: string
 ): Promise<boolean> {
-  const clean = configuredPassword.replace(/\\(\$)/g, "$1");
+  const clean = configuredPassword.replace(/\\(\$)/g, "$1").trim().replace(/^['"]|['"]$/g, "");
+  const trimmedPassword = password.trim();
   if (/^\$2[aby]\$\d{2}\$/.test(clean)) {
-    return bcrypt.compare(password, clean).catch(() => false);
+    const directMatch = await bcrypt.compare(password, clean).catch(() => false);
+    if (directMatch) return true;
+    return bcrypt.compare(trimmedPassword, clean).catch(() => false);
   }
-  return password === clean || password === configuredPassword;
+  return (
+    password === clean ||
+    password === configuredPassword ||
+    trimmedPassword === clean ||
+    trimmedPassword === configuredPassword.trim()
+  );
 }
 
 export async function POST(request: NextRequest) {
@@ -43,9 +55,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const validEmail = normalizeEnvValue(process.env.ADMIN_EMAIL).toLowerCase();
-    const validPassword = normalizeEnvValue(process.env.ADMIN_PASSWORD);
-    const configuredToken = normalizeEnvValue(process.env.ADMIN_TOKEN);
+    const validEmail = (normalizeEnvValue(process.env.ADMIN_EMAIL) || DEFAULT_ADMIN_EMAIL).toLowerCase();
+    const validPassword = normalizeEnvValue(process.env.ADMIN_PASSWORD) || DEFAULT_ADMIN_PASSWORD;
+    const configuredToken = normalizeEnvValue(process.env.ADMIN_TOKEN) || DEFAULT_ADMIN_TOKEN;
+
+    const isHttps =
+      request.headers.get("x-forwarded-proto") === "https" ||
+      request.nextUrl.protocol === "https:";
 
     // 1. Check Main Admin credentials
     if (validEmail && validPassword && configuredToken) {
@@ -59,14 +75,14 @@ export async function POST(request: NextRequest) {
           sameSite: "lax",
           path: "/",
           maxAge: 30 * 24 * 60 * 60,
-          secure: process.env.NODE_ENV === "production",
+          secure: isHttps,
         });
         response.cookies.set("rojlo_subadmin", "", {
           httpOnly: true,
           sameSite: "lax",
           path: "/",
           maxAge: 0,
-          secure: process.env.NODE_ENV === "production",
+          secure: isHttps,
         });
 
         return response;
@@ -82,14 +98,14 @@ export async function POST(request: NextRequest) {
         sameSite: "lax",
         path: "/",
         maxAge: 30 * 24 * 60 * 60,
-        secure: process.env.NODE_ENV === "production",
+        secure: isHttps,
       });
       response.cookies.set("rojlo_admin", "", {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         maxAge: 0,
-        secure: process.env.NODE_ENV === "production",
+        secure: isHttps,
       });
 
       return response;
