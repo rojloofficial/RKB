@@ -310,7 +310,7 @@ async function CityContent({
                   )}
 
                   {isAdActiveInCurrentShift(ad) && (
-                    <span className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black sm:left-6 sm:top-6 shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
+                    <span className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:left-6 sm:top-6 shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
                       {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
                     </span>
                   )}

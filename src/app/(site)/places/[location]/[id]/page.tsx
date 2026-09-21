@@ -10,7 +10,6 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import {
   getPublicAdById,
-  listRelatedCityAds,
   listAdsByCityAndLocalArea,
   isAdVisiblePublicly,
   type Ad,
@@ -192,7 +191,6 @@ async function AdContent({
     ad.serviceRates && ad.serviceRates.length > 0
       ? ad.serviceRates
       : DEFAULT_SERVICE_RATES;
-  const relatedProfiles = await listRelatedCityAds(cityName, ad._id ?? id, 6);
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
@@ -279,8 +277,13 @@ async function AdContent({
             </div>
           )}
 
-          <div className="mt-4">
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
             <Eyebrow>{ad.category}</Eyebrow>
+            {isAdActiveInCurrentShift(ad) && (
+              <span className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-bold uppercase tracking-wider shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
+                {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
+              </span>
+            )}
           </div>
           <h1 className="mt-3 flex flex-wrap items-baseline gap-2 sm:gap-3 text-2xl sm:text-3xl md:text-4xl font-black text-neutral-900 break-words">
             <span>{ad.name}</span>
@@ -299,6 +302,11 @@ async function AdContent({
 
           <div className="mt-6 grid gap-8 md:grid-cols-2">
             <div className="order-1 relative">
+              {isAdActiveInCurrentShift(ad) && (
+                <span className={`absolute left-3 top-3 z-10 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
+                  {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
+                </span>
+              )}
               <span className="absolute right-3 top-3 z-10 rounded-full bg-neutral-900/85 px-3 py-1 text-xs font-semibold text-white">
                 {cityName}
               </span>
@@ -378,68 +386,6 @@ async function AdContent({
                 </tbody>
               </table>
             </div>
-          </div>
-
-          <div className="mt-8">
-            <h3 className="text-lg font-bold text-neutral-900">
-              Related Profiles in {cityName}
-            </h3>
-
-            {relatedProfiles.length === 0 ? (
-              <p className="mt-3 text-sm leading-7 text-neutral-600">
-                No other profiles are available in {cityName} right now.
-              </p>
-            ) : (
-              <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {relatedProfiles.slice(0, 6).map((profile) => (
-                  <Card
-                    key={profile._id}
-                    className="group relative overflow-hidden p-0 shadow-xs transition-all hover:border-neutral-400 hover:shadow-sm"
-                  >
-                    <Link
-                      href={`/places/${location}/${profile._id}`}
-                      aria-label={`View details for ${profile.name}`}
-                      className="absolute inset-0 z-10 focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2"
-                    />
-
-                    <div className="relative h-56 bg-neutral-100">
-                      {profile.images?.[0] ? (
-                        <Image
-                          src={profile.images[0]}
-                          alt={`${profile.name} profile image`}
-                          fill
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 360px"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-sm font-medium text-neutral-400">
-                          No image available
-                        </div>
-                      )}
-                      <span className="absolute left-3 top-3 rounded-full bg-neutral-900/80 px-3 py-1 text-xs font-semibold text-white">
-                        {cityName}
-                      </span>
-                    </div>
-
-                    <div className="relative z-0 p-5">
-                      <h4 className="text-lg font-black text-neutral-900">
-                        {profile.name}
-                      </h4>
-                      {profile.age && (
-                        <p className="mt-1 text-sm font-semibold text-neutral-500">
-                          Age: {profile.age}
-                        </p>
-                      )}
-                      {profile.about && (
-                        <p className="mt-2 line-clamp-3 text-sm leading-6 text-neutral-600">
-                          {profile.about}
-                        </p>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
           </div>
         </SectionPanel>
       </section>
@@ -647,7 +593,7 @@ async function LocalAreaContent({
 
                   {isAdActiveInCurrentShift(ad) && (
                     <span
-                      className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black sm:left-6 sm:top-6 shadow-xs ${
+                      className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:left-6 sm:top-6 shadow-xs ${
                         getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass
                       }`}
                     >

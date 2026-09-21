@@ -186,7 +186,7 @@ export default function PromotionPackagesPage() {
   async function handleResetToDefaults() {
     if (
       !window.confirm(
-        "Are you sure you want to reset to the default 4 promotion packages (Platinum Top 1-3, Gold Top 4-6, Silver Top 7-10, Bronze Top 10-15)? Any custom packages will be replaced."
+        "Are you sure you want to reset to the default 4 promotion packages (Platinum, Gold, Silver, Bronze)? Any custom packages will be replaced."
       )
     ) {
       return;
@@ -383,7 +383,7 @@ export default function PromotionPackagesPage() {
                           type="text"
                           value={pkg.title}
                           onChange={(e) => updatePackage(index, "title", e.target.value)}
-                          placeholder="e.g. Platinum VIP (Top 1-3)"
+                          placeholder="e.g. Platinum"
                           className="mt-1 w-full rounded-lg border border-red-200 px-3 py-2 text-red-950 font-bold outline-none focus:border-red-500"
                           required
                         />
