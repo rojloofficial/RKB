@@ -97,7 +97,6 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/vip",
     key: "vip",
     icon: "M12 2l2.5 6.5L21 11l-6.5 2.5L12 20l-2.5-6.5L3 11l6.5-2.5L12 2z",
-    mainOnly: true,
   },
   {
     name: "Phone No. Control",
@@ -116,14 +115,12 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/admin-control",
     key: "admin-control",
     icon: "M12 4v16m8-8H4",
-    mainOnly: true,
   },
   {
     name: "Sub Admin List",
     href: "/admin/sub-admins",
     key: "sub-admins",
     icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
-    mainOnly: true,
   },
 ];
 
@@ -148,7 +145,6 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
   const visibleItems = adminNavItems.filter((item) => {
     if (!me || !me.authenticated) return false;
-    if (item.mainOnly) return me.role === "main";
     if (me.role === "main") return true;
     return (me.permissions ?? []).includes(item.key);
   });

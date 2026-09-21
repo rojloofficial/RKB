@@ -47,7 +47,7 @@ export default function VipPage() {
       router.replace("/admin/login");
       return;
     }
-    if (me.role !== "main") {
+    if (me.role !== "main" && !me.permissions?.includes("vip")) {
       router.replace("/admin");
       return;
     }

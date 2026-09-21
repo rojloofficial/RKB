@@ -2,15 +2,45 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminContext } from "@/lib/admin-access";
 import {
   listSubAdmins,
+  getSubAdminById,
   createSubAdmin,
+  updateSubAdmin,
   deleteSubAdmin,
 } from "@/lib/models/admin-user";
+
+function isAuthorized(ctx: any): boolean {
+  if (!ctx) return false;
+  if (ctx.role === "main") return true;
+  return (
+    ctx.permissions?.includes("sub-admins") ||
+    ctx.permissions?.includes("admin-control")
+  );
+}
 
 export async function GET(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (ctx.role !== "main") {
+  if (!isAuthorized(ctx)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  const { searchParams } = request.nextUrl;
+  const id = searchParams.get("id");
+
+  if (id) {
+    const admin = await getSubAdminById(id);
+    if (!admin) {
+      return NextResponse.json({ error: "Sub-admin not found." }, { status: 404 });
+    }
+    return NextResponse.json({
+      admin: {
+        _id: admin._id,
+        email: admin.email,
+        permissions: admin.permissions,
+        lastLogin: admin.lastLogin,
+        createdAt: admin.createdAt,
+      },
+    });
   }
 
   const admins = await listSubAdmins();
@@ -27,7 +57,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (ctx.role !== "main") {
+  if (!isAuthorized(ctx)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
@@ -69,10 +99,47 @@ export async function POST(request: NextRequest) {
   }
 }
 
+export async function PUT(request: NextRequest) {
+  const ctx = await getAdminContext(request);
+  if (!ctx) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  if (!isAuthorized(ctx)) {
+    return NextResponse.json({ error: "Forbidden." }, { status: 403 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const id = String(body?.id || body?._id || "").trim();
+  if (!id) {
+    return NextResponse.json({ error: "Sub-admin ID is required." }, { status: 400 });
+  }
+
+  const email = body?.email ? String(body.email).trim() : undefined;
+  const password = body?.password ? String(body.password) : undefined;
+  const permissions = Array.isArray(body?.permissions)
+    ? body.permissions.map(String)
+    : undefined;
+
+  try {
+    const updated = await updateSubAdmin(id, { email, password, permissions });
+    return NextResponse.json({
+      success: true,
+      admin: {
+        _id: updated._id,
+        email: updated.email,
+        permissions: updated.permissions,
+        lastLogin: updated.lastLogin,
+        createdAt: updated.createdAt,
+      },
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Failed to update sub-admin.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
 export async function DELETE(request: NextRequest) {
   const ctx = await getAdminContext(request);
   if (!ctx) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  if (ctx.role !== "main") {
+  if (!isAuthorized(ctx)) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 

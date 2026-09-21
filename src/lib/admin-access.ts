@@ -12,7 +12,7 @@ export type AdminContext =
 export const ADMIN_SECTIONS = [
   { key: "dashboard", name: "Dashboard" },
   { key: "state", name: "State" },
-  { key: "city", name: "City" },
+  { key: "city", name: "City List" },
   { key: "city-seo", name: "City SEO" },
   { key: "dynamic-seo", name: "Dynamic SEO" },
   { key: "ads", name: "Ads" },
@@ -25,9 +25,9 @@ export const ADMIN_SECTIONS = [
   { key: "promotion-packages", name: "Promotion Package" },
   { key: "vip", name: "VIP" },
   { key: "phone-control", name: "Phone No. Control" },
+  { key: "not-found", name: "404 Pages" },
   { key: "admin-control", name: "Admin Control" },
   { key: "sub-admins", name: "Sub Admin List" },
-  { key: "not-found", name: "404 Pages" },
 ] as const;
 
 export function sectionFromHref(href: string): string | null {
@@ -91,7 +91,6 @@ export function canAccess(
 ): boolean {
   if (!context) return false;
   if (context.role === "main") return true;
-  if (section === "admin-control" || section === "sub-admins") return false;
   if (section === "dynamic-seo") {
     return (
       context.permissions.includes("dynamic-seo") ||
