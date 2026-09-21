@@ -44,6 +44,12 @@ export async function POST(request: NextRequest) {
     }
 
     const storedHash = String(user.passwordHash || (user as any).password || "").trim();
+    if (!storedHash) {
+      return NextResponse.json(
+        { error: "Account registration is incomplete. Please sign up to set your password." },
+        { status: 400 }
+      );
+    }
     let valid = false;
 
     if (
@@ -114,8 +120,9 @@ export async function POST(request: NextRequest) {
       token: jwtToken, // JWT token in response
     });
 
-    if (sessionToken) {
-      response.cookies.set("rojlo_auth", sessionToken, {
+    const authCookieVal = sessionToken || jwtToken;
+    if (authCookieVal) {
+      response.cookies.set("rojlo_auth", authCookieVal, {
         httpOnly: true,
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
@@ -137,32 +144,8 @@ export async function POST(request: NextRequest) {
       name: error instanceof Error ? error.name : "Unknown",
     });
 
-    // Check if it's a filesystem/storage error
-    const isStorageError =
-      errorMsg.includes("EROFS") ||
-      errorMsg.includes("EACCES") ||
-      errorMsg.includes("EPERM") ||
-      errorMsg.includes("writeStore");
-
-    // Check if it's a database connection error
-    const isDbConnectionError =
-      errorMsg.includes("MongoDB") ||
-      errorMsg.includes("ECONNREFUSED") ||
-      errorMsg.includes("ETIMEDOUT") ||
-      errorMsg.includes("MongoNetworkError") ||
-      errorMsg.includes("MongoServerSelectionError") ||
-      errorMsg.includes("ENOTFOUND") ||
-      errorMsg.includes("getaddrinfo");
-
-    if (isStorageError || isDbConnectionError) {
-      return NextResponse.json(
-        { error: "Service temporarily unavailable. Please try again later." },
-        { status: 503 }
-      );
-    }
-
     return NextResponse.json(
-      { error: "Unable to log in. Please try again." },
+      { error: "Unable to log in. Please check your credentials and try again." },
       { status: 500 }
     );
   }

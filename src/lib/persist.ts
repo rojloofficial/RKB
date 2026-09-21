@@ -152,19 +152,63 @@ function normalize(raw: Partial<StoreData>): StoreData {
 
 async function readStoreFromMongo(): Promise<StoreData> {
   const db = await getDb();
-  if (!db) return defaults();
+  if (!db) return readStoreFromFile();
 
   try {
-    const doc = await db.collection("_store").findOne({ key: "app_state" });
-    if (!doc) return defaults();
-    const rest: Record<string, unknown> = {};
-    for (const [k, v] of Object.entries(doc)) {
-      if (k !== "_id" && k !== "key") rest[k] = v;
+    const [storeDoc, fileStore, mongoUsers] = await Promise.all([
+      db.collection("_store").findOne({ key: "app_state" }).catch(() => null),
+      readStoreFromFile().catch(() => defaults()),
+      db.collection("users").find({}).toArray().catch(() => []),
+    ]);
+
+    let baseData: Partial<StoreData> = {};
+    if (storeDoc) {
+      for (const [k, v] of Object.entries(storeDoc)) {
+        if (k !== "_id" && k !== "key") baseData[k] = v;
+      }
     }
-    return normalize(rest as Partial<StoreData>);
+
+    // Merge fileStore (seed/local) with MongoDB _store doc
+    const merged = normalize({ ...fileStore, ...baseData });
+
+    // Build unified user map
+    const userMap = new Map<string, StoreRecord>();
+
+    // 1) Add local fileStore users
+    for (const u of fileStore.users || []) {
+      const email = String(u.email || "").trim().toLowerCase();
+      if (email) userMap.set(email, u);
+    }
+
+    // 2) Merge _store users
+    for (const u of merged.users || []) {
+      const email = String(u.email || "").trim().toLowerCase();
+      if (email) {
+        const existing = userMap.get(email);
+        userMap.set(email, { ...existing, ...u });
+      }
+    }
+
+    // 3) Merge MongoDB `users` collection documents
+    for (const doc of mongoUsers) {
+      const email = String(doc.email || "").trim().toLowerCase();
+      if (email) {
+        const existing = userMap.get(email);
+        const uRecord: StoreRecord = {
+          ...existing,
+          ...doc,
+          _id: doc._id?.toString() || (existing?._id as string),
+          passwordHash: doc.passwordHash || (existing?.passwordHash as string) || "",
+        };
+        userMap.set(email, uRecord);
+      }
+    }
+
+    merged.users = Array.from(userMap.values());
+    return merged;
   } catch (err) {
     console.error("[persist] MongoDB readStore failed:", err);
-    return defaults();
+    return readStoreFromFile();
   }
 }
 
@@ -174,7 +218,6 @@ let pendingMongoWriteData: StoreData | null = null;
 async function doWriteStoreToMongo(data: StoreData): Promise<void> {
   const db = await getDb();
   if (!db) {
-    console.error("[persist] MongoDB not available, write skipped");
     return;
   }
 

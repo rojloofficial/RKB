@@ -92,38 +92,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return promise;
   }, []);
 
-  // Initialize from localStorage on mount
+  // Initialize from localStorage and server session on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem(STORAGE_KEY);
-    const storedUser = localStorage.getItem(USER_STORAGE_KEY);
-    const hasSessionCookie =
-      typeof document !== "undefined" && document.cookie.includes("rojlo_auth");
+    let mounted = true;
 
-    if (!storedToken && !hasSessionCookie) {
-      queueMicrotask(() => {
-        setIsLoading(false);
-      });
-      return;
-    }
-
-    queueMicrotask(() => {
+    try {
+      const storedToken = localStorage.getItem(STORAGE_KEY);
+      const storedUser = localStorage.getItem(USER_STORAGE_KEY);
       if (storedToken) {
         setTokenState(storedToken);
       }
       if (storedUser) {
         try {
-          setUserState(JSON.parse(storedUser));
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed._id) {
+            setUserState(parsed);
+          }
         } catch {
           localStorage.removeItem(USER_STORAGE_KEY);
         }
       }
+    } catch {}
+
+    const tokenFromStorage = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    void refreshAuthFromServer(tokenFromStorage).finally(() => {
+      if (mounted) {
+        setIsLoading(false);
+      }
     });
 
-    const timer = setTimeout(() => {
-      void refreshAuthFromServer(storedToken);
-    }, 100);
-
-    return () => clearTimeout(timer);
+    return () => {
+      mounted = false;
+    };
   }, [refreshAuthFromServer]);
 
   const setUser = (newUser: AuthUser | null) => {

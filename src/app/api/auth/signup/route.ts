@@ -119,8 +119,9 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
 
-    if (sessionToken) {
-      response.cookies.set("rojlo_auth", sessionToken, {
+    const authCookieVal = sessionToken || jwtToken;
+    if (authCookieVal) {
+      response.cookies.set("rojlo_auth", authCookieVal, {
         httpOnly: true,
         path: "/",
         maxAge: 60 * 60 * 24 * 30,
@@ -150,43 +151,6 @@ export async function POST(request: NextRequest) {
           alreadyExists: true,
         },
         { status: 409 }
-      );
-    }
-
-    const isStorageError =
-      errorMsg.includes("EROFS") ||
-      errorMsg.includes("EACCES") ||
-      errorMsg.includes("EPERM") ||
-      errorMsg.includes("writeStore");
-
-    const isDbConnectionError =
-      errorMsg.includes("MongoDB") ||
-      errorMsg.includes("ECONNREFUSED") ||
-      errorMsg.includes("ETIMEDOUT") ||
-      errorMsg.includes("MongoNetworkError") ||
-      errorMsg.includes("MongoServerSelectionError") ||
-      errorMsg.includes("ENOTFOUND") ||
-      errorMsg.includes("getaddrinfo");
-
-    if (isStorageError) {
-      console.error(
-        "[signup] Storage error detected - likely Vercel environment. " +
-          "Ensure MONGODB_URI is configured in Vercel environment variables."
-      );
-      return NextResponse.json(
-        { error: "Service temporarily unavailable. Please try again later." },
-        { status: 503 }
-      );
-    }
-
-    if (isDbConnectionError) {
-      console.error(
-        "[signup] Database connection error. " +
-          "Check MongoDB Atlas IP whitelist and connection string."
-      );
-      return NextResponse.json(
-        { error: "Service temporarily unavailable. Please try again later." },
-        { status: 503 }
       );
     }
 

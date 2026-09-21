@@ -15,7 +15,7 @@ const uri = process.env.MONGODB_URI?.trim().replace(/^['"]|['"]$/g, "");
 const dbName = (process.env.MONGODB_DB || "rojlo")
   .trim()
   .replace(/^['"]|['"]$/g, "");
-const retryAfterMs = 5_000;
+const RETRY_AFTER_MS = 30_000;
 
 let resolvedUri: string | null = null;
 
@@ -89,7 +89,8 @@ if (uri && !uri.startsWith("mongodb+srv://") && !uri.startsWith("mongodb://")) {
 
 interface MongoCache {
   client: MongoClient | null;
-  promise: Promise<{ client: MongoClient; db: Db }> | null;
+  db: Db | null;
+  promise: Promise<{ client: MongoClient; db: Db } | null> | null;
 }
 
 declare global {
@@ -98,9 +99,8 @@ declare global {
 
 const globalCache: MongoCache =
   global._mongoCache ??
-  (global._mongoCache = { client: null, promise: null });
+  (global._mongoCache = { client: null, db: null, promise: null });
 
-let cachedDb: Db | null = null;
 let connectionFailed = false;
 let lastConnectionFailure: Error | null = null;
 let lastConnectionFailureAt = 0;
@@ -119,10 +119,14 @@ export async function getDb(): Promise<Db | null> {
     return null;
   }
 
+  if (globalCache.db) {
+    return globalCache.db;
+  }
+
   if (connectionFailed) {
     if (
       lastConnectionFailure &&
-      Date.now() - lastConnectionFailureAt >= retryAfterMs
+      Date.now() - lastConnectionFailureAt >= RETRY_AFTER_MS
     ) {
       connectionFailed = false;
       lastConnectionFailure = null;
@@ -131,26 +135,23 @@ export async function getDb(): Promise<Db | null> {
     }
   }
 
-  if (cachedDb) return cachedDb;
-
   if (!globalCache.promise) {
     globalCache.promise = (async () => {
       const isProduction = process.env.NODE_ENV === "production";
+      const isServerless =
+        Boolean(process.env.VERCEL) ||
+        Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
+        Boolean(process.env.AWS_REGION);
 
       // Helper to attempt connection with a given URI
       async function tryConnect(targetUri: string) {
-        const isServerless =
-          Boolean(process.env.VERCEL) ||
-          Boolean(process.env.AWS_LAMBDA_FUNCTION_NAME) ||
-          Boolean(process.env.AWS_REGION);
-
         const client = new MongoClient(targetUri, {
           maxPoolSize: 20,
           minPoolSize: isServerless ? 0 : (isProduction ? 2 : 0),
           maxIdleTimeMS: 60000,
           socketTimeoutMS: 15000,
-          serverSelectionTimeoutMS: 5000,
-          connectTimeoutMS: 5000,
+          serverSelectionTimeoutMS: 3500,
+          connectTimeoutMS: 3500,
           tls: true,
         });
         return await client.connect();
@@ -158,31 +159,44 @@ export async function getDb(): Promise<Db | null> {
 
       let connectedClient: MongoClient | null = null;
 
-      try {
-        // Attempt native URI first
-        connectedClient = await tryConnect(uri);
-      } catch (nativeErr) {
-        const isDnsIssue =
-          nativeErr instanceof Error &&
-          (nativeErr.message.includes("querySrv") ||
-            nativeErr.message.includes("ECONNREFUSED"));
+      // On non-serverless/local environments, resolve SRV upfront via 8.8.8.8 to avoid ISP DNS ECONNREFUSED delay
+      if (!isServerless && uri.startsWith("mongodb+srv://")) {
+        try {
+          const fastUri = await getEffectiveMongoUri(uri);
+          connectedClient = await tryConnect(fastUri);
+        } catch (fastErr) {
+          console.warn("[db] Direct replicaSet connect notice, trying native SRV:", fastErr instanceof Error ? fastErr.message : String(fastErr));
+          try {
+            connectedClient = await tryConnect(uri);
+          } catch (nativeErr) {
+            throw nativeErr;
+          }
+        }
+      } else {
+        try {
+          connectedClient = await tryConnect(uri);
+        } catch (nativeErr) {
+          const isDnsIssue =
+            nativeErr instanceof Error &&
+            (nativeErr.message.includes("querySrv") ||
+              nativeErr.message.includes("ECONNREFUSED"));
 
-        if (isDnsIssue && uri.startsWith("mongodb+srv://")) {
-          // Fall back to resolved SRV URI via public DNS
-          const fallbackUri = await getEffectiveMongoUri(uri);
-          connectedClient = await tryConnect(fallbackUri);
-        } else {
-          throw nativeErr;
+          if (isDnsIssue && uri.startsWith("mongodb+srv://")) {
+            const fallbackUri = await getEffectiveMongoUri(uri);
+            connectedClient = await tryConnect(fallbackUri);
+          } else {
+            throw nativeErr;
+          }
         }
       }
 
       console.log("[db] MongoDB connected successfully");
       globalCache.client = connectedClient;
-      cachedDb = connectedClient.db(dbName);
+      globalCache.db = connectedClient.db(dbName);
       connectionFailed = false;
       lastConnectionFailure = null;
       warned = false;
-      return { client: connectedClient, db: cachedDb! };
+      return { client: connectedClient, db: globalCache.db };
     })().catch((err) => {
       connectionFailed = true;
       lastConnectionFailure = err instanceof Error ? err : new Error(String(err));
@@ -213,14 +227,13 @@ export async function getDb(): Promise<Db | null> {
         }
         warned = true;
       }
-      return null as unknown as { client: MongoClient; db: Db };
+      return null;
     });
   }
 
   try {
     const res = await globalCache.promise;
     if (res && res.db) {
-      cachedDb = res.db;
       return res.db;
     }
     return null;
@@ -232,4 +245,3 @@ export async function getDb(): Promise<Db | null> {
 export function isDbAvailable(): boolean {
   return Boolean(uri) && !connectionFailed;
 }
-
