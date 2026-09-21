@@ -81,13 +81,19 @@ export async function POST(request: NextRequest) {
         passwordHash: "",
         emailVerified: false,
       });
-      if (!user._id) {
-        return NextResponse.json(
-          { error: "Unable to start registration. Please try again." },
-          { status: 500 }
-        );
+      if (!user || !user._id) {
+        const fallback = await findUserByEmail(normalizedEmail);
+        if (fallback && fallback._id) {
+          userId = String(fallback._id);
+        } else {
+          return NextResponse.json(
+            { error: "Unable to start registration. Please try again." },
+            { status: 500 }
+          );
+        }
+      } else {
+        userId = String(user._id);
       }
-      userId = String(user._id);
     }
 
     const otpResult = await createAndSendOtp(userId, normalizedEmail, now);
@@ -120,30 +126,8 @@ export async function POST(request: NextRequest) {
       name: error instanceof Error ? error.name : "Unknown",
     });
 
-    const isStorageError =
-      errorMsg.includes("EROFS") ||
-      errorMsg.includes("EACCES") ||
-      errorMsg.includes("EPERM") ||
-      errorMsg.includes("writeStore");
-
-    const isDbConnectionError =
-      errorMsg.includes("MongoDB") ||
-      errorMsg.includes("ECONNREFUSED") ||
-      errorMsg.includes("ETIMEDOUT") ||
-      errorMsg.includes("MongoNetworkError") ||
-      errorMsg.includes("MongoServerSelectionError") ||
-      errorMsg.includes("ENOTFOUND") ||
-      errorMsg.includes("getaddrinfo");
-
-    if (isStorageError || isDbConnectionError) {
-      return NextResponse.json(
-        { error: "Service temporarily unavailable. Please try again later." },
-        { status: 503 }
-      );
-    }
-
     return NextResponse.json(
-      { error: "Unable to start registration. Please try again." },
+      { error: errorMsg || "Unable to start registration. Please try again." },
       { status: 500 }
     );
   }

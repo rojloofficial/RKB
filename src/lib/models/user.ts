@@ -117,26 +117,34 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   const normalized = normalizeEmail(email);
   if (!normalized) return null;
 
-  const collection = await getUsersCollection();
-  if (!collection) return memoryFindByEmail(normalized);
+  try {
+    const collection = await getUsersCollection();
+    if (collection) {
+      const doc = await collection.findOne({ email: normalized });
+      if (doc) return doc as unknown as User;
+    }
+  } catch (err) {
+    console.warn("[user.ts] findUserByEmail MongoDB error, falling back to store:", err);
+  }
 
-  const doc = await collection.findOne({ email: normalized });
-  return (doc as unknown as User) ?? null;
+  return memoryFindByEmail(normalized);
 }
 
 export async function findUserById(id: string): Promise<User | null> {
-  const collection = await getUsersCollection();
-  if (!collection) return memoryFindById(id);
+  if (!id) return null;
 
-  let _id: ObjectId;
   try {
-    _id = new ObjectId(id);
-  } catch {
-    return null;
+    const collection = await getUsersCollection();
+    if (collection && ObjectId.isValid(id)) {
+      const _id = new ObjectId(id);
+      const doc = await collection.findOne({ _id });
+      if (doc) return doc as unknown as User;
+    }
+  } catch (err) {
+    console.warn("[user.ts] findUserById MongoDB error, falling back to store:", err);
   }
 
-  const doc = await collection.findOne({ _id });
-  return (doc as unknown as User) ?? null;
+  return memoryFindById(id);
 }
 
 export async function findUserBySessionToken(
@@ -144,39 +152,63 @@ export async function findUserBySessionToken(
 ): Promise<User | null> {
   if (!token) return null;
 
-  const collection = await getUsersCollection();
-  if (!collection) return memoryFindBySessionToken(token);
+  try {
+    const collection = await getUsersCollection();
+    if (collection) {
+      const doc = await collection.findOne({ sessionToken: token });
+      if (doc) return doc as unknown as User;
+    }
+  } catch (err) {
+    console.warn("[user.ts] findUserBySessionToken MongoDB error, falling back to store:", err);
+  }
 
-  const doc = await collection.findOne({ sessionToken: token });
-  return (doc as unknown as User) ?? null;
+  return memoryFindBySessionToken(token);
 }
 
 export async function createUser(
   user: Omit<User, "_id" | "createdAt" | "updatedAt">
 ): Promise<PublicUser> {
-  const collection = await getUsersCollection();
-  if (!collection) return memoryCreateUser(user);
-
+  const normalized = normalizeEmail(user.email);
   const now = new Date();
   const doc = {
     ...user,
-    email: normalizeEmail(user.email),
+    email: normalized,
     coins: Number((user as User).coins ?? 0),
     createdAt: now,
     updatedAt: now,
   };
 
-  const result = await collection.insertOne(doc);
-  return {
-    _id: result.insertedId.toString(),
-    name: doc.name,
-    email: doc.email,
-    phone: doc.phone,
-    service: doc.service,
-    coins: Number(doc.coins ?? 0),
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
+  try {
+    const collection = await getUsersCollection();
+    if (collection) {
+      try {
+        const result = await collection.insertOne(doc);
+        return {
+          _id: result.insertedId.toString(),
+          name: doc.name,
+          email: doc.email,
+          phone: doc.phone,
+          service: doc.service,
+          coins: Number(doc.coins ?? 0),
+          createdAt: doc.createdAt,
+          updatedAt: doc.updatedAt,
+        };
+      } catch (insertErr: unknown) {
+        const errMsg = String(insertErr);
+        if (errMsg.includes("E11000") || errMsg.includes("duplicate")) {
+          const existing = await collection.findOne({ email: normalized });
+          if (existing && existing._id) {
+            return toPublicUser(existing as unknown as User);
+          }
+        }
+        console.warn("[user.ts] createUser insert error, falling back to store:", insertErr);
+      }
+    }
+  } catch (err) {
+    console.warn("[user.ts] createUser collection error, falling back to store:", err);
+  }
+
+  return memoryCreateUser({ ...user, email: normalized });
 }
 
 export async function issueUserSession(userId: string): Promise<string | null> {
@@ -189,61 +221,63 @@ export async function setUserSession(
   userId: string,
   token: string
 ): Promise<boolean> {
-  const collection = await getUsersCollection();
-  if (!collection) {
-    const store = await readStore();
-    const user = store.users.find((u) => u._id === userId) as User | undefined;
-    if (!user) return false;
-    user.sessionToken = token;
-    user.updatedAt = new Date();
-    await writeStore(store);
-    return true;
-  }
-
-  let _id: ObjectId;
   try {
-    _id = new ObjectId(userId);
-  } catch {
-    return false;
+    const collection = await getUsersCollection();
+    if (collection && ObjectId.isValid(userId)) {
+      const _id = new ObjectId(userId);
+      const result = await collection.findOneAndUpdate(
+        { _id },
+        {
+          $set: {
+            sessionToken: token,
+            updatedAt: new Date(),
+          },
+        },
+        { returnDocument: "after" }
+      );
+      if (result) return true;
+    }
+  } catch (err) {
+    console.warn("[user.ts] setUserSession MongoDB error, falling back to store:", err);
   }
 
-  const result = await collection.findOneAndUpdate(
-    { _id },
-    {
-      $set: {
-        sessionToken: token,
-        updatedAt: new Date(),
-      },
-    },
-    { returnDocument: "after" }
-  );
-  return Boolean(result);
+  const store = await readStore();
+  const user = store.users.find((u) => u._id === userId) as User | undefined;
+  if (!user) return false;
+  user.sessionToken = token;
+  user.updatedAt = new Date();
+  await writeStore(store);
+  return true;
 }
 
 export async function clearUserSession(token: string): Promise<void> {
   if (!token) return;
 
-  const collection = await getUsersCollection();
-  if (!collection) {
-    const store = await readStore();
-    const user = store.users.find((u) => u.sessionToken === token) as
-      | User
-      | undefined;
-    if (user) {
-      delete user.sessionToken;
-      user.updatedAt = new Date();
-      await writeStore(store);
+  try {
+    const collection = await getUsersCollection();
+    if (collection) {
+      await collection.updateOne(
+        { sessionToken: token },
+        {
+          $unset: { sessionToken: "" },
+          $set: { updatedAt: new Date() },
+        }
+      );
+      return;
     }
-    return;
+  } catch (err) {
+    console.warn("[user.ts] clearUserSession MongoDB error, falling back to store:", err);
   }
 
-  await collection.updateOne(
-    { sessionToken: token },
-    {
-      $unset: { sessionToken: "" },
-      $set: { updatedAt: new Date() },
-    }
-  );
+  const store = await readStore();
+  const user = store.users.find((u) => u.sessionToken === token) as
+    | User
+    | undefined;
+  if (user) {
+    delete user.sessionToken;
+    user.updatedAt = new Date();
+    await writeStore(store);
+  }
 }
 
 export async function listUsers(): Promise<PublicUser[]> {
