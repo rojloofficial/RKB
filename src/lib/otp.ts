@@ -5,7 +5,7 @@ import { createHmac, randomInt } from "crypto";
 export const OTP_LENGTH = 6;
 export const OTP_TTL_MS = 10 * 60 * 1000; // 10 minutes
 export const OTP_MAX_ATTEMPTS = 5;
-export const OTP_RESEND_COOLDOWN_MS = 60 * 1000; // 60 seconds
+export const OTP_RESEND_COOLDOWN_MS = 15 * 1000; // 15 seconds
 
 function cleanEnv(val?: string): string {
   return (val ?? "").trim().replace(/^['"]|['"]$/g, "");
