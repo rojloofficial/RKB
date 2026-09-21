@@ -42,36 +42,59 @@ async function getPaymentRequestsCollection(): Promise<Collection<Document> | nu
 }
 
 export async function listPaymentRequests(): Promise<PaymentRequest[]> {
+  const mergedMap = new Map<string, PaymentRequest>();
+
   const col = await getPaymentRequestsCollection();
   if (col) {
     try {
       const docs = await col.find({}).sort({ createdAt: -1 }).toArray();
-      return docs.map((doc) => ({
-        _id: doc._id.toString(),
-        userEmail: String(doc.userEmail || ""),
-        userId: String(doc.userId || ""),
-        transactionId: String(doc.transactionId || ""),
-        coins: Number(doc.coins || 0),
-        amount: Number(doc.amount || 0),
-        discount: doc.discount ? Number(doc.discount) : undefined,
-        couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
-        status: (doc.status as "pending" | "confirmed" | "declined") || "pending",
-        credited: Boolean(doc.credited),
-        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
-        confirmedAt: doc.confirmedAt instanceof Date ? doc.confirmedAt.toISOString() : (doc.confirmedAt ? String(doc.confirmedAt) : undefined),
-        declinedReason: doc.declinedReason ? String(doc.declinedReason) : undefined,
-        upiId: doc.upiId ? String(doc.upiId) : undefined,
-        upiName: doc.upiName ? String(doc.upiName) : undefined,
-      }));
+      for (const doc of docs) {
+        const reqItem: PaymentRequest = {
+          _id: doc._id.toString(),
+          userEmail: String(doc.userEmail || ""),
+          userId: String(doc.userId || ""),
+          transactionId: String(doc.transactionId || ""),
+          coins: Number(doc.coins || 0),
+          amount: Number(doc.amount || 0),
+          discount: doc.discount ? Number(doc.discount) : undefined,
+          couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
+          status: (doc.status as "pending" | "confirmed" | "declined") || "pending",
+          credited: Boolean(doc.credited),
+          createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
+          confirmedAt: doc.confirmedAt instanceof Date ? doc.confirmedAt.toISOString() : (doc.confirmedAt ? String(doc.confirmedAt) : undefined),
+          declinedReason: doc.declinedReason ? String(doc.declinedReason) : undefined,
+          upiId: doc.upiId ? String(doc.upiId) : undefined,
+          upiName: doc.upiName ? String(doc.upiName) : undefined,
+        };
+        const key = reqItem.transactionId.trim().toLowerCase();
+        if (key) mergedMap.set(key, reqItem);
+      }
     } catch (err) {
       console.error("[payment-request] MongoDB list failed:", err);
     }
   }
 
-  const store = await readStore();
-  const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+  try {
+    const store = await readStore();
+    const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+    for (const r of requests) {
+      const key = (r.transactionId || "").trim().toLowerCase();
+      if (!key) continue;
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, r);
+      } else {
+        const existing = mergedMap.get(key)!;
+        if (existing.status === "pending" && (r.status === "confirmed" || r.status === "declined")) {
+          mergedMap.set(key, { ...existing, ...r });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[payment-request] store list failed:", err);
+  }
 
-  return requests.sort((a, b) => {
+  const result = Array.from(mergedMap.values());
+  return result.sort((a, b) => {
     const ta = new Date(a.createdAt).getTime();
     const tb = new Date(b.createdAt).getTime();
     return tb - ta;
@@ -88,10 +111,12 @@ export async function createPaymentRequest(request: {
   couponCode?: string;
 }): Promise<PaymentRequest> {
   const now = new Date();
+  const cleanTx = request.transactionId.trim();
+  const cleanEmail = request.userEmail.trim().toLowerCase();
   const newRequest: PaymentRequest = {
-    userEmail: request.userEmail.trim().toLowerCase(),
+    userEmail: cleanEmail,
     userId: String(request.userId),
-    transactionId: request.transactionId.trim(),
+    transactionId: cleanTx,
     coins: Number(request.coins),
     amount: Number(request.amount),
     discount: request.discount ? Number(request.discount) : undefined,
@@ -110,7 +135,9 @@ export async function createPaymentRequest(request: {
         ...docToInsert,
         createdAt: now,
       } as Document);
-      newRequest._id = res.insertedId.toString();
+      if (res?.insertedId) {
+        newRequest._id = res.insertedId.toString();
+      }
     } catch (err) {
       console.error("[payment-request] MongoDB insert failed:", err);
     }
@@ -120,17 +147,22 @@ export async function createPaymentRequest(request: {
     newRequest._id = Date.now().toString();
   }
 
-  // Fallback to store only when MongoDB is unavailable
-  if (!col) {
-    try {
-      const store = await readStore();
-      const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+  // Always sync with local store so payment requests are NEVER lost
+  try {
+    const store = await readStore();
+    const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+    const existingIdx = requests.findIndex(
+      (r) => r.transactionId?.trim().toLowerCase() === cleanTx.toLowerCase()
+    );
+    if (existingIdx >= 0) {
+      requests[existingIdx] = newRequest;
+    } else {
       requests.push(newRequest);
-      store.paymentRequests = requests;
-      await writeStore(store);
-    } catch (err) {
-      console.error("[payment-request] writeStore sync failed:", err);
     }
+    store.paymentRequests = requests;
+    await writeStore(store);
+  } catch (err) {
+    console.error("[payment-request] writeStore sync failed:", err);
   }
 
   return newRequest;
@@ -139,13 +171,18 @@ export async function createPaymentRequest(request: {
 export async function findPaymentRequestByTransactionId(
   transactionId: string
 ): Promise<PaymentRequest | null> {
-  const cleanTx = transactionId.trim();
+  const cleanTx = transactionId.trim().toLowerCase();
   if (!cleanTx) return null;
 
   const col = await getPaymentRequestsCollection();
   if (col) {
     try {
-      const doc = await col.findOne({ transactionId: cleanTx });
+      const doc = await col.findOne({
+        $or: [
+          { transactionId: transactionId.trim() },
+          { transactionId: { $regex: new RegExp(`^${cleanTx.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") } },
+        ],
+      });
       if (doc) {
         return {
           _id: doc._id.toString(),
@@ -172,7 +209,7 @@ export async function findPaymentRequestByTransactionId(
 
   const store = await readStore();
   const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-  const match = requests.find((r) => r.transactionId.trim().toLowerCase() === cleanTx.toLowerCase());
+  const match = requests.find((r) => r.transactionId?.trim().toLowerCase() === cleanTx);
   return match ?? null;
 }
 
@@ -182,47 +219,74 @@ export async function listPaymentRequestsByUser(
 ): Promise<PaymentRequest[]> {
   const cleanId = String(userId || "").trim();
   const cleanEmail = email ? email.trim().toLowerCase() : "";
-  const col = await getPaymentRequestsCollection();
+  const mergedMap = new Map<string, PaymentRequest>();
 
+  const col = await getPaymentRequestsCollection();
   if (col) {
     try {
       const filters: Record<string, unknown>[] = [];
       if (cleanId) filters.push({ userId: cleanId });
-      if (cleanEmail) filters.push({ userEmail: cleanEmail });
+      if (cleanEmail) {
+        filters.push({ userEmail: cleanEmail });
+        filters.push({
+          userEmail: { $regex: new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+        });
+      }
 
       const query = filters.length > 1 ? { $or: filters } : (filters[0] ?? {});
       const docs = await col.find(query).sort({ createdAt: -1 }).limit(100).toArray();
-      return docs.map((doc) => ({
-        _id: doc._id.toString(),
-        userEmail: String(doc.userEmail || ""),
-        userId: String(doc.userId || ""),
-        transactionId: String(doc.transactionId || ""),
-        coins: Number(doc.coins || 0),
-        amount: Number(doc.amount || 0),
-        discount: doc.discount ? Number(doc.discount) : undefined,
-        couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
-        status: (doc.status as "pending" | "confirmed" | "declined") || "pending",
-        credited: Boolean(doc.credited),
-        createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
-        confirmedAt: doc.confirmedAt instanceof Date ? doc.confirmedAt.toISOString() : (doc.confirmedAt ? String(doc.confirmedAt) : undefined),
-        declinedReason: doc.declinedReason ? String(doc.declinedReason) : undefined,
-        upiId: doc.upiId ? String(doc.upiId) : undefined,
-        upiName: doc.upiName ? String(doc.upiName) : undefined,
-      }));
+      for (const doc of docs) {
+        const item: PaymentRequest = {
+          _id: doc._id.toString(),
+          userEmail: String(doc.userEmail || ""),
+          userId: String(doc.userId || ""),
+          transactionId: String(doc.transactionId || ""),
+          coins: Number(doc.coins || 0),
+          amount: Number(doc.amount || 0),
+          discount: doc.discount ? Number(doc.discount) : undefined,
+          couponCode: doc.couponCode ? String(doc.couponCode) : undefined,
+          status: (doc.status as "pending" | "confirmed" | "declined") || "pending",
+          credited: Boolean(doc.credited),
+          createdAt: doc.createdAt instanceof Date ? doc.createdAt.toISOString() : String(doc.createdAt || new Date().toISOString()),
+          confirmedAt: doc.confirmedAt instanceof Date ? doc.confirmedAt.toISOString() : (doc.confirmedAt ? String(doc.confirmedAt) : undefined),
+          declinedReason: doc.declinedReason ? String(doc.declinedReason) : undefined,
+          upiId: doc.upiId ? String(doc.upiId) : undefined,
+          upiName: doc.upiName ? String(doc.upiName) : undefined,
+        };
+        const key = item.transactionId.trim().toLowerCase();
+        if (key) mergedMap.set(key, item);
+      }
     } catch (err) {
       console.error("[payment-request] listPaymentRequestsByUser failed:", err);
     }
   }
 
-  const store = await readStore();
-  const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-  return requests
-    .filter(
+  try {
+    const store = await readStore();
+    const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
+    const userRequests = requests.filter(
       (r) =>
         (cleanId && String(r.userId) === cleanId) ||
-        (cleanEmail && String(r.userEmail || "").toLowerCase() === cleanEmail)
-    )
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        (cleanEmail && String(r.userEmail || "").trim().toLowerCase() === cleanEmail)
+    );
+    for (const r of userRequests) {
+      const key = (r.transactionId || "").trim().toLowerCase();
+      if (!key) continue;
+      if (!mergedMap.has(key)) {
+        mergedMap.set(key, r);
+      } else {
+        const existing = mergedMap.get(key)!;
+        if (existing.status === "pending" && (r.status === "confirmed" || r.status === "declined")) {
+          mergedMap.set(key, { ...existing, ...r });
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[payment-request] store listPaymentRequestsByUser failed:", err);
+  }
+
+  const result = Array.from(mergedMap.values());
+  return result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function confirmPaymentRequest(
@@ -230,20 +294,17 @@ export async function confirmPaymentRequest(
 ): Promise<PaymentRequest | null> {
   const col = await getPaymentRequestsCollection();
   const now = new Date();
-
-  let existing: PaymentRequest | null = null;
+  let targetDoc: PaymentRequest | null = null;
   let mongoId: ObjectId | null = null;
 
   if (col) {
     if (ObjectId.isValid(id)) {
       mongoId = new ObjectId(id);
     }
-
     const targetQuery: Record<string, unknown> = mongoId
-      ? { _id: mongoId }
+      ? { $or: [{ _id: mongoId }, { transactionId: id }] }
       : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
 
-    // Atomic findOneAndUpdate ensuring the status is not already confirmed
     const atomicUpdate = await col.findOneAndUpdate(
       { ...targetQuery, status: { $ne: "confirmed" } },
       {
@@ -257,69 +318,66 @@ export async function confirmPaymentRequest(
     );
 
     if (atomicUpdate) {
-      existing = { ...(atomicUpdate as unknown as PaymentRequest), _id: atomicUpdate._id.toString() };
-      const coinsToCredit = Number(existing.coins || 0);
-      let credited = Boolean(existing.credited);
-
-      if (!credited && coinsToCredit > 0) {
-        try {
-          const ok = await updateUserCoins(existing.userId, coinsToCredit, existing.userEmail);
-          credited = ok;
-          if (ok) {
-            await col.updateOne({ _id: atomicUpdate._id }, { $set: { credited: true, updatedAt: new Date() } });
-            existing.credited = true;
-          }
-        } catch (error) {
-          console.error("[payment-request] Failed to credit user coins:", error);
-        }
+      targetDoc = { ...(atomicUpdate as unknown as PaymentRequest), _id: atomicUpdate._id.toString() };
+    } else {
+      const currentDoc = await col.findOne(targetQuery);
+      if (currentDoc) {
+        targetDoc = { ...(currentDoc as unknown as PaymentRequest), _id: currentDoc._id.toString() };
       }
-
-      return existing;
-    }
-
-    // If atomicUpdate was null, it was either already confirmed or doesn't exist in MongoDB
-    const currentDoc = await col.findOne(targetQuery);
-    if (currentDoc) {
-      return { ...(currentDoc as unknown as PaymentRequest), _id: currentDoc._id.toString() };
     }
   }
 
-  // Fallback to memory store
+  // Also sync in store
   const store = await readStore();
   const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-  existing = requests.find((r) => r._id === id || r.transactionId === id) ?? null;
+  const idx = requests.findIndex(
+    (r) => r._id === id || r.transactionId === id || (targetDoc && r.transactionId === targetDoc.transactionId)
+  );
 
-  if (!existing) return null;
-
-  if (existing.status === "confirmed" || existing.credited) {
-    return existing;
+  if (idx !== -1) {
+    if (!targetDoc) {
+      targetDoc = requests[idx];
+    }
+    requests[idx] = {
+      ...requests[idx],
+      status: "confirmed",
+      confirmedAt: targetDoc.confirmedAt || now.toISOString(),
+    };
+  } else if (targetDoc) {
+    requests.push({ ...targetDoc, status: "confirmed", confirmedAt: targetDoc.confirmedAt || now.toISOString() });
   }
 
-  const coinsToCredit = Number(existing.coins || 0);
-  let credited = Boolean(existing.credited);
-  if (!credited && coinsToCredit > 0) {
+  if (!targetDoc) return null;
+
+  targetDoc.status = "confirmed";
+  targetDoc.confirmedAt = targetDoc.confirmedAt || now.toISOString();
+
+  // Credit user coins if not already credited
+  const coinsToCredit = Number(targetDoc.coins || 0);
+  if (!targetDoc.credited && coinsToCredit > 0) {
     try {
-      credited = await updateUserCoins(existing.userId, coinsToCredit, existing.userEmail);
-    } catch {
-      credited = false;
+      const ok = await updateUserCoins(targetDoc.userId, coinsToCredit, targetDoc.userEmail);
+      if (ok) {
+        targetDoc.credited = true;
+        if (col) {
+          const updateQuery = mongoId
+            ? { _id: mongoId }
+            : { $or: [{ _id: targetDoc._id as unknown as ObjectId }, { transactionId: targetDoc.transactionId }] };
+          await col.updateOne(updateQuery, { $set: { credited: true, updatedAt: new Date() } });
+        }
+        if (idx !== -1) {
+          requests[idx].credited = true;
+        }
+      }
+    } catch (error) {
+      console.error("[payment-request] Failed to credit user coins:", error);
     }
   }
 
-  const updated: PaymentRequest = {
-    ...existing,
-    status: "confirmed",
-    credited,
-    confirmedAt: now.toISOString(),
-  };
+  store.paymentRequests = requests;
+  await writeStore(store);
 
-  const idx = requests.findIndex((r) => r._id === id || r.transactionId === existing?.transactionId);
-  if (idx !== -1) {
-    requests[idx] = updated;
-    store.paymentRequests = requests;
-    await writeStore(store);
-  }
-
-  return updated;
+  return targetDoc;
 }
 
 export async function declinePaymentRequest(
@@ -330,15 +388,15 @@ export async function declinePaymentRequest(
   const now = new Date();
   const finalReason = reason && reason.trim() ? reason.trim() : "Wrong Transaction ID";
 
+  let targetDoc: PaymentRequest | null = null;
   let mongoId: ObjectId | null = null;
 
   if (col) {
     if (ObjectId.isValid(id)) {
       mongoId = new ObjectId(id);
     }
-
     const targetQuery: Record<string, unknown> = mongoId
-      ? { _id: mongoId }
+      ? { $or: [{ _id: mongoId }, { transactionId: id }] }
       : { $or: [{ _id: id as unknown as ObjectId }, { transactionId: id }] };
 
     const atomicUpdate = await col.findOneAndUpdate(
@@ -354,39 +412,44 @@ export async function declinePaymentRequest(
     );
 
     if (atomicUpdate) {
-      const declinedReq = { ...(atomicUpdate as unknown as PaymentRequest), _id: atomicUpdate._id.toString() };
-      return declinedReq;
-    }
-
-    const currentDoc = await col.findOne(targetQuery);
-    if (currentDoc) {
-      return { ...(currentDoc as unknown as PaymentRequest), _id: currentDoc._id.toString() };
+      targetDoc = { ...(atomicUpdate as unknown as PaymentRequest), _id: atomicUpdate._id.toString() };
+    } else {
+      const currentDoc = await col.findOne(targetQuery);
+      if (currentDoc) {
+        targetDoc = { ...(currentDoc as unknown as PaymentRequest), _id: currentDoc._id.toString() };
+      }
     }
   }
 
+  // Also sync in store
   const store = await readStore();
   const requests = (store.paymentRequests ?? []) as unknown as PaymentRequest[];
-  const existing = requests.find((r) => r._id === id || r.transactionId === id) ?? null;
+  const idx = requests.findIndex(
+    (r) => r._id === id || r.transactionId === id || (targetDoc && r.transactionId === targetDoc.transactionId)
+  );
 
-  if (!existing) return null;
-  if (existing.status === "declined" || existing.status === "confirmed") {
-    return existing;
-  }
-
-  const updated: PaymentRequest = {
-    ...existing,
-    status: "declined",
-    declinedReason: finalReason,
-  };
-
-  const idx = requests.findIndex((r) => r._id === id || r.transactionId === id);
   if (idx !== -1) {
-    requests[idx] = updated;
-    store.paymentRequests = requests;
-    await writeStore(store);
+    if (!targetDoc) {
+      targetDoc = requests[idx];
+    }
+    requests[idx] = {
+      ...requests[idx],
+      status: "declined",
+      declinedReason: finalReason,
+    };
+  } else if (targetDoc) {
+    requests.push({ ...targetDoc, status: "declined", declinedReason: finalReason });
   }
 
-  return updated;
+  if (!targetDoc) return null;
+
+  targetDoc.status = "declined";
+  targetDoc.declinedReason = finalReason;
+
+  store.paymentRequests = requests;
+  await writeStore(store);
+
+  return targetDoc;
 }
 
 export async function getPaymentRequestById(id: string): Promise<PaymentRequest | null> {
@@ -468,39 +531,42 @@ export async function checkCoinPurchaseEligibility(
 
   let latestPurchaseMs = 0;
 
-  // 1. Direct MongoDB Query
+  // 1. Direct MongoDB Query (case-insensitive across both history and requests)
   const db = await getDb();
   if (db) {
     try {
-      // Look up payment_history (confirmed purchases)
-      const historyDoc = await db
-        .collection("payment_history")
-        .findOne(
-          { userEmail: cleanEmail },
-          { sort: { createdAt: -1 } }
-        );
+      const emailEscaped = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const emailRegex = new RegExp(`^${emailEscaped}$`, "i");
 
-      if (historyDoc?.createdAt) {
-        const d = new Date(historyDoc.createdAt);
-        const t = d.getTime();
-        if (!isNaN(t) && t > latestPurchaseMs) {
-          latestPurchaseMs = t;
+      // Check payment_history (confirmed purchases)
+      const historyDocs = await db
+        .collection("payment_history")
+        .find({
+          $or: [{ userEmail: cleanEmail }, { userEmail: emailRegex }],
+        })
+        .toArray();
+
+      for (const h of historyDocs) {
+        if (h.createdAt) {
+          const d = new Date(h.createdAt);
+          const t = d.getTime();
+          if (!isNaN(t) && t > latestPurchaseMs) {
+            latestPurchaseMs = t;
+          }
         }
       }
 
-      // Look up payment_requests (pending or confirmed)
-      const requestDoc = await db
+      // Check payment_requests (pending or confirmed)
+      const requestDocs = await db
         .collection("payment_requests")
-        .findOne(
-          {
-            userEmail: cleanEmail,
-            status: { $in: ["confirmed", "pending"] },
-          },
-          { sort: { createdAt: -1 } }
-        );
+        .find({
+          $or: [{ userEmail: cleanEmail }, { userEmail: emailRegex }],
+          status: { $in: ["confirmed", "pending"] },
+        })
+        .toArray();
 
-      if (requestDoc) {
-        const d = new Date(requestDoc.confirmedAt || requestDoc.createdAt);
+      for (const r of requestDocs) {
+        const d = new Date(r.confirmedAt || r.createdAt);
         const t = d.getTime();
         if (!isNaN(t) && t > latestPurchaseMs) {
           latestPurchaseMs = t;
@@ -511,7 +577,7 @@ export async function checkCoinPurchaseEligibility(
     }
   }
 
-  // 2. Store fallback
+  // 2. Store fallback & merge
   try {
     const store = await readStore();
 

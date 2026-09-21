@@ -47,11 +47,22 @@ export default function BuyCoinSection() {
 
   const userEmail = user?.email;
   const checkEligibility = useCallback(async () => {
-    if (!userEmail) return;
+    let emailToUse = userEmail || user?.email;
+    if (!emailToUse && typeof window !== "undefined") {
+      try {
+        emailToUse = JSON.parse(localStorage.getItem("rojlo_auth_user") || "{}")?.email || "";
+      } catch {}
+    }
+    if (!emailToUse) return;
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("rojlo_auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const res = await fetch(
-        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(userEmail)}&_t=${Date.now()}`,
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(emailToUse)}&_t=${Date.now()}`,
         {
+          headers,
           cache: "no-store",
           credentials: "include",
         }
@@ -71,7 +82,7 @@ export default function BuyCoinSection() {
     } catch (err) {
       console.error("Failed to check coin purchase eligibility:", err);
     }
-  }, [userEmail]);
+  }, [userEmail, user?.email]);
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -105,11 +116,9 @@ export default function BuyCoinSection() {
   }, [loadPackages]);
 
   useEffect(() => {
-    if (userEmail) {
-      queueMicrotask(() => {
-        void checkEligibility();
-      });
-    }
+    queueMicrotask(() => {
+      void checkEligibility();
+    });
 
     let lastCheck = Date.now();
     const handleCoinUpdate = () => {
@@ -118,18 +127,26 @@ export default function BuyCoinSection() {
     };
     const handleFocus = () => {
       const now = Date.now();
-      if (now - lastCheck < 30_000) return;
+      if (now - lastCheck < 10_000) return;
       lastCheck = now;
       void checkEligibility();
     };
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === "rojlo_coin_update") {
+        void checkEligibility();
+      }
+    };
+
     window.addEventListener("coins:updated", handleCoinUpdate);
     window.addEventListener("focus", handleFocus);
+    window.addEventListener("storage", handleStorage);
 
     return () => {
       window.removeEventListener("coins:updated", handleCoinUpdate);
       window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("storage", handleStorage);
     };
-  }, [userEmail, checkEligibility]);
+  }, [checkEligibility]);
 
   useEffect(() => {
     if (!eligibility || eligibility.allowed || !eligibility.nextAllowedAt) {

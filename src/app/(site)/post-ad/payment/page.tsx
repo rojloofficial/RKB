@@ -56,7 +56,12 @@ function PaymentView() {
     let cancelled = false;
     async function checkStatus() {
       try {
-        const res = await fetch("/api/payment-confirmation", {
+        const token = typeof window !== "undefined" ? localStorage.getItem("rojlo_auth_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const query = user?.email ? `?email=${encodeURIComponent(user.email)}` : "";
+        const res = await fetch(`/api/payment-confirmation${query}`, {
+          headers,
           credentials: "include",
           cache: "no-store",
         });
@@ -74,6 +79,7 @@ function PaymentView() {
           } else if (current.status === "confirmed") {
             setSubmittedStatus("confirmed");
             window.dispatchEvent(new CustomEvent("coins:updated"));
+            window.localStorage.setItem("rojlo_coin_update", String(Date.now()));
           }
         }
       } catch {}
@@ -86,15 +92,25 @@ function PaymentView() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [submitted, submittedTxId, submittedStatus]);
+  }, [submitted, submittedTxId, submittedStatus, user?.email]);
 
   const userEmail = user?.email;
   const checkEligibility = useCallback(async () => {
-    if (!userEmail) return;
+    let emailToUse = userEmail || user?.email;
+    if (!emailToUse && typeof window !== "undefined") {
+      try {
+        emailToUse = JSON.parse(localStorage.getItem("rojlo_auth_user") || "{}")?.email || "";
+      } catch {}
+    }
+    if (!emailToUse) return;
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("rojlo_auth_token") : null;
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(
-        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(userEmail)}&_t=${Date.now()}`,
+        `/api/payment-confirmation/eligibility?email=${encodeURIComponent(emailToUse)}&_t=${Date.now()}`,
         {
+          headers,
           cache: "no-store",
           credentials: "include",
         }
@@ -114,7 +130,7 @@ function PaymentView() {
     } catch (err) {
       console.error("Failed to check coin purchase eligibility:", err);
     }
-  }, [userEmail]);
+  }, [userEmail, user?.email]);
 
   useEffect(() => {
     if (userEmail) {
@@ -239,9 +255,23 @@ function PaymentView() {
     setSubmitting(true);
     setSubmitError("");
     try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("rojlo_auth_token") : null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      let currentEmail = user?.email || "";
+      let currentId = user?._id || "";
+      if (!currentEmail && typeof window !== "undefined") {
+        try {
+          const parsed = JSON.parse(localStorage.getItem("rojlo_auth_user") || "{}");
+          currentEmail = parsed?.email || "";
+          currentId = parsed?._id || "";
+        } catch {}
+      }
+
       const response = await fetch("/api/payment-confirmation", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         credentials: "include",
         body: JSON.stringify({
           coins,
@@ -249,6 +279,8 @@ function PaymentView() {
           transactionId: txnToSubmit,
           couponCode: couponCode.trim() || null,
           discount,
+          userId: currentId,
+          userEmail: currentEmail,
         }),
       });
 
@@ -262,7 +294,21 @@ function PaymentView() {
       setSubmittedTxId(txnToSubmit);
       setSubmittedStatus("pending");
       setDeclineReason("");
+
+      // Start 24h countdown immediately
+      const nowIso = new Date().toISOString();
+      const nextAllowedIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      setEligibility({
+        allowed: false,
+        remainingMs: 24 * 60 * 60 * 1000,
+        remainingFormatted: "24h 0m 0s",
+        lastPurchaseAt: nowIso,
+        nextAllowedAt: nextAllowedIso,
+        reason: "You can only purchase coins once every 24 hours per email address.",
+      });
+
       window.dispatchEvent(new CustomEvent("coins:updated"));
+      window.localStorage.setItem("rojlo_coin_update", String(Date.now()));
       void checkEligibility();
       setTransactionId("");
       setCouponCode("");
@@ -303,49 +349,49 @@ function PaymentView() {
         </div>
 
         <div className="mt-6 rounded-[1.75rem] bg-white p-6 text-center sm:p-8">
+          {/* 24h Cooldown Alert Banner - Visible whenever cooldown is active */}
+          {eligibility && !eligibility.allowed && (
+            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-amber-950 shadow-xs">
+              <div className="flex items-start gap-3">
+                <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
+                    <h3 className="text-sm sm:text-base font-bold text-amber-950">
+                      24-Hour Purchase Limit Active
+                    </h3>
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
+                      <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                      Next purchase in: {liveCountdown || eligibility.remainingFormatted}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
+                    An email can only purchase coins once in 24 hours. Your last coin purchase was recorded on{" "}
+                    <strong className="font-semibold text-amber-950">
+                      {eligibility.lastPurchaseAt
+                        ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          })
+                        : "recently"}
+                    </strong>
+                    . New payment submissions are temporarily paused until the cooldown timer expires.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {!submitted && (
             <>
-              {/* 24h Cooldown Alert Banner */}
-              {eligibility && !eligibility.allowed && (
-                <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-amber-950 shadow-xs">
-                  <div className="flex items-start gap-3">
-                    <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
-                      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                      </svg>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-                        <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                          24-Hour Purchase Limit Active
-                        </h3>
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
-                          <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
-                          Next purchase in: {liveCountdown || eligibility.remainingFormatted}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
-                        An email can only purchase coins once in 24 hours. Your last coin purchase was recorded on{" "}
-                        <strong className="font-semibold text-amber-950">
-                          {eligibility.lastPurchaseAt
-                            ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                              })
-                            : "recently"}
-                        </strong>
-                        . New payment submissions are temporarily paused until the cooldown timer expires.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <p className="text-lg font-bold text-neutral-900">
                 Pay {price || "—"} &nbsp;·&nbsp; Get {coins} coins
               </p>
@@ -354,12 +400,19 @@ function PaymentView() {
               </p>
             </>
           )}
+
           {submitted && submittedStatus === "pending" && (
             <div className="rounded-[1.5rem] border border-neutral-200 bg-neutral-50 p-6 text-center">
               <p className="text-xl font-black text-neutral-900">Payment submitted</p>
               <p className="mt-2 text-base text-neutral-700">
                 Don&apos;t pay again. Please wait to confirm the payment.
               </p>
+              {eligibility && !eligibility.allowed && (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs sm:text-sm font-bold text-amber-950">
+                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                  Next purchase allowed in: {liveCountdown || eligibility.remainingFormatted}
+                </div>
+              )}
               <div className="mt-5 flex justify-center">
                 <Button
                   type="button"
@@ -411,6 +464,12 @@ function PaymentView() {
               <p className="mt-2 text-base text-neutral-700">
                 Coins have been added to your wallet.
               </p>
+              {eligibility && !eligibility.allowed && (
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs sm:text-sm font-bold text-amber-950">
+                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                  Next purchase allowed in: {liveCountdown || eligibility.remainingFormatted}
+                </div>
+              )}
               <div className="mt-5 flex justify-center">
                 <Button
                   type="button"

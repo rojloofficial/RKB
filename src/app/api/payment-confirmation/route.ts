@@ -70,7 +70,13 @@ async function getAuthUser(req: NextRequest): Promise<User | null> {
 
 export async function GET(req: NextRequest) {
   try {
-    const user = await getAuthUser(req);
+    let user = await getAuthUser(req);
+    if (!user) {
+      const qEmail = req.nextUrl.searchParams.get("email");
+      const qId = req.nextUrl.searchParams.get("userId");
+      if (qId) user = await findUserById(qId);
+      if (!user && qEmail) user = await findUserByEmail(qEmail);
+    }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -98,14 +104,23 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const user = await getAuthUser(req);
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const body = await req.json().catch(() => null);
     if (!body) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+    }
+
+    let user = await getAuthUser(req);
+    if (!user) {
+      if (body.userId) {
+        user = await findUserById(String(body.userId));
+      }
+      if (!user && body.userEmail) {
+        user = await findUserByEmail(String(body.userEmail));
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { coins, amount, transactionId, couponCode, discount } = body;

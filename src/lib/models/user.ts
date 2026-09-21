@@ -301,47 +301,60 @@ export async function updateUserCoins(
   const numericDelta = Number(delta || 0);
   if (!Number.isFinite(numericDelta)) return false;
 
+  let mongoSuccess = false;
   const collection = await getUsersCollection();
   if (collection) {
-    const filters: Record<string, unknown>[] = [];
-    if (userId) {
-      if (ObjectId.isValid(userId)) {
-        filters.push({ _id: new ObjectId(userId) });
+    try {
+      const filters: Record<string, unknown>[] = [];
+      if (userId) {
+        if (ObjectId.isValid(userId)) {
+          filters.push({ _id: new ObjectId(userId) });
+        }
+        filters.push({ _id: userId });
       }
-      filters.push({ _id: userId });
-    }
-    if (userEmail) {
-      filters.push({ email: normalizeEmail(userEmail) });
-    }
+      if (userEmail) {
+        filters.push({ email: normalizeEmail(userEmail) });
+      }
 
-    if (filters.length > 0) {
-      const query = filters.length === 1 ? filters[0] : { $or: filters };
-      const result = await collection.findOneAndUpdate(
-        query,
-        {
-          $inc: { coins: numericDelta },
-          $set: { updatedAt: new Date() },
-        },
-        { returnDocument: "after" }
-      );
-      if (result) return true;
+      if (filters.length > 0) {
+        const query = filters.length === 1 ? filters[0] : { $or: filters };
+        const result = await collection.findOneAndUpdate(
+          query,
+          {
+            $inc: { coins: numericDelta },
+            $set: { updatedAt: new Date() },
+          },
+          { returnDocument: "after" }
+        );
+        if (result) mongoSuccess = true;
+      }
+    } catch (err) {
+      console.error("[user.ts] updateUserCoins MongoDB error:", err);
     }
   }
 
-  const store = await readStore();
-  const user = store.users.find(
-    (u) =>
-      (userId && u._id === userId) ||
-      (userEmail && normalizeEmail(String(u.email)) === normalizeEmail(userEmail))
-  ) as User | undefined;
-  if (!user) return false;
+  // Also sync to store.users so in-memory / local state stays completely up-to-date
+  let storeSuccess = false;
+  try {
+    const store = await readStore();
+    const user = store.users.find(
+      (u) =>
+        (userId && u._id === userId) ||
+        (userEmail && normalizeEmail(String(u.email)) === normalizeEmail(userEmail))
+    ) as User | undefined;
+    if (user) {
+      const currentCoins = Number(user.coins ?? 0);
+      const nextCoins = currentCoins + numericDelta;
+      user.coins = nextCoins;
+      user.updatedAt = new Date();
+      await writeStore(store);
+      storeSuccess = true;
+    }
+  } catch (err) {
+    console.error("[user.ts] updateUserCoins store error:", err);
+  }
 
-  const currentCoins = Number(user.coins ?? 0);
-  const nextCoins = currentCoins + numericDelta;
-  user.coins = nextCoins;
-  user.updatedAt = new Date();
-  await writeStore(store);
-  return true;
+  return mongoSuccess || storeSuccess;
 }
 
 export async function deleteUserById(id: string): Promise<boolean> {

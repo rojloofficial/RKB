@@ -38,7 +38,25 @@ export default function Page() {
 
     async function load() {
       try {
-        const res = await fetch("/api/payment-confirmation", {
+        const token = typeof window !== "undefined" ? localStorage.getItem("rojlo_auth_token") : null;
+        const headers: Record<string, string> = {};
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        let storedEmail = "";
+        let storedId = "";
+        try {
+          const parsed = JSON.parse(localStorage.getItem("rojlo_auth_user") || "{}");
+          storedEmail = parsed?.email || "";
+          storedId = parsed?._id || "";
+        } catch {}
+
+        const queryParams = new URLSearchParams();
+        if (storedEmail) queryParams.set("email", storedEmail);
+        if (storedId) queryParams.set("userId", storedId);
+        const queryStr = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+        const res = await fetch(`/api/payment-confirmation${queryStr}`, {
+          headers,
           credentials: "include",
           cache: "no-store",
         });
@@ -132,12 +150,12 @@ export default function Page() {
                     <p>
                       <span className="font-semibold text-neutral-900">Status:</span>{" "}
                       <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1 ${
                           item.status === "confirmed"
-                            ? "bg-neutral-900 text-white"
+                            ? "bg-emerald-600 text-white"
                             : item.status === "declined"
-                              ? "bg-neutral-300 text-neutral-800"
-                              : "bg-neutral-200 text-neutral-800"
+                              ? "bg-red-100 text-red-700 border border-red-200"
+                              : "bg-amber-100 text-amber-800 border border-amber-200"
                         }`}
                       >
                         {item.status === "confirmed"
@@ -148,8 +166,8 @@ export default function Page() {
                       </span>
                     </p>
                     {item.status === "declined" && (
-                      <div className="mt-2 rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-2 text-xs text-neutral-800">
-                        <span className="font-bold text-neutral-900">Message: </span>
+                      <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
+                        <span className="font-bold text-red-950">Decline Reason: </span>
                         {item.declinedReason || "Wrong Transaction ID"}
                       </div>
                     )}
