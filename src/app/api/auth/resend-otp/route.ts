@@ -13,7 +13,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 5);
+    const rate = await checkRateLimitAsync(`resend-otp:${ip}`, 15);
     if (!rate.ok) {
       return NextResponse.json(
         {
@@ -27,15 +27,30 @@ export async function POST(request: NextRequest) {
     const { email } = body ?? {};
     const normalizedEmail = normalizeEmail(email);
 
-    if (!normalizedEmail) {
+    if (!normalizedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
       return NextResponse.json(
-        { error: "Email is required." },
+        { error: "Please enter a valid email address." },
         { status: 400 }
       );
     }
 
     const existing = await findUserByEmail(normalizedEmail);
     const now = new Date();
+
+    // If an established account already exists, prompt user to use another email
+    if (
+      existing &&
+      ((existing.passwordHash && existing.passwordHash.trim().length > 0) || existing.emailVerified)
+    ) {
+      return NextResponse.json(
+        {
+          error: "Use other email, this email already have account.",
+          alreadyExists: true,
+        },
+        { status: 409 }
+      );
+    }
+
     let userId: string;
 
     if (existing && existing._id) {
@@ -67,16 +82,22 @@ export async function POST(request: NextRequest) {
     }
 
     const otpResult = await createAndSendOtp(userId, normalizedEmail, now);
-    if (!otpResult.ok) {
-      return NextResponse.json({ error: otpResult.error }, { status: otpResult.status });
+    if (!otpResult.ok || !otpResult.sent) {
+      return NextResponse.json(
+        {
+          error:
+            otpResult.error ||
+            "Failed to send verification code to your email. Please try again.",
+          emailSent: false,
+        },
+        { status: otpResult.status || 502 }
+      );
     }
 
     return NextResponse.json(
       {
-        message: otpResult.sent
-          ? "A new verification code has been sent to your email."
-          : otpResult.message || "We couldn't send the code right now. Please check your email configuration.",
-        emailSent: otpResult.sent,
+        message: "A new verification code has been sent to your email.",
+        emailSent: true,
       },
       { status: 200 }
     );

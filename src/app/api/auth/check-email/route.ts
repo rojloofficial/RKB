@@ -12,7 +12,10 @@ export async function POST(request: NextRequest) {
     }
 
     const user = await findUserByEmail(normalizedEmail);
-    const exists = Boolean(user && user.passwordHash && user.passwordHash.trim().length > 0);
+    const exists = Boolean(
+      user &&
+      ((user.passwordHash && user.passwordHash.trim().length > 0) || user.emailVerified)
+    );
 
     return NextResponse.json({
       exists,

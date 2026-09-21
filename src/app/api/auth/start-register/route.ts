@@ -18,7 +18,7 @@ import {
 export async function POST(request: NextRequest) {
   try {
     const ip = clientIp(request);
-    const rate = await checkRateLimitAsync(`start-register:${ip}`, 5);
+    const rate = await checkRateLimitAsync(`start-register:${ip}`, 15);
     if (!rate.ok) {
       return NextResponse.json(
         { error: "Too many requests. Please try again in a few minutes." },
@@ -41,7 +41,10 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Check if user already has an established account
-    if (existing && existing.passwordHash && existing.passwordHash.trim().length > 0) {
+    if (
+      existing &&
+      ((existing.passwordHash && existing.passwordHash.trim().length > 0) || existing.emailVerified)
+    ) {
       return NextResponse.json(
         {
           error: "Use other email, this email already have account.",
@@ -85,19 +88,25 @@ export async function POST(request: NextRequest) {
     }
 
     const otpResult = await createAndSendOtp(userId, normalizedEmail, now);
-    if (!otpResult.ok) {
-      return NextResponse.json({ error: otpResult.error }, { status: otpResult.status });
+    if (!otpResult.ok || !otpResult.sent) {
+      return NextResponse.json(
+        {
+          error:
+            otpResult.error ||
+            "Failed to send verification code to your email. Please check your email address and try again.",
+          emailSent: false,
+        },
+        { status: otpResult.status || 502 }
+      );
     }
 
     return NextResponse.json(
       {
-        message: otpResult.sent
-          ? "We sent a verification code to your email."
-          : otpResult.message || "We couldn't send the verification code right now. Please check your email configuration.",
+        message: "We sent a verification code to your email.",
         needsVerification: true,
         email: normalizedEmail,
-        emailSent: otpResult.sent,
-        isExistingUser: Boolean(existing?.emailVerified && existing?.passwordHash),
+        emailSent: true,
+        isExistingUser: false,
       },
       { status: 200 }
     );

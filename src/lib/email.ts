@@ -18,52 +18,22 @@ export type EmailResult =
 const FALLBACK_USER = "rojloofficial@gmail.com";
 const FALLBACK_PASS = "svsgsykzenlxtpmw";
 
-const transporterCache = new Map<string, nodemailer.Transporter>();
-
-function getPooledTransporter(
+function createDirectTransporter(
   host: string,
   port: number,
   user: string,
   pass: string,
-  isGmail: boolean
+  secure: boolean
 ): nodemailer.Transporter {
-  const cacheKey = `${host}:${port}:${user}`;
-  const existing = transporterCache.get(cacheKey);
-  if (existing) {
-    return existing;
-  }
-
-  const transportOptions = isGmail
-    ? {
-        host: "smtp.gmail.com",
-        port: 465,
-        secure: true,
-        auth: { user, pass },
-        pool: true,
-        maxConnections: 3,
-        maxMessages: 100,
-        connectionTimeout: 4000,
-        greetingTimeout: 4000,
-        socketTimeout: 8000,
-      }
-    : {
-        host,
-        port,
-        secure: port === 465,
-        auth: { user, pass },
-        pool: true,
-        maxConnections: 3,
-        maxMessages: 100,
-        connectionTimeout: 4000,
-        greetingTimeout: 4000,
-        socketTimeout: 8000,
-      };
-
-  const transporter = nodemailer.createTransport(
-    transportOptions as nodemailer.TransportOptions
-  );
-  transporterCache.set(cacheKey, transporter);
-  return transporter;
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: { user, pass },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 25000,
+  });
 }
 
 export async function sendEmail({ to, subject, text, html }: EmailPayload): Promise<EmailResult> {
@@ -73,7 +43,7 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
   const rawUser = cleanEnv(process.env.SMTP_USER);
   const rawPass = cleanEnv(process.env.SMTP_PASS).replace(/\s+/g, "");
 
-  // Safe fallback to verified official Gmail credentials so Vercel can always send emails
+  // Safe fallback to verified official Gmail credentials so emails always deliver
   const user = (rawUser && rawUser !== "suraj@gmail.com") ? rawUser : FALLBACK_USER;
   const pass = (rawPass && rawPass !== "vanni12") ? rawPass : FALLBACK_PASS;
 
@@ -90,14 +60,10 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
     };
   }
 
-  const isGmail =
-    host.toLowerCase().includes("gmail") ||
-    user.toLowerCase().endsWith("@gmail.com");
-
-  // Attempt 1: Send using primary credentials
-  const primaryCacheKey = `${host}:${port}:${user}`;
+  // Attempt 1: Send using primary configuration
   try {
-    const transporter = getPooledTransporter(host, port, user, pass, isGmail);
+    const isPort465 = port === 465;
+    const transporter = createDirectTransporter(host, port, user, pass, isPort465);
     await transporter.sendMail({
       from,
       to: cleanTo,
@@ -107,26 +73,17 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
       html: html ?? text,
     });
 
-    console.log(`[email] Email sent successfully to ${cleanTo}`);
+    console.log(`[email] Email sent successfully to ${cleanTo} via ${host}:${port}`);
     return { sent: true };
   } catch (error: unknown) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    console.error(`[email] Attempt with primary credentials failed for ${cleanTo}:`, errMsg);
+    console.error(`[email] Attempt 1 with primary credentials (${user} on ${host}:${port}) failed for ${cleanTo}:`, errMsg);
 
-    transporterCache.delete(primaryCacheKey);
-
-    const isAuthError =
-      errMsg.includes("535") ||
-      errMsg.includes("BadCredentials") ||
-      errMsg.includes("EAUTH") ||
-      (typeof error === "object" && error !== null && (error as { code?: string }).code === "EAUTH");
-
-    // Attempt 2: If primary credentials failed and they differ from verified fallback, retry with fallback
-    if (isAuthError && (user !== FALLBACK_USER || pass !== FALLBACK_PASS)) {
-      console.warn("[email] Primary credentials rejected. Retrying with official verified fallback credentials...");
-      const fallbackCacheKey = `smtp.gmail.com:465:${FALLBACK_USER}`;
+    // Attempt 2: Fallback to verified official Gmail credentials on port 465
+    if (user !== FALLBACK_USER || pass !== FALLBACK_PASS || host !== "smtp.gmail.com" || port !== 465) {
+      console.warn("[email] Retrying email delivery with official verified Gmail credentials (port 465)...");
       try {
-        const fallbackTransporter = getPooledTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
+        const fallbackTransporter = createDirectTransporter("smtp.gmail.com", 465, FALLBACK_USER, FALLBACK_PASS, true);
         await fallbackTransporter.sendMail({
           from: `"${siteName}" <${FALLBACK_USER}>`,
           to: cleanTo,
@@ -136,25 +93,38 @@ export async function sendEmail({ to, subject, text, html }: EmailPayload): Prom
           html: html ?? text,
         });
 
-        console.log(`[email] Email sent successfully using fallback credentials to ${cleanTo}`);
+        console.log(`[email] Email delivered successfully to ${cleanTo} using verified Gmail credentials (port 465)`);
         return { sent: true };
       } catch (fallbackError: unknown) {
-        transporterCache.delete(fallbackCacheKey);
         const fbErrMsg = fallbackError instanceof Error ? fallbackError.message : String(fallbackError);
-        console.error("[email] Fallback credentials attempt also failed:", fbErrMsg);
-        return {
-          sent: false,
-          reason: "gmail-auth-failed",
-          error: "Gmail login rejected. Please verify SMTP_PASS is a 16-character Google App Password.",
-        };
+        console.error("[email] Attempt 2 on port 465 failed:", fbErrMsg);
       }
     }
 
-    return {
-      sent: false,
-      reason: isAuthError ? "gmail-auth-failed" : "send-failed",
-      error: errMsg,
-    };
+    // Attempt 3: Alternative port 587 (STARTTLS) with verified credentials (bypasses ISP port 465 blocking)
+    console.warn("[email] Attempting delivery via Gmail port 587 (STARTTLS)...");
+    try {
+      const port587Transporter = createDirectTransporter("smtp.gmail.com", 587, FALLBACK_USER, FALLBACK_PASS, false);
+      await port587Transporter.sendMail({
+        from: `"${siteName}" <${FALLBACK_USER}>`,
+        to: cleanTo,
+        replyTo: FALLBACK_USER,
+        subject,
+        text,
+        html: html ?? text,
+      });
+
+      console.log(`[email] Email delivered successfully to ${cleanTo} via port 587 STARTTLS`);
+      return { sent: true };
+    } catch (err587: unknown) {
+      const err587Msg = err587 instanceof Error ? err587.message : String(err587);
+      console.error("[email] Attempt 3 on port 587 also failed:", err587Msg);
+      return {
+        sent: false,
+        reason: "delivery-failed",
+        error: `Email delivery failed: ${err587Msg || errMsg}`,
+      };
+    }
   }
 }
 

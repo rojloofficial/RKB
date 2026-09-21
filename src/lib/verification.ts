@@ -10,8 +10,8 @@ import { setUserOtp } from "./models/user";
 import { sendOtpEmail } from "./email";
 
 export type OtpSendResult =
-  | { ok: true; sent: boolean; message?: string }
-  | { ok: false; error: string; status: number };
+  | { ok: true; sent: true; message?: string }
+  | { ok: false; sent: false; error: string; status: number };
 
 /**
  * Generate a new OTP for a user, store its hash, invalidate any previous OTP
@@ -28,7 +28,7 @@ export async function createAndSendOtp(
 
   const stored = await setUserOtp(userId, hashOtp(otp, email), OTP_TTL_MS);
   if (!stored) {
-    return { ok: false, error: "Unable to store verification code.", status: 500 };
+    return { ok: false, sent: false, error: "Unable to store verification code.", status: 500 };
   }
 
   // Log on server for debugging and operational visibility
@@ -52,8 +52,20 @@ export async function createAndSendOtp(
     sendError = error instanceof Error ? error.message : String(error);
   }
 
+  if (!sent) {
+    console.error(`[verification] Failed to send OTP email to ${email}:`, sendError);
+    return {
+      ok: false,
+      sent: false,
+      error:
+        sendError ||
+        "Failed to deliver verification code to your email. Please verify your email address and try again.",
+      status: 502,
+    };
+  }
+
   void now;
-  return { ok: true, sent, message: sendError };
+  return { ok: true, sent: true, message: "Verification code sent to your email." };
 }
 
 export function otpCooldownRemainingMs(lastSentAt: Date | undefined, now: Date): number {

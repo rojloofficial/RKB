@@ -84,6 +84,22 @@ function AuthPage() {
     setExpiresIn(OTP_TTL_SECONDS);
   }
 
+  useEffect(() => {
+    if (mode !== "signup") {
+      setEmailWarning("");
+      return;
+    }
+    const clean = email.trim().toLowerCase();
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      setEmailWarning("");
+      return;
+    }
+    const timer = setTimeout(() => {
+      void checkEmailExists(clean);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [email, mode]);
+
   async function checkEmailExists(checkVal: string) {
     if (mode !== "signup") return;
     const clean = checkVal.trim().toLowerCase();
@@ -98,6 +114,7 @@ function AuthPage() {
       const data = await res.json();
       if (data.exists) {
         setEmailWarning("Use other email, this email already have account.");
+        resetOtp();
       } else {
         setEmailWarning("");
       }
@@ -148,47 +165,58 @@ function AuthPage() {
     setError("");
     if (resendIn > 0 || sending) return;
 
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("Enter a valid email address to send the code.");
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError("Enter a valid email address to send the OTP.");
+      return;
+    }
+
+    if (emailWarning) {
+      setError("Use other email, this email already have account.");
       return;
     }
 
     setSending(true);
     try {
-      const res = await fetch("/api/auth/start-register", {
+      const endpoint = otpSent ? "/api/auth/resend-otp" : "/api/auth/start-register";
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 409 || data.alreadyExists) {
           setEmailWarning(data.error || "Use other email, this email already have account.");
           setError("");
+          resetOtp();
         } else {
-          setError(data.error || data.message || "Unable to send the code.");
+          setError(data.error || data.message || "Unable to send the verification code.");
+          setOtpSent(false);
         }
         if (data.resendInMs) setResendIn(Math.ceil(data.resendInMs / 1000));
         setSending(false);
         return;
       }
+
+      if (data.emailSent === false) {
+        setError(data.error || data.message || "Failed to deliver OTP to your email. Please try again.");
+        setOtpSent(false);
+        setSending(false);
+        return;
+      }
+
       setEmailWarning("");
       setOtpSent(true);
-      setOtpEmail(email);
+      setOtpEmail(cleanEmail);
       setDigits(["", "", "", "", "", ""]);
       setExpiresIn(OTP_TTL_SECONDS);
-      if (data.emailSent === false) {
-        setOtpError(
-          data.message ||
-          "We couldn't send the code right now. Please check your email configuration and resend below."
-        );
-      } else {
-        setResendIn(RESEND_COOLDOWN_SECONDS);
-      }
+      setResendIn(RESEND_COOLDOWN_SECONDS);
       digitRefs.current[0]?.focus();
     } catch {
       setError("Network error. Please try again.");
+      setOtpSent(false);
     } finally {
       setSending(false);
     }
@@ -400,7 +428,7 @@ function AuthPage() {
                   type="button"
                   variant={otpSent ? "soft" : "solid"}
                   size="sm"
-                  disabled={sending || resendIn > 0}
+                  disabled={sending || resendIn > 0 || Boolean(emailWarning)}
                   onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
                   className="!text-white whitespace-nowrap w-full sm:w-auto shrink-0"
                 >
@@ -409,8 +437,8 @@ function AuthPage() {
                     : resendIn > 0
                     ? `Resend in ${resendIn}s`
                     : otpSent
-                    ? "Resend Code"
-                    : "Send Code"}
+                    ? "Resend OTP"
+                    : "Send OTP"}
                 </Button>
               )}
             </div>
@@ -440,16 +468,16 @@ function AuthPage() {
             {mode === "signup" && !emailWarning && (
               <div className="mt-1.5">
                 {otpSent ? (
-                  <p className="text-xs font-semibold text-neutral-800">
-                    ✓ Code sent to {otpEmail}. Check your inbox or spam folder.
+                  <p className="text-xs font-semibold text-emerald-700">
+                    ✓ OTP sent to {otpEmail}. Check your inbox or spam folder.
                   </p>
                 ) : (
                   <p className="text-xs text-neutral-600">
-                    Click <strong>&quot;Send Code&quot;</strong> to receive your 6-digit verification code.
+                    Click <strong>&quot;Send OTP&quot;</strong> to receive your 6-digit verification code.
                   </p>
                 )}
                 {otpError && (
-                  <p className="mt-1 text-xs font-semibold text-neutral-800">
+                  <p className="mt-1 text-xs font-semibold text-red-700">
                     {otpError}
                   </p>
                 )}
@@ -504,9 +532,9 @@ function AuthPage() {
                   <button
                     type="button"
                     onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                    className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black"
+                    className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
                   >
-                    Resend code
+                    Resend OTP
                   </button>
                 )}
               </div>
