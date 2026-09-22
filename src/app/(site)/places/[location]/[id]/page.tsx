@@ -537,14 +537,14 @@ async function LocalAreaContent({
               <span className="text-sm font-semibold text-neutral-900">
                 Nearby Areas:
               </span>
-              <span className="rounded-xl border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-bold text-white shadow-2xs">
+              <span className="rounded-xl border border-neutral-950 bg-neutral-950 px-3 py-1.5 text-xs font-bold !text-white text-white shadow-2xs">
                 {localArea.name} (Current)
               </span>
               {siblingAreas.map((area) => (
                 <Link
                   key={area._id ?? area.slug}
                   href={`/places/${citySlug}/${area.slug}`}
-                  className="rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-800 transition hover:bg-neutral-950 hover:text-white hover:border-neutral-950 cursor-pointer shadow-2xs"
+                  className="rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-1.5 text-xs font-bold text-black transition hover:bg-neutral-950 hover:text-white hover:border-neutral-950 cursor-pointer shadow-2xs"
                 >
                   {area.name}
                 </Link>

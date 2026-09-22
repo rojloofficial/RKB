@@ -393,12 +393,7 @@ export async function listAdsByCityAndLocalArea(
     return aboutText.includes(normArea) || nameText.includes(normArea);
   });
 
-  if (matching.length > 0) {
-    return matching;
-  }
-
-  // If no ads specifically tagged for this neighborhood yet, return the city's verified ads
-  return cityAds;
+  return matching;
 }
 
 

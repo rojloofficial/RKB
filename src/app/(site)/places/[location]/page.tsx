@@ -3,8 +3,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import ContactActions from "@/components/ads/ContactActions";
-import { Card, SectionPanel } from "@/components/ui/card";
+import { SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { listAdsByCity } from "@/lib/models/ad";
@@ -12,10 +11,10 @@ import { getCitySeo } from "@/lib/models/city-seo";
 import { getCityBySlug, listAllCities } from "@/lib/models/city";
 import { listLocalAreas } from "@/lib/models/localArea";
 import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
-import { isAdActiveInCurrentShift, getTierRankInfo } from "@/lib/promo-shifts";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import CityFaqSection from "@/components/places/city-faq-section";
+import CityNearbyAreasAds from "@/components/places/city-nearby-areas-ads";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -271,92 +270,12 @@ async function CityContent({
             {city.name}
           </h1>
 
-          {localAreas.length > 0 && (
-            <div className="mt-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-neutral-500 block mb-2">
-                Local Areas in {city.name}:
-              </span>
-              <div className="flex flex-wrap items-center gap-2">
-                {localAreas.map((area) => (
-                  <Link
-                    key={area._id ?? area.slug}
-                    href={`/places/${city.slug}/${area.slug}`}
-                    className="rounded-xl border border-neutral-200 bg-neutral-100 px-3 py-1.5 text-xs font-bold text-neutral-800 transition hover:bg-neutral-950 hover:text-white hover:border-neutral-950 cursor-pointer shadow-2xs"
-                  >
-                    {area.name}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {ads.length === 0 ? (
-            <p className="mt-4 text-neutral-600">
-              No services posted in {city.name} yet. Be the first to post an ad!
-            </p>
-          ) : (
-            <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {ads.map((ad, idx) => (
-                <Card
-                  key={ad._id}
-                  className="group relative min-h-[28rem] sm:min-h-[30rem] p-5 sm:p-7 transition-shadow hover:shadow-md"
-                >
-                  {ad._id && (
-                    <Link
-                      href={`/places/${city.slug}/${ad._id}`}
-                      aria-label={`View details for ${ad.name}`}
-                      className="absolute inset-0 z-0 rounded-2xl focus:outline-none focus:ring-2 focus:ring-neutral-900 focus:ring-offset-2"
-                    />
-                  )}
-
-                  {isAdActiveInCurrentShift(ad) && (
-                    <span className={`pointer-events-none absolute left-3.5 top-3.5 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider sm:left-6 sm:top-6 shadow-xs ${getTierRankInfo(ad.promoTier, ad.promoPackage).badgeClass}`}>
-                      {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
-                    </span>
-                  )}
-
-                  {ad.city && (
-                    <span className="pointer-events-none absolute right-3.5 top-3.5 z-10 inline-flex max-w-[12rem] sm:max-w-xs items-center truncate rounded-full bg-neutral-100 border border-neutral-200 px-2.5 sm:px-3 py-1 text-xs font-semibold text-neutral-700 sm:right-6 sm:top-6">
-                      {ad.city}
-                    </span>
-                  )}
-
-                  <div className="pointer-events-none relative z-10">
-                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-neutral-900 break-words">
-                      {ad.name}
-                    </h3>
-
-                    {ad.about && (
-                      <p className="mt-2 text-sm leading-6 sm:leading-7 text-neutral-600 line-clamp-3">
-                        {ad.about}
-                      </p>
-                    )}
-
-                    {ad.images[0] && (
-                      <div className="relative mt-4 h-56 overflow-hidden rounded-xl bg-neutral-100 sm:h-64">
-                        <Image
-                          src={ad.images[0]}
-                          alt={`${ad.name} - Services in ${city.name}`}
-                          fill
-                          className="object-contain transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 640px) 100vw, 360px"
-                          priority={idx === 0}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="relative z-10 mt-4 flex flex-wrap gap-2">
-                    <ContactActions
-                      phone={ad.phone}
-                      whatsapp={ad.whatsapp}
-                      telegram={ad.telegram}
-                    />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )}
+          <CityNearbyAreasAds
+            ads={ads}
+            localAreas={localAreas}
+            cityName={city.name}
+            citySlug={city.slug}
+          />
         </SectionPanel>
       </section>
 
