@@ -295,16 +295,7 @@ async function CityContent({
               </div>
             )}
             {seo.content.map((block) => {
-              if (block.type === "h1")
-                return (
-                  <h2
-                    key={block.id}
-                    className="mt-6 text-3xl font-black text-neutral-900"
-                  >
-                    {block.text}
-                  </h2>
-                );
-              if (block.type === "h2")
+              if (block.type === "h1" || block.type === "h2" || block.type === "h3")
                 return (
                   <h2
                     key={block.id}
@@ -312,15 +303,6 @@ async function CityContent({
                   >
                     {block.text}
                   </h2>
-                );
-              if (block.type === "h3")
-                return (
-                  <h3
-                    key={block.id}
-                    className="mt-4 text-xl font-semibold text-neutral-900"
-                  >
-                    {block.text}
-                  </h3>
                 );
               return (
                 <p

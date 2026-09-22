@@ -64,7 +64,7 @@ function normalizeLocalAreaSeo(raw: Record<string, unknown>): LocalAreaSeo {
     content: Array.isArray(raw.content)
       ? (raw.content as ContentBlock[]).map((b, i) => ({
           id: b.id || `b_${i}`,
-          type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
           text: String(b.text || "").trim(),
         }))
       : [],
@@ -322,6 +322,13 @@ export async function upsertLocalAreaSeo(data: LocalAreaSeo): Promise<LocalAreaS
     areaSlug,
     cityName: data.cityName || citySlug,
     areaName: data.areaName || areaSlug,
+    content: Array.isArray(data.content)
+      ? data.content.map((b, i) => ({
+          id: b.id || `b_${i}`,
+          type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          text: String(b.text || "").trim(),
+        }))
+      : [],
     updatedAt: new Date().toISOString(),
   };
 

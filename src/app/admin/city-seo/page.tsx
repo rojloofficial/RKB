@@ -6,13 +6,32 @@ import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
 import { AdminCitySeoSkeleton } from "@/components/skeletons/admin-skeletons";
 
-type BlockType = "h1" | "h2" | "h3" | "p";
+type BlockType = "h2" | "h3" | "p";
 
 type ContentBlock = {
   id: string;
   type: BlockType;
   text: string;
 };
+
+function normalizeBlocks(blocks: unknown[]): ContentBlock[] {
+  if (!Array.isArray(blocks)) return [];
+  return blocks.map((item, idx) => {
+    const b = (typeof item === "object" && item !== null ? item : {}) as Record<string, unknown>;
+    const rawType = String(b.type || "");
+    const resolvedType: BlockType =
+      rawType === "h1"
+        ? "h2"
+        : rawType === "h2" || rawType === "h3" || rawType === "p"
+        ? (rawType as BlockType)
+        : "p";
+    return {
+      id: String(b.id || `b_${Date.now()}_${idx}`),
+      type: resolvedType,
+      text: String(b.text || ""),
+    };
+  });
+}
 
 type FaqItem = {
   id: string;
@@ -25,7 +44,7 @@ type ParentCitySeo = {
   description?: string;
   primaryKeyword?: string;
   popularSearches?: string[];
-  content?: Array<{ type: BlockType; text: string }>;
+  content?: Array<{ type: BlockType | string; text: string }>;
   faqs?: Array<{ question: string; answer: string }>;
 };
 
@@ -269,9 +288,9 @@ function CitySeoContent() {
             setImageAlt(existingAreaSeo.imageAlt ?? "");
             setContent(
               Array.isArray(existingAreaSeo.content) && existingAreaSeo.content.length
-                ? existingAreaSeo.content
+                ? normalizeBlocks(existingAreaSeo.content)
                 : [
-                    { id: uid(), type: "h1", text: "" },
+                    { id: uid(), type: "h2", text: "" },
                     { id: uid(), type: "p", text: "" },
                   ]
             );
@@ -291,7 +310,7 @@ function CitySeoContent() {
               `Verified ads in ${aName}`,
             ]);
             setContent([
-              { id: uid(), type: "h1", text: `${aName}, ${pName}` },
+              { id: uid(), type: "h2", text: `${aName}, ${pName}` },
               { id: uid(), type: "p", text: "" },
             ]);
             setFaqs([]);
@@ -332,9 +351,9 @@ function CitySeoContent() {
             setImageAlt(seo.imageAlt ?? "");
             setContent(
               Array.isArray(seo.content) && seo.content.length
-                ? seo.content
+                ? normalizeBlocks(seo.content)
                 : [
-                    { id: uid(), type: "h1", text: "" },
+                    { id: uid(), type: "h2", text: "" },
                     { id: uid(), type: "p", text: "" },
                   ]
             );
@@ -343,7 +362,7 @@ function CitySeoContent() {
           } else {
             setUrlSlug(targetSlug);
             setContent([
-              { id: uid(), type: "h1", text: "" },
+              { id: uid(), type: "h2", text: "" },
               { id: uid(), type: "p", text: "" },
             ]);
             setFaqs([]);
@@ -380,7 +399,7 @@ function CitySeoContent() {
           }
         } else {
           setContent([
-            { id: uid(), type: "h1", text: "" },
+            { id: uid(), type: "h2", text: "" },
             { id: uid(), type: "p", text: "" },
           ]);
           setFaqs([]);
@@ -511,7 +530,7 @@ function CitySeoContent() {
         ? content.map((c) => ({ type: c.type, text: c.text }))
         : [
             {
-              type: "h1",
+              type: "h2",
               text: `Top Escort Services in ${cityName}`,
             },
             {
@@ -692,23 +711,18 @@ function CitySeoContent() {
             if (!str) continue;
             if (str.startsWith("### ")) {
               newBlocks.push({ id: uid(), type: "h3", text: str.slice(4).trim() });
-            } else if (str.startsWith("## ")) {
-              newBlocks.push({ id: uid(), type: "h2", text: str.slice(3).trim() });
-            } else if (str.startsWith("# ")) {
-              newBlocks.push({ id: uid(), type: "h1", text: str.slice(2).trim() });
+            } else if (str.startsWith("## ") || str.startsWith("# ")) {
+              newBlocks.push({ id: uid(), type: "h2", text: str.replace(/^#+\s*/, "").trim() });
             } else {
               newBlocks.push({ id: uid(), type: "p", text: str });
             }
           } else if (typeof item === "object" && item !== null) {
-            const bType: BlockType = ["h1", "h2", "h3", "p"].includes(item.type)
-              ? item.type
-              : item.tag === "h1" || item.heading === 1
-              ? "h1"
-              : item.tag === "h2" || item.heading === 2
-              ? "h2"
-              : item.tag === "h3" || item.heading === 3
-              ? "h3"
-              : "p";
+            const bType: BlockType =
+              item.type === "h1" || item.tag === "h1" || item.heading === 1 || item.type === "h2" || item.tag === "h2" || item.heading === 2
+                ? "h2"
+                : item.type === "h3" || item.tag === "h3" || item.heading === 3
+                ? "h3"
+                : "p";
             const bText = String(
               item.text ||
                 item.content ||
@@ -733,10 +747,8 @@ function CitySeoContent() {
           if (!trimmed) continue;
           if (trimmed.startsWith("### ")) {
             newBlocks.push({ id: uid(), type: "h3", text: trimmed.slice(4).trim() });
-          } else if (trimmed.startsWith("## ")) {
-            newBlocks.push({ id: uid(), type: "h2", text: trimmed.slice(3).trim() });
-          } else if (trimmed.startsWith("# ")) {
-            newBlocks.push({ id: uid(), type: "h1", text: trimmed.slice(2).trim() });
+          } else if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+            newBlocks.push({ id: uid(), type: "h2", text: trimmed.replace(/^#+\s*/, "").trim() });
           } else {
             newBlocks.push({ id: uid(), type: "p", text: trimmed });
           }
@@ -879,16 +891,16 @@ function CitySeoContent() {
       ).slice(0, 8)
     );
 
-    const adaptedContent = (parentCitySeo.content ?? []).map((b: { type: BlockType; text: string }) => ({
+    const adaptedContent = (parentCitySeo.content ?? []).map((b: { type: BlockType | string; text: string }) => ({
       id: uid(),
-      type: b.type,
+      type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
       text: b.text.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
     }));
     setContent(
       adaptedContent.length > 0
         ? adaptedContent
         : [
-            { id: uid(), type: "h1", text: `${aName}, ${cName}` },
+            { id: uid(), type: "h2", text: `${aName}, ${cName}` },
             { id: uid(), type: "p", text: "" },
           ]
     );
@@ -1100,7 +1112,6 @@ function CitySeoContent() {
   const descLen = description.length;
   const contentText = content.map((b) => b.text).join(" ");
   const wordCount = contentText.trim() ? contentText.trim().split(/\s+/).length : 0;
-  const h1Count = content.filter((b) => b.type === "h1").length;
   const h2Count = content.filter((b) => b.type === "h2").length;
   const h3Count = content.filter((b) => b.type === "h3").length;
 
@@ -1119,8 +1130,8 @@ function CitySeoContent() {
     { label: "Meta description exists", ok: descLen > 0 },
     { label: "Primary keyword exists", ok: primaryKeyword.trim().length > 0 },
     { label: "URL slug exists", ok: urlSlug.trim().length > 0 },
-    { label: "Exactly one H1 exists", ok: h1Count === 1, warn: h1Count > 1 },
-    { label: "At least one H2 exists", ok: h2Count >= 1 },
+    { label: "Top page H1 exists", ok: Boolean(name.trim() || title.trim()) },
+    { label: "At least one H2 heading exists", ok: h2Count >= 1 },
     { label: "Content has sufficient length", ok: wordCount >= 300 },
     { label: "Image has alt text", ok: Boolean(featuredImage && imageAlt.trim()) },
     { label: "Canonical URL exists", ok: canonicalUrl.trim().length > 0 },
@@ -1539,12 +1550,6 @@ function CitySeoContent() {
               </div>
             </div>
 
-            {h1Count > 1 && (
-              <p className="mb-3 rounded-xl bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700">
-                You already have an H1. SEO best practice is to use one primary H1 per page.
-              </p>
-            )}
-
             <div className="space-y-3">
               {content.map((block, i) => (
                 <div
@@ -1571,7 +1576,6 @@ function CitySeoContent() {
                     }
                     className="rounded-lg border border-pink-200 bg-white px-2 py-2 text-sm text-red-950 outline-none"
                   >
-                    <option value="h1">H1 — Heading 1</option>
                     <option value="h2">H2 — Heading 2</option>
                     <option value="h3">H3 — Heading 3</option>
                     <option value="p">Paragraph</option>
@@ -1582,9 +1586,7 @@ function CitySeoContent() {
                     placeholder="Write your content here..."
                     rows={block.type === "p" ? 3 : 1}
                     className={`flex-1 rounded-lg border border-pink-200 bg-white px-3 py-2 text-red-950 outline-none focus:border-red-500 ${
-                      block.type === "h1"
-                        ? "text-2xl font-black"
-                        : block.type === "h2"
+                      block.type === "h2"
                         ? "text-xl font-bold"
                         : block.type === "h3"
                         ? "text-lg font-semibold"
@@ -1759,7 +1761,7 @@ function CitySeoContent() {
               <p>Meta description: {descLen} chars</p>
               <p>Primary keyword usage: {keywordUsage} times</p>
               <p>Content word count: {wordCount}</p>
-              <p>H1: {h1Count} · H2: {h2Count} · H3: {h3Count}</p>
+              <p>H2: {h2Count} · H3: {h3Count}</p>
             </div>
           </section>
 

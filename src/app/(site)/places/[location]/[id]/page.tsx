@@ -606,9 +606,9 @@ async function LocalAreaContent({
                   </span>
 
                   <div className="pointer-events-none relative z-10">
-                    <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-neutral-900 break-words">
+                    <h2 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-neutral-900 break-words">
                       {ad.name}
-                    </h3>
+                    </h2>
 
                     {ad.about && (
                       <p className="mt-2 text-sm leading-6 sm:leading-7 text-neutral-600 line-clamp-3">
@@ -675,16 +675,7 @@ async function LocalAreaContent({
           <SectionPanel>
             <Eyebrow>Local Guide</Eyebrow>
             {seo.content.map((block) => {
-              if (block.type === "h1")
-                return (
-                  <h2
-                    key={block.id}
-                    className="mt-6 text-2xl sm:text-3xl font-black text-neutral-900"
-                  >
-                    {block.text}
-                  </h2>
-                );
-              if (block.type === "h2")
+              if (block.type === "h1" || block.type === "h2" || block.type === "h3")
                 return (
                   <h2
                     key={block.id}
@@ -692,15 +683,6 @@ async function LocalAreaContent({
                   >
                     {block.text}
                   </h2>
-                );
-              if (block.type === "h3")
-                return (
-                  <h3
-                    key={block.id}
-                    className="mt-4 text-lg sm:text-xl font-semibold text-neutral-900"
-                  >
-                    {block.text}
-                  </h3>
                 );
               return (
                 <p

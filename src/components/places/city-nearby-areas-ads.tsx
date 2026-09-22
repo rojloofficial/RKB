@@ -189,9 +189,9 @@ export default function CityNearbyAreasAds({
               )}
 
               <div className="pointer-events-none relative z-10">
-                <h3 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-neutral-900 break-words">
+                <h2 className="pr-20 sm:pr-24 text-lg sm:text-xl font-black text-neutral-900 break-words">
                   {ad.name}
-                </h3>
+                </h2>
 
                 {ad.about && (
                   <p className="mt-2 text-sm leading-6 sm:leading-7 text-neutral-600 line-clamp-3">

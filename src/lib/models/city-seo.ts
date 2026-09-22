@@ -78,7 +78,7 @@ function normalizeSeoDoc(raw: Record<string, unknown>): CitySeo {
     content: Array.isArray(raw.content)
       ? (raw.content as ContentBlock[]).map((b, i) => ({
           id: b.id || `b_${i}`,
-          type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
           text: String(b.text || ""),
         }))
       : [],
@@ -238,7 +238,7 @@ export async function upsertCitySeo(data: CitySeo): Promise<CitySeo> {
     content: Array.isArray(data.content)
       ? data.content.map((b, i) => ({
           id: b.id || `b_${i}`,
-          type: (["h1", "h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
+          type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
           text: String(b.text || "").trim(),
         }))
       : [],

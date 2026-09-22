@@ -1,8 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Lora } from "next/font/google";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
+
+const classicFont = Lora({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-classic",
+  fallback: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -99,11 +107,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={`h-full antialiased ${classicFont.variable}`}>
       <head>
         <JsonLd data={globalSchema} />
       </head>
-      <body className="min-h-full bg-neutral-50 text-neutral-900">
+      <body className={`${classicFont.className} min-h-full bg-neutral-50 text-neutral-900`}>
         {children}
       </body>
     </html>
