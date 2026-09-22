@@ -17,12 +17,10 @@ export function invalidateStatesCache(): void {
   statesLruCache.clear();
 }
 
+import { slugifyLocation } from "../location-normalizer";
+
 function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  return slugifyLocation(value);
 }
 
 export const DEFAULT_INDIAN_STATES: string[] = [

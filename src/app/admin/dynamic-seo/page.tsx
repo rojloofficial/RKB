@@ -45,9 +45,6 @@ export default function DynamicSeoPage() {
   const [cities, setCities] = useState<CityItem[]>([]);
   const [allLocalAreas, setAllLocalAreas] = useState<LocalAreaItem[]>([]);
   const [seoMap, setSeoMap] = useState<Record<string, LocalAreaSeoRecord>>({});
-  const [citiesWithCustomSeo, setCitiesWithCustomSeo] = useState<Set<string>>(
-    new Set()
-  );
 
   // Local pending mode updates: key = `${citySlug}::${areaSlug}` -> mode
   const [pendingModes, setPendingModes] = useState<Record<string, SeoMode>>({});
@@ -88,11 +85,6 @@ export default function DynamicSeoPage() {
         map[key] = item;
       });
       setSeoMap(map);
-
-      const customSet = new Set<string>(
-        (seoData.citiesWithCustomSeo ?? []).map((s: string) => s.toLowerCase().trim())
-      );
-      setCitiesWithCustomSeo(customSet);
 
       // Expand all cities by default if fewer than 20, or expand first 5
       const initialExpanded = new Set<string>();

@@ -5,16 +5,29 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const stateFilter = searchParams.get("state")?.trim().toLowerCase();
+  const rawState = searchParams.get("state")?.trim();
+  const stateFilter = rawState?.toLowerCase();
 
   try {
     let cities = await listAllCities();
-    if (stateFilter) {
-      cities = cities.filter(
-        (c) =>
-          c.state?.trim().toLowerCase() === stateFilter ||
+    if (stateFilter && rawState) {
+      const { resolveCanonicalState, slugifyLocation } = await import("@/lib/location-normalizer");
+      const canonical = resolveCanonicalState(rawState);
+      const canonicalLower = canonical.canonicalName.toLowerCase();
+      const canonicalSlug = canonical.slug;
+
+      cities = cities.filter((c) => {
+        if (!c.state) return false;
+        const cStateLower = c.state.trim().toLowerCase();
+        const cStateSlug = slugifyLocation(c.state);
+        return (
+          cStateLower === stateFilter ||
+          cStateLower === canonicalLower ||
+          cStateSlug === stateFilter ||
+          cStateSlug === canonicalSlug ||
           c.region?.trim().toLowerCase() === stateFilter
-      );
+        );
+      });
     }
     return NextResponse.json(
       { cities },

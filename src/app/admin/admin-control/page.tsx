@@ -56,9 +56,11 @@ function AdminControlInner() {
 
   useEffect(() => {
     if (!editId) {
-      setEmail("");
-      setPassword("");
-      setPermissions([]);
+      queueMicrotask(() => {
+        setEmail("");
+        setPassword("");
+        setPermissions([]);
+      });
       return;
     }
 

@@ -100,13 +100,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const storedToken = localStorage.getItem(STORAGE_KEY);
       const storedUser = localStorage.getItem(USER_STORAGE_KEY);
       if (storedToken) {
-        setTokenState(storedToken);
+        queueMicrotask(() => {
+          if (mounted) setTokenState(storedToken);
+        });
       }
       if (storedUser) {
         try {
           const parsed = JSON.parse(storedUser);
           if (parsed && parsed._id) {
-            setUserState(parsed);
+            queueMicrotask(() => {
+              if (mounted) setUserState(parsed);
+            });
           }
         } catch {
           localStorage.removeItem(USER_STORAGE_KEY);

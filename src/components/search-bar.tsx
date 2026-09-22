@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Button from "@/components/ui/button";
 import { PrefixTrie } from "@/lib/trie";
 
@@ -101,6 +103,7 @@ const POPULAR_SEARCH_TARGETS = [
 ];
 
 export default function SearchBar() {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -157,9 +160,7 @@ export default function SearchBar() {
       if (selected) {
         setQuery(selected);
         setIsOpen(false);
-        if (typeof window !== "undefined") {
-          window.location.href = `/places?q=${encodeURIComponent(selected)}`;
-        }
+        router.push(`/places?q=${encodeURIComponent(selected)}`);
       }
     } else if (e.key === "Escape") {
       setIsOpen(false);
@@ -201,7 +202,7 @@ export default function SearchBar() {
         <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-neutral-200 bg-white py-1.5 text-left shadow-lg">
           {suggestions.map((suggestion, idx) => (
             <li key={suggestion}>
-              <a
+              <Link
                 href={`/places?q=${encodeURIComponent(suggestion)}`}
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center gap-2.5 px-5 py-2.5 text-sm transition-colors ${
@@ -212,7 +213,7 @@ export default function SearchBar() {
               >
                 <span className="text-neutral-400 text-xs">📍</span>
                 <span>{suggestion}</span>
-              </a>
+              </Link>
             </li>
           ))}
         </ul>

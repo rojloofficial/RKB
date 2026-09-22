@@ -99,23 +99,6 @@ async function memoryFindBySessionToken(
   return null;
 }
 
-async function memoryCreateUser(
-  data: Omit<User, "_id" | "createdAt" | "updatedAt">
-): Promise<PublicUser> {
-  const store = await readStore();
-  const now = new Date();
-  const user: User = {
-    _id: `mem_${store.users.length + 1}_${Date.now()}`,
-    ...data,
-    email: normalizeEmail(data.email),
-    coins: Number((data as User).coins ?? 0),
-    createdAt: now,
-    updatedAt: now,
-  };
-  store.users.push(user as unknown as (typeof store.users)[number]);
-  await writeStore(store);
-  return toPublicUser(user);
-}
 
 let userIndexesCreated = false;
 
@@ -198,7 +181,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
     try {
       const store = await readStore();
       const idx = store.users.findIndex(
-        (u) => String((u as any).email || "").trim().toLowerCase() === normalized
+        (u) => String((u as { email?: string }).email || "").trim().toLowerCase() === normalized
       );
       if (idx === -1) {
         store.users.push(foundUser as unknown as (typeof store.users)[number]);
@@ -539,13 +522,13 @@ export async function listUsers(): Promise<PublicUser[]> {
     let storeUpdated = false;
     for (const [key, fullUser] of fullUsersMap.entries()) {
       const idx = store.users.findIndex(
-        (su) => String((su as any).email || "").trim().toLowerCase() === key
+        (su) => String((su as { email?: string }).email || "").trim().toLowerCase() === key
       );
       if (idx === -1) {
         store.users.push(fullUser as unknown as (typeof store.users)[number]);
         storeUpdated = true;
       } else {
-        const su = store.users[idx] as any;
+        const su = store.users[idx] as { passwordHash?: string; lastLogin?: Date | string };
         if (!su.passwordHash && fullUser.passwordHash) {
           su.passwordHash = fullUser.passwordHash;
           storeUpdated = true;

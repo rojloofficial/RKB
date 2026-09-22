@@ -20,6 +20,15 @@ type FaqItem = {
   answer: string;
 };
 
+type ParentCitySeo = {
+  title?: string;
+  description?: string;
+  primaryKeyword?: string;
+  popularSearches?: string[];
+  content?: Array<{ type: BlockType; text: string }>;
+  faqs?: Array<{ question: string; answer: string }>;
+};
+
 function slugify(value: string): string {
   return value
     .toLowerCase()
@@ -152,7 +161,7 @@ function CitySeoContent() {
 
   // Local Area & Parent City specific state
   const [parentCityName, setParentCityName] = useState("");
-  const [parentCitySeo, setParentCitySeo] = useState<any>(null);
+  const [parentCitySeo, setParentCitySeo] = useState<ParentCitySeo | null>(null);
   const [areaMode, setAreaMode] = useState<"inherit" | "individual">("individual");
   const [cityLocalAreas, setCityLocalAreas] = useState<
     Array<{ name: string; slug: string; mode?: string }>
@@ -242,7 +251,7 @@ function CitySeoContent() {
           ]);
 
           const localAreaRecord = (areaListRes.localAreas ?? []).find(
-            (a: any) => a.slug.toLowerCase() === editArea.toLowerCase()
+            (a: { slug: string; name: string }) => a.slug.toLowerCase() === editArea.toLowerCase()
           );
           const aName = localAreaRecord?.name || editArea;
           setName(aName);
@@ -355,12 +364,12 @@ function CitySeoContent() {
             const areas = areasRes.localAreas ?? [];
             const areaSeoList = areaSeoRes.seoList ?? [];
             const areaSeoMap = new Map<string, string>();
-            areaSeoList.forEach((s: any) => {
+            areaSeoList.forEach((s: { areaSlug: string; mode?: string }) => {
               areaSeoMap.set(s.areaSlug.toLowerCase(), s.mode || "inherit");
             });
 
             setCityLocalAreas(
-              areas.map((a: any) => ({
+              areas.map((a: { name: string; slug: string }) => ({
                 name: a.name,
                 slug: a.slug,
                 mode: areaSeoMap.get(a.slug.toLowerCase()) || "inherit",
@@ -870,7 +879,7 @@ function CitySeoContent() {
       ).slice(0, 8)
     );
 
-    const adaptedContent = (parentCitySeo.content ?? []).map((b: any) => ({
+    const adaptedContent = (parentCitySeo.content ?? []).map((b: { type: BlockType; text: string }) => ({
       id: uid(),
       type: b.type,
       text: b.text.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
@@ -884,7 +893,7 @@ function CitySeoContent() {
           ]
     );
 
-    const adaptedFaqs = (parentCitySeo.faqs ?? []).map((f: any) => ({
+    const adaptedFaqs = (parentCitySeo.faqs ?? []).map((f: { question: string; answer: string }) => ({
       id: uid(),
       question: f.question.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
       answer: f.answer.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),

@@ -30,7 +30,10 @@ export default function CityNearbyAreasAds({
       const params = new URLSearchParams(window.location.search);
       const initialArea = params.get("area");
       if (initialArea && localAreas.some((a) => a.slug.toLowerCase() === initialArea.toLowerCase())) {
-        setSelectedAreaSlug(initialArea.toLowerCase());
+        const targetSlug = initialArea.toLowerCase();
+        queueMicrotask(() => {
+          setSelectedAreaSlug(targetSlug);
+        });
       }
     }
   }, [localAreas]);

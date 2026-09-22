@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const storedHash = String(user.passwordHash || (user as any).password || "").trim();
+    const storedHash = String(user.passwordHash || (user as { password?: string }).password || "").trim();
     if (!storedHash) {
       return NextResponse.json(
         { error: "Account registration is incomplete. Please sign up to set your password." },

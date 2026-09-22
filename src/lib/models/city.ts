@@ -2,6 +2,11 @@ import { cache } from "react";
 import { readStore, writeStore } from "../persist";
 import { cityPlaces, getCityBySlug as getStaticCityBySlug } from "../places";
 import { LRUCache } from "../lru-cache";
+import {
+  resolveCanonicalCity,
+  normalizeLocationName,
+  slugifyLocation,
+} from "../location-normalizer";
 
 export type CityRecord = {
   _id?: string;
@@ -16,11 +21,7 @@ export type CityRecord = {
 };
 
 function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  return slugifyLocation(value);
 }
 
 export async function listCities(): Promise<CityRecord[]> {
@@ -98,7 +99,8 @@ export const getCityBySlug = cache(async function (
   }
 
   // O(1) Static City Lookup
-  const staticCity = getStaticCityBySlug(sLower);
+  const canonical = resolveCanonicalCity(sLower);
+  const staticCity = getStaticCityBySlug(sLower) || (canonical.slug ? getStaticCityBySlug(canonical.slug) : undefined);
   if (staticCity) {
     if (
       staticCity.state &&
@@ -123,7 +125,10 @@ export const getCityBySlug = cache(async function (
   }
 
   const custom = (await listCities()).find(
-    (c) => c.slug.toLowerCase() === sLower
+    (c) =>
+      c.slug.toLowerCase() === sLower ||
+      (canonical.slug && c.slug.toLowerCase() === canonical.slug) ||
+      normalizeLocationName(c.name) === normalizeLocationName(canonical.canonicalName)
   );
   const found = custom ?? null;
   cityLruCache.set(sLower, found);

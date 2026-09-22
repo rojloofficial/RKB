@@ -34,7 +34,7 @@ export default function AdminLogin() {
         return;
       }
       await refresh();
-      window.location.href = "/admin";
+      router.replace("/admin");
     } catch {
       setError("Network error. Please try again.");
     } finally {

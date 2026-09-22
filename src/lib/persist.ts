@@ -161,7 +161,7 @@ async function readStoreFromMongo(): Promise<StoreData> {
       db.collection("users").find({}).toArray().catch(() => []),
     ]);
 
-    let baseData: Partial<StoreData> = {};
+    const baseData: Partial<StoreData> = {};
     if (storeDoc) {
       for (const [k, v] of Object.entries(storeDoc)) {
         if (k !== "_id" && k !== "key") baseData[k] = v;

@@ -89,7 +89,6 @@ export default function AdminCities() {
   const router = useRouter();
   const me = useAdminContext();
   const [allLocations, setAllLocations] = useState<AdminLocation[]>([]);
-  const [seoMap, setSeoMap] = useState<Record<string, SeoInfo>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -173,7 +172,6 @@ export default function AdminCities() {
             map[s.slug] = { hasSeo: true, updatedAt: s.updatedAt };
           }
         );
-        setSeoMap(map);
       }
 
       const locations: AdminLocation[] = [];

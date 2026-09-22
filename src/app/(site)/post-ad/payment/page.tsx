@@ -296,8 +296,9 @@ function PaymentView() {
       setDeclineReason("");
 
       // Start 24h countdown immediately
-      const nowIso = new Date().toISOString();
-      const nextAllowedIso = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+      const nowDate = new Date();
+      const nowIso = nowDate.toISOString();
+      const nextAllowedIso = new Date(nowDate.getTime() + 24 * 60 * 60 * 1000).toISOString();
       setEligibility({
         allowed: false,
         remainingMs: 24 * 60 * 60 * 1000,
@@ -308,7 +309,7 @@ function PaymentView() {
       });
 
       window.dispatchEvent(new CustomEvent("coins:updated"));
-      window.localStorage.setItem("rojlo_coin_update", String(Date.now()));
+      window.localStorage.setItem("rojlo_coin_update", String(nowDate.getTime()));
       void checkEligibility();
       setTransactionId("");
       setCouponCode("");

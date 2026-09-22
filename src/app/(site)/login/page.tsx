@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Button from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
@@ -113,23 +113,7 @@ function AuthPage() {
     setTimerTrigger(0);
   }
 
-  useEffect(() => {
-    if (mode !== "signup") {
-      setEmailWarning("");
-      return;
-    }
-    const clean = email.trim().toLowerCase();
-    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
-      setEmailWarning("");
-      return;
-    }
-    const timer = setTimeout(() => {
-      void checkEmailExists(clean);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [email, mode]);
-
-  async function checkEmailExists(checkVal: string) {
+  const checkEmailExists = useCallback(async (checkVal: string) => {
     if (mode !== "signup") return;
     const clean = sanitizeEmail(checkVal);
     if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return;
@@ -150,7 +134,23 @@ function AuthPage() {
     } catch {
       // Ignore background check failure
     }
-  }
+  }, [mode]);
+
+  useEffect(() => {
+    if (mode !== "signup") {
+      queueMicrotask(() => setEmailWarning(""));
+      return;
+    }
+    const clean = email.trim().toLowerCase();
+    if (!clean || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) {
+      queueMicrotask(() => setEmailWarning(""));
+      return;
+    }
+    const timer = setTimeout(() => {
+      void checkEmailExists(clean);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [email, mode, checkEmailExists]);
 
   function handleDigitChange(index: number, value: string) {
     const clean = value.replace(/\D/g, "").slice(-1);

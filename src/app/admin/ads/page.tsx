@@ -56,7 +56,9 @@ export default function AdminAds() {
     }
 
     let active = true;
-    void loadAds();
+    queueMicrotask(() => {
+      if (active) void loadAds();
+    });
 
     fetch("/api/admin/cities", { credentials: "include" })
       .then((r) => r.json())

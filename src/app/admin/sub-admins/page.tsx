@@ -63,6 +63,16 @@ export default function SubAdminList() {
     }
   }, [me, router, load]);
 
+  const filteredAdmins = useMemo(() => {
+    if (!search.trim()) return admins;
+    const q = search.toLowerCase().trim();
+    return admins.filter((a) => {
+      if (a.email.toLowerCase().includes(q)) return true;
+      const labels = a.permissions.map((p) => (SECTION_LABEL_MAP.get(p) || p).toLowerCase());
+      return labels.some((lbl) => lbl.includes(q));
+    });
+  }, [admins, search]);
+
   if (!me || !me.authenticated) return null;
 
   async function remove(id: string) {
@@ -84,16 +94,6 @@ export default function SubAdminList() {
       alert("Network error. Please try again.");
     }
   }
-
-  const filteredAdmins = useMemo(() => {
-    if (!search.trim()) return admins;
-    const q = search.toLowerCase().trim();
-    return admins.filter((a) => {
-      if (a.email.toLowerCase().includes(q)) return true;
-      const labels = a.permissions.map((p) => (SECTION_LABEL_MAP.get(p) || p).toLowerCase());
-      return labels.some((lbl) => lbl.includes(q));
-    });
-  }, [admins, search]);
 
   return (
     <main className="p-4 sm:p-6 lg:p-10 min-w-0">

@@ -49,8 +49,14 @@ import {
   getAllDefaultLocalAreas,
   type LocalAreaEntry,
 } from "../local-areas-data";
-import { cityPlaces, getCityBySlug } from "../places";
+import { getCityBySlug, cityPlaces } from "../places";
 import { LRUCache } from "../lru-cache";
+import {
+  resolveCanonicalCity,
+  resolveCanonicalState,
+  slugifyLocation,
+  normalizeLocationName,
+} from "../location-normalizer";
 
 export type LocalAreaDetail = {
   name: string;
@@ -83,13 +89,14 @@ export const listLocalAreas = cache(async function (filters?: {
   const deletedAreaIds = new Set(
     (store.deletedLocalAreas ?? []).map((s: string) => String(s).toLowerCase().trim())
   );
-  let storedAreas = ((store.localAreas ?? []) as unknown as LocalAreaRecord[]);
+  const storedAreas = ((store.localAreas ?? []) as unknown as LocalAreaRecord[]);
 
   // Collect default local areas matching the query
   let defaultAreas: LocalAreaEntry[] = [];
   if (filters?.citySlug || filters?.cityName) {
-    const queryCity = (filters.citySlug || filters.cityName || "").toLowerCase();
-    defaultAreas = getDefaultLocalAreasForCity(queryCity);
+    const rawCity = (filters.citySlug || filters.cityName || "").toLowerCase();
+    const canonical = resolveCanonicalCity(rawCity);
+    defaultAreas = getDefaultLocalAreasForCity(canonical.slug || rawCity);
   } else {
     defaultAreas = getAllDefaultLocalAreas();
   }
@@ -134,27 +141,40 @@ export const listLocalAreas = cache(async function (filters?: {
   let areas = Array.from(mergedMap.values());
 
   if (filters?.citySlug) {
-    const targetSlug = filters.citySlug.trim().toLowerCase();
+    const rawSlug = filters.citySlug.trim().toLowerCase();
+    const canonical = resolveCanonicalCity(rawSlug);
+    const targetSlug = canonical.slug || rawSlug;
     areas = areas.filter(
       (a) =>
         a.citySlug?.toLowerCase() === targetSlug ||
+        a.citySlug?.toLowerCase() === rawSlug ||
         slugify(a.cityName) === targetSlug
     );
   } else if (filters?.cityName) {
-    const targetName = filters.cityName.trim().toLowerCase();
+    const rawName = filters.cityName.trim().toLowerCase();
+    const canonical = resolveCanonicalCity(rawName);
+    const targetName = canonical.canonicalName.toLowerCase();
+    const targetSlug = canonical.slug;
     areas = areas.filter(
       (a) =>
+        a.cityName?.toLowerCase() === rawName ||
         a.cityName?.toLowerCase() === targetName ||
-        a.citySlug?.toLowerCase() === slugify(targetName)
+        a.citySlug?.toLowerCase() === targetSlug ||
+        a.citySlug?.toLowerCase() === slugify(rawName)
     );
   }
 
   if (filters?.stateName) {
-    const targetState = filters.stateName.trim().toLowerCase();
+    const rawState = filters.stateName.trim().toLowerCase();
+    const canonicalState = resolveCanonicalState(rawState);
+    const targetState = canonicalState.canonicalName.toLowerCase();
+    const targetSlug = canonicalState.slug;
     areas = areas.filter(
       (a) =>
+        a.stateName?.toLowerCase() === rawState ||
         a.stateName?.toLowerCase() === targetState ||
-        a.stateSlug?.toLowerCase() === slugify(targetState)
+        a.stateSlug?.toLowerCase() === targetSlug ||
+        slugify(a.stateName ?? "") === targetSlug
     );
   }
 
@@ -477,6 +497,7 @@ export async function validateLocationsJson(json: unknown): Promise<JsonValidati
   }
 
   // Calculate new vs existing records against current store
+  // Calculate new vs existing records against both static data and current store
   const store = await readStore();
   const existingStates = (store.states ?? []) as Array<{ name?: string; slug?: string }>;
   const existingCities = (store.cities ?? []) as Array<{ name?: string; slug?: string; state?: string }>;
@@ -487,31 +508,56 @@ export async function validateLocationsJson(json: unknown): Promise<JsonValidati
   let newLocalAreas = 0;
 
   for (const s of parsedData) {
-    const stateSlug = slugify(s.stateName);
-    const stateExists = existingStates.some(
-      (st) =>
-        st.slug === stateSlug ||
-        st.name?.trim().toLowerCase() === s.stateName.toLowerCase()
-    );
+    const canonicalState = resolveCanonicalState(s.stateName);
+    const stateNameNorm = normalizeLocationName(canonicalState.canonicalName);
+    const stateSlug = canonicalState.slug;
+
+    const stateExists =
+      existingStates.some(
+        (st) =>
+          st.slug === stateSlug ||
+          normalizeLocationName(st.name ?? "") === stateNameNorm
+      ) ||
+      cityPlaces.some(
+        (cp) =>
+          cp.state &&
+          (slugifyLocation(cp.state) === stateSlug ||
+            normalizeLocationName(cp.state) === stateNameNorm)
+      );
+
     if (!stateExists) newStates++;
 
     for (const c of s.cities) {
-      const citySlug = slugify(c.cityName);
-      const cityExists = existingCities.some(
-        (ct) =>
-          ct.slug === citySlug ||
-          (ct.name?.trim().toLowerCase() === c.cityName.toLowerCase() &&
-            ct.state?.trim().toLowerCase() === s.stateName.toLowerCase())
-      );
+      const canonicalCity = resolveCanonicalCity(c.cityName);
+      const cityNameNorm = normalizeLocationName(canonicalCity.canonicalName);
+      const citySlug = canonicalCity.slug;
+
+      const cityExists =
+        existingCities.some(
+          (ct) =>
+            ct.slug === citySlug ||
+            normalizeLocationName(ct.name ?? "") === cityNameNorm
+        ) ||
+        cityPlaces.some(
+          (cp) =>
+            cp.slug === citySlug ||
+            normalizeLocationName(cp.name) === cityNameNorm
+        );
+
       if (!cityExists) newCities++;
 
       for (const a of c.localAreas) {
-        const areaSlug = slugify(a);
-        const areaExists = existingAreas.some(
-          (ar) =>
-            ar.citySlug === citySlug &&
-            (ar.slug === areaSlug || ar.name?.trim().toLowerCase() === a.toLowerCase())
-        );
+        const areaNameNorm = normalizeLocationName(a);
+        const areaSlug = slugifyLocation(a);
+
+        const areaExists =
+          existingAreas.some(
+            (ar) =>
+              (ar.citySlug === citySlug || ar.citySlug === slugifyLocation(c.cityName)) &&
+              (ar.slug === areaSlug || normalizeLocationName(ar.name ?? "") === areaNameNorm)
+          ) ||
+          Boolean(findDefaultLocalArea(citySlug, areaSlug));
+
         if (!areaExists) newLocalAreas++;
       }
     }
@@ -562,13 +608,14 @@ export async function importLocationsJson(json: unknown): Promise<{
   const localAreas = store.localAreas as unknown as LocalAreaRecord[];
 
   for (const s of data) {
-    const trimmedStateName = s.stateName.trim();
-    const stateSlug = slugify(trimmedStateName) || `state-${Date.now()}`;
+    const canonicalState = resolveCanonicalState(s.stateName);
+    const trimmedStateName = canonicalState.canonicalName;
+    const stateSlug = canonicalState.slug || `state-${Date.now()}`;
 
     let existingState = states.find(
       (st) =>
         st.slug === stateSlug ||
-        st.name?.trim().toLowerCase() === trimmedStateName.toLowerCase()
+        normalizeLocationName(st.name ?? "") === normalizeLocationName(trimmedStateName)
     );
 
     if (!existingState) {
@@ -582,14 +629,14 @@ export async function importLocationsJson(json: unknown): Promise<{
     }
 
     for (const c of s.cities) {
-      const trimmedCityName = c.cityName.trim();
-      const citySlug = slugify(trimmedCityName) || `city-${Date.now()}`;
+      const canonicalCity = resolveCanonicalCity(c.cityName);
+      const trimmedCityName = canonicalCity.canonicalName;
+      const citySlug = canonicalCity.slug || `city-${Date.now()}`;
 
       let existingCity = cities.find(
         (ct) =>
           ct.slug === citySlug ||
-          (ct.name?.trim().toLowerCase() === trimmedCityName.toLowerCase() &&
-            ct.state?.trim().toLowerCase() === trimmedStateName.toLowerCase())
+          normalizeLocationName(ct.name ?? "") === normalizeLocationName(trimmedCityName)
       );
 
       if (!existingCity) {
@@ -611,13 +658,13 @@ export async function importLocationsJson(json: unknown): Promise<{
 
       for (const areaName of c.localAreas) {
         const trimmedAreaName = areaName.trim();
-        const areaSlug = slugify(trimmedAreaName) || `area-${Date.now()}`;
+        const areaSlug = slugifyLocation(trimmedAreaName) || `area-${Date.now()}`;
 
         const existingArea = localAreas.find(
           (ar) =>
-            ar.citySlug === citySlug &&
+            (ar.citySlug === citySlug || ar.citySlug === canonicalCity.slug) &&
             (ar.slug === areaSlug ||
-              ar.name?.trim().toLowerCase() === trimmedAreaName.toLowerCase())
+              normalizeLocationName(ar.name ?? "") === normalizeLocationName(trimmedAreaName))
         );
 
         if (!existingArea) {

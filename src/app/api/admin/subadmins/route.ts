@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAdminContext } from "@/lib/admin-access";
+import { getAdminContext, AdminContext } from "@/lib/admin-access";
 import {
   listSubAdmins,
   getSubAdminById,
@@ -8,7 +8,7 @@ import {
   deleteSubAdmin,
 } from "@/lib/models/admin-user";
 
-function isAuthorized(ctx: any): boolean {
+function isAuthorized(ctx: AdminContext | null): boolean {
   if (!ctx) return false;
   if (ctx.role === "main") return true;
   return (

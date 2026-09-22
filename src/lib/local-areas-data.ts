@@ -1,3 +1,5 @@
+import { resolveCanonicalCity, slugifyLocation } from "./location-normalizer";
+
 export type LocalAreaEntry = {
   name: string;
   slug: string;
@@ -8,435 +10,1709 @@ export type LocalAreaEntry = {
 };
 
 export function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
+  return slugifyLocation(value);
 }
 
 export const POPULAR_LOCAL_AREAS_MAP: Record<
   string,
   Array<{ name: string; slug: string; description?: string; highlights?: string[] }>
 > = {
-  mumbai: [
-    {
-      name: "Andheri West",
-      slug: "andheri-west",
-      description: "A prominent commercial and entertainment hub known for shopping, studios, and dining.",
-      highlights: ["Lokhandwala Complex", "Versova Beach", "Infinity Mall", "Link Road"],
-    },
-    {
-      name: "Andheri East",
-      slug: "andheri-east",
-      description: "Major corporate and transit center with direct metro and airport connectivity.",
-      highlights: ["MIDC", "SEEPZ", "Chhatrapati Shivaji Maharaj Airport", "Metro Junction"],
-    },
-    {
-      name: "Bandra West",
-      slug: "bandra-west",
-      description: "The Queen of the Suburbs, celebrated for seaside promenades, boutique cafes, and nightlife.",
-      highlights: ["Bandstand", "Carter Road", "Hill Road", "Linking Road"],
-    },
-    {
-      name: "Bandra East",
-      slug: "bandra-east",
-      description: "Premier financial district housing global institutions and convention centers.",
-      highlights: ["Bandra Kurla Complex (BKC)", "MMRDA Grounds", "Kalanagar"],
-    },
-    {
-      name: "Juhu",
-      slug: "juhu",
-      description: "Upscale seaside neighborhood famed for its expansive beach and celebrity residences.",
-      highlights: ["Juhu Beach", "Prithvi Theatre", "JW Marriott", "Juhu Tara Road"],
-    },
-    {
-      name: "Powai",
-      slug: "powai",
-      description: "Picturesque lakeside hub blending premier academic institutes with modern tech parks.",
-      highlights: ["Powai Lake", "Hiranandani Gardens", "IIT Bombay", "Galleria Shopping"],
-    },
-    {
-      name: "Colaba",
-      slug: "colaba",
-      description: "Historic South Mumbai district teeming with colonial architecture and bustling markets.",
-      highlights: ["Gateway of India", "Colaba Causeway", "Taj Mahal Palace", "Regal Cinema"],
-    },
-    {
-      name: "Borivali West",
-      slug: "borivali-west",
-      description: "Vibrant residential suburb with abundant green escapes and lively shopping bazaars.",
-      highlights: ["Sanjay Gandhi National Park", "Gorai Beach Ferry", "Eksar Road", "Shimpoli"],
-    },
-    {
-      name: "Malad West",
-      slug: "malad-west",
-      description: "Thriving residential and IT corridor known for malls, seaside access, and entertainment.",
-      highlights: ["Inorbit Mall", "Mindspace", "Marve Beach", "Aksa Beach"],
-    },
-    {
-      name: "Goregaon West",
-      slug: "goregaon-west",
-      description: "Centrally located suburban destination offering top entertainment and retail centers.",
-      highlights: ["Film City", "Oberoi Mall", "Bangur Nagar", "Oshiwara Link Road"],
-    },
-    {
-      name: "Dadar",
-      slug: "dadar",
-      description: "The cultural and transit heart of Mumbai connecting central and western corridors.",
-      highlights: ["Shivaji Park", "Dadar Flower Market", "Siddhivinayak Temple", "Plaza Cinema"],
-    },
-    {
-      name: "Thane West",
-      slug: "thane-west",
-      description: "The City of Lakes with modern urban infrastructure, expansive malls, and nature spots.",
-      highlights: ["Viviana Mall", "Upvan Lake", "Ghopbunder Road", "Talao Pali"],
-    },
-    {
-      name: "Navi Mumbai Vashi",
-      slug: "vashi",
-      description: "Well-planned commercial focal point of Navi Mumbai with tech parks and broad avenues.",
-      highlights: ["Inorbit Vashi", "Vashi Bridge", "Sector 17 Market", "Palm Beach Road"],
-    },
-  ],
-  delhi: [
+  "delhi": [
     {
       name: "Connaught Place",
       slug: "connaught-place",
-      description: "Iconic colonial-era circular heritage market, business center, and dining epicenter.",
-      highlights: ["Central Park", "Janpath Market", "Palika Bazaar", "Barakhamba Road"],
-    },
-    {
-      name: "South Extension",
-      slug: "south-extension",
-      description: "Elite South Delhi shopping and commercial hub with high-end designer stores.",
-      highlights: ["South Ex 1", "South Ex 2", "Ring Road", "Ansal Plaza"],
-    },
-    {
-      name: "Hauz Khas",
-      slug: "hauz-khas",
-      description: "Artistic neighborhood merging historic medieval ruins with chic boutiques and lakeside cafes.",
-      highlights: ["Hauz Khas Village", "Deer Park", "Hauz Khas Fort", "Siri Fort"],
+      description: "Historic circular commercial hub and premier dining destination in central Delhi.",
+      highlights: ["Janpath","Palika Bazaar","Central Park"],
     },
     {
       name: "Karol Bagh",
       slug: "karol-bagh",
-      description: "Bustling cultural shopping district acclaimed for fashion, jewelry, and street food.",
-      highlights: ["Gaffar Market", "Ajmal Khan Road", "Pusa Road", "Jhandewalan"],
-    },
-    {
-      name: "Rohini",
-      slug: "rohini",
-      description: "Expansive modern sub-city with amusement parks, educational hubs, and shopping plazas.",
-      highlights: ["Adventure Island", "Unity One Mall", "Japanese Park", "Sector 14"],
-    },
-    {
-      name: "Dwarka",
-      slug: "dwarka",
-      description: "Asia's largest planned residential sub-city with wide roads and prime airport proximity.",
-      highlights: ["Vegas Mall", "Dwarka Sector 10 Market", "Dwarka Expressway", "Sector 21"],
+      description: "Vibrant shopping and cultural district famed for garments, jewelry, and street delicacies.",
+      highlights: ["Gaffar Market","Ajmal Khan Road","Pusa Road"],
     },
     {
       name: "Lajpat Nagar",
       slug: "lajpat-nagar",
-      description: "Renowned market hub celebrated for authentic Indian attire, street food, and decor.",
-      highlights: ["Central Market", "Ring Road", "Flyover Market", "Amar Colony"],
+      description: "Bustling retail center acclaimed for ethnic wear, home decor, and street food.",
+      highlights: ["Central Market","Ring Road","Amar Colony"],
     },
     {
       name: "Saket",
       slug: "saket",
-      description: "Premium South Delhi residential and lifestyle hub housing world-class luxury malls.",
-      highlights: ["Select Citywalk", "DLF Avenue", "Max Hospital", "Garden of Five Senses"],
+      description: "Upscale South Delhi residential and retail district housing luxury malls and heritage spots.",
+      highlights: ["Select Citywalk","DLF Avenue","Garden of Five Senses"],
     },
     {
       name: "Vasant Kunj",
       slug: "vasant-kunj",
-      description: "Affluent residential neighborhood adjacent to the Ridge with luxury shopping complexes.",
-      highlights: ["DLF Promenade", "Ambience Mall", "Nelson Mandela Marg", "JNU Greenery"],
+      description: "Affluent residential neighborhood adjacent to the Ridge with luxury lifestyle malls.",
+      highlights: ["DLF Promenade","Ambience Mall","Nelson Mandela Marg"],
+    },
+    {
+      name: "Dwarka",
+      slug: "dwarka",
+      description: "Asia's largest planned sub-city with wide sector boulevards and airport access.",
+      highlights: ["Vegas Mall","Dwarka Expressway","Sector 10 Market"],
+    },
+    {
+      name: "Rohini",
+      slug: "rohini",
+      description: "Expansive residential sub-city with shopping plazas, amusement centers, and universities.",
+      highlights: ["Adventure Island","Japanese Park","Unity One Mall"],
     },
     {
       name: "Pitampura",
       slug: "pitampura",
-      description: "Vibrant North-West Delhi commercial and lifestyle hub famous for the TV Tower and food streets.",
-      highlights: ["Pitampura TV Tower", "Dilli Haat Pitampura", "Netaji Subhash Place", "Pacific Mall"],
+      description: "Lively North-West Delhi lifestyle hub featuring the famous TV Tower and food streets.",
+      highlights: ["Dilli Haat Pitampura","Netaji Subhash Place","Pacific Mall"],
+    },
+    {
+      name: "Janakpuri",
+      slug: "janakpuri",
+      description: "Major West Delhi residential and commercial district with lively craft markets.",
+      highlights: ["Dilli Haat Janakpuri","District Centre","Jail Road"],
+    },
+    {
+      name: "Rajouri Garden",
+      slug: "rajouri-garden",
+      description: "Prominent West Delhi shopping and nightlife center with high-street fashion and diners.",
+      highlights: ["Main Market","City Square Mall","TDI Mall"],
+    },
+    {
+      name: "Greater Kailash",
+      slug: "greater-kailash",
+      description: "Prestigious South Delhi enclave celebrated for designer retail and trendy cafes.",
+      highlights: ["M Block Market GK1","N Block Market GK1","M Block GK2"],
+    },
+    {
+      name: "Hauz Khas",
+      slug: "hauz-khas",
+      description: "Heritage neighborhood blending 13th-century historic ruins with chic cafes and lake views.",
+      highlights: ["Hauz Khas Village","Deer Park","Hauz Khas Fort"],
+    },
+    {
+      name: "Malviya Nagar",
+      slug: "malviya-nagar",
+      description: "Vibrant South Delhi neighborhood packed with cafes, markets, and metro connectivity.",
+      highlights: ["Main Market","Geetanjali Enclave","Khirki Village"],
+    },
+    {
+      name: "South Extension",
+      slug: "south-extension",
+      description: "Elite shopping hub along the Ring Road featuring top designer boutiques and jewellers.",
+      highlights: ["South Ex Part 1","South Ex Part 2","Ansal Plaza"],
+    },
+    {
+      name: "Chandni Chowk",
+      slug: "chandni-chowk",
+      description: "Old Delhi's iconic 17th-century heritage market famed for street delicacies and bridal bazaar.",
+      highlights: ["Paranthe Wali Gali","Dariba Kalan","Red Fort Corridor"],
+    },
+    {
+      name: "Paharganj",
+      slug: "paharganj",
+      description: "Bustling backpacker and travelers market adjacent to New Delhi Railway Station.",
+      highlights: ["Main Bazaar","Arakashan Road","Multani Dhanda"],
+    },
+    {
+      name: "Defence Colony",
+      slug: "defence-colony",
+      description: "Affluent residential neighborhood renowned for premium restaurants, bakeries, and boutiques.",
+      highlights: ["Def Col Flyover Market","Main Market","Varun Marg"],
+    },
+    {
+      name: "Mayur Vihar",
+      slug: "mayur-vihar",
+      description: "Well-planned East Delhi residential suburb right by the Yamuna with parks and malls.",
+      highlights: ["Mayur Vihar Phase 1","Phase 2","Noida Link Road"],
+    },
+    {
+      name: "Shahdara",
+      slug: "shahdara",
+      description: "Historic trading center in North-East Delhi known for bustling markets and textiles.",
+      highlights: ["Chhota Bazaar","Grand Trunk Road","Kanti Nagar"],
+    },
+    {
+      name: "Nehru Place",
+      slug: "nehru-place",
+      description: "Asia's premier electronics and information technology commercial complex.",
+      highlights: ["Epicuria Food Mall","Electronics Market","Kalkaji Border"],
     },
   ],
-  bengaluru: [
+  "mumbai": [
     {
-      name: "Koramangala",
-      slug: "koramangala",
-      description: "India's startup capital neighborhood boasting countless cafes, co-working spaces, and nightlife.",
-      highlights: ["80 Feet Road", "Forum Mall", "100 Feet Road", "Jyoti Nivas College Road"],
+      name: "Andheri West",
+      slug: "andheri-west",
+      description: "Bustling commercial and entertainment hub known for studios, nightlife, and dining.",
+      highlights: ["Lokhandwala Complex","Versova Beach","Infinity Mall"],
+    },
+    {
+      name: "Andheri East",
+      slug: "andheri-east",
+      description: "Corporate and logistics hub with metro connectivity and international airport terminals.",
+      highlights: ["MIDC","SEEPZ","Chhatrapati Shivaji Maharaj Airport"],
+    },
+    {
+      name: "Bandra West",
+      slug: "bandra-west",
+      description: "The Queen of the Suburbs famous for seaside promenades, cafes, and historic streets.",
+      highlights: ["Bandstand","Carter Road","Hill Road","Linking Road"],
+    },
+    {
+      name: "Bandra East",
+      slug: "bandra-east",
+      description: "Premier financial district housing global headquarters and exhibition grounds.",
+      highlights: ["Bandra Kurla Complex (BKC)","MMRDA Grounds","Kalanagar"],
+    },
+    {
+      name: "Borivali West",
+      slug: "borivali-west",
+      description: "Family-friendly suburban district offering nature escapes, shopping, and dining.",
+      highlights: ["Sanjay Gandhi National Park","Gorai Ferry","Shimpoli"],
+    },
+    {
+      name: "Juhu",
+      slug: "juhu",
+      description: "Glamorous coastal neighborhood famed for celebrity residences and sweeping sandy beaches.",
+      highlights: ["Juhu Beach","Prithvi Theatre","JW Marriott"],
+    },
+    {
+      name: "Powai",
+      slug: "powai",
+      description: "Picturesque lakeside locality home to premier tech parks and European-style architecture.",
+      highlights: ["Hiranandani Gardens","Powai Lake","IIT Bombay"],
+    },
+    {
+      name: "Worli",
+      slug: "worli",
+      description: "High-end coastal commercial and residential destination anchored by the Sea Link.",
+      highlights: ["Worli Sea Face","Bandra-Worli Sea Link","Atria Mall"],
+    },
+    {
+      name: "Colaba",
+      slug: "colaba",
+      description: "Historic South Mumbai cultural district teeming with Victorian architecture and bazaars.",
+      highlights: ["Gateway of India","Colaba Causeway","Taj Mahal Palace"],
+    },
+    {
+      name: "Dadar",
+      slug: "dadar",
+      description: "Central transit and cultural heart of Mumbai famous for festive flower markets and parks.",
+      highlights: ["Shivaji Park","Siddhivinayak Temple","Dadar Flower Market"],
+    },
+    {
+      name: "Lower Parel",
+      slug: "lower-parel",
+      description: "Former textile mill district transformed into Mumbai's luxury dining and corporate hotspot.",
+      highlights: ["High Street Phoenix","Palladium","Kamala Mills"],
+    },
+    {
+      name: "Malad West",
+      slug: "malad-west",
+      description: "Dynamic residential and corporate corridor with large shopping malls and seaside access.",
+      highlights: ["Inorbit Mall","Mindspace IT Park","Marve Beach"],
+    },
+    {
+      name: "Goregaon West",
+      slug: "goregaon-west",
+      description: "Centrally located entertainment corridor adjacent to Mumbai's Film City.",
+      highlights: ["Film City","Oberoi Mall","Oshiwara Link Road"],
+    },
+    {
+      name: "Kandivali West",
+      slug: "kandivali-west",
+      description: "Rapidly expanding residential suburb with authentic street foods and bustling bazaars.",
+      highlights: ["Mahavir Nagar","Link Road","Growel's 101"],
+    },
+    {
+      name: "Kurla West",
+      slug: "kurla-west",
+      description: "Major transit junction linking central and western corridors with massive retail malls.",
+      highlights: ["Phoenix Marketcity Kurla","LBS Marg","Kurla Station"],
+    },
+    {
+      name: "Chembur",
+      slug: "chembur",
+      description: "Leafy eastern suburb celebrated for culinary heritage, golf clubs, and monorail links.",
+      highlights: ["Diamond Garden","Sindhi Society","Eastern Freeway"],
+    },
+    {
+      name: "Vile Parle",
+      slug: "vile-parle",
+      description: "Cultural academic hub with historic heritage homes and proximity to domestic terminals.",
+      highlights: ["Vile Parle East Market","NMIMS Campus","Irla Market"],
+    },
+    {
+      name: "Ghatkopar",
+      slug: "ghatkopar",
+      description: "Bustling central suburb world-famous for vegetarian street food corridors and shopping.",
+      highlights: ["Khau Galli","R City Mall","Ghatkopar Metro Station"],
+    },
+    {
+      name: "Mulund",
+      slug: "mulund",
+      description: "Well-planned peaceful suburb nestled against the hills, offering lush green avenues.",
+      highlights: ["LBS Marg","R-Mall","Yogi Hills"],
+    },
+    {
+      name: "Thane West",
+      slug: "thane-west",
+      description: "City of Lakes combining modern townships, sprawling shopping centers, and hill views.",
+      highlights: ["Viviana Mall","Upvan Lake","Ghodbunder Road"],
+    },
+  ],
+  "bengaluru": [
+    {
+      name: "Whitefield",
+      slug: "whitefield",
+      description: "Global technology powerhouse featuring mega IT parks, malls, and premium residences.",
+      highlights: ["ITPL","Phoenix Marketcity","Nexus Shantiniketan"],
     },
     {
       name: "Indiranagar",
       slug: "indiranagar",
-      description: "Tree-lined upscale urban destination renowned for craft breweries, restaurants, and shopping.",
-      highlights: ["100 Feet Road", "12th Main Road", "CMH Road", "Defense Colony"],
+      description: "Leafy upscale urban enclave celebrated for indie boutiques, craft breweries, and dining.",
+      highlights: ["100 Feet Road","12th Main Road","CMH Road"],
     },
     {
-      name: "Whitefield",
-      slug: "whitefield",
-      description: "Global IT powerhouse neighborhood with major international tech parks and residential estates.",
-      highlights: ["ITPL", "Phoenix Marketcity", "Nexus Shantiniketan", "EPIP Zone"],
+      name: "Koramangala",
+      slug: "koramangala",
+      description: "India's premier startup haven packed with vibrant cafes, tech workspaces, and lounges.",
+      highlights: ["80 Feet Road","Koramangala 5th Block","Forum Mall"],
     },
     {
       name: "HSR Layout",
       slug: "hsr-layout",
-      description: "Fast-growing residential and tech hotspot serving as a gateway to Electronic City and ORR.",
-      highlights: ["27th Main Road", "Agara Lake", "Sector 1 to Sector 7", "Outer Ring Road"],
-    },
-    {
-      name: "Jayanagar",
-      slug: "jayanagar",
-      description: "Heritage planned neighborhood celebrated for sprawling parks, traditional eateries, and serenity.",
-      highlights: ["Jayanagar 4th Block Complex", "Madhavan Park", "South End Circle"],
+      description: "Rapidly booming residential and venture capital hub seamlessly connected to the ORR.",
+      highlights: ["27th Main","Sector 1 to 7","Agara Lake"],
     },
     {
       name: "Electronic City",
       slug: "electronic-city",
-      description: "Massive high-tech industrial cluster connected by the elevated expressway.",
-      highlights: ["Phase 1 IT Corridor", "Phase 2", "Elevated Tollway", "Infosys Campus"],
-    },
-    {
-      name: "JP Nagar",
-      slug: "jp-nagar",
-      description: "Lively residential destination with theater spaces, microbreweries, and scenic lakes.",
-      highlights: ["Ranga Shankara", "Sarakki Lake", "Dollar Layout", "Brigade Millennium"],
+      description: "Pioneering technology industrial township connected via the elevated toll expressway.",
+      highlights: ["Phase 1 IT Corridor","Infosys Campus","Phase 2"],
     },
     {
       name: "Marathahalli",
       slug: "marathahalli",
-      description: "Bustling junction on the Outer Ring Road connecting key IT hubs and factory outlets.",
-      highlights: ["Innovative Multiplex", "Outer Ring Road", "Kalamandir Junction", "HAL Airport Road"],
+      description: "High-density transit and retail junction along the Outer Ring Road tech corridor.",
+      highlights: ["ORR Junction","Innovative Multiplex","HAL Airport Road"],
+    },
+    {
+      name: "BTM Layout",
+      slug: "btm-layout",
+      description: "Youthful and affordable residential neighborhood situated between Koramangala and JP Nagar.",
+      highlights: ["BTM 2nd Stage","Udupi Garden Junction","Madiwala Lake"],
+    },
+    {
+      name: "Jayanagar",
+      slug: "jayanagar",
+      description: "Classic planned southern Bangalore enclave famed for expansive parks and authentic tiffins.",
+      highlights: ["4th Block Shopping Complex","Madhavan Park","South End Circle"],
+    },
+    {
+      name: "Rajajinagar",
+      slug: "rajajinagar",
+      description: "Vibrant western Bangalore district combining commercial avenues and grand temples.",
+      highlights: ["Orion Mall","World Trade Center Bangalore","ISKCON Temple"],
+    },
+    {
+      name: "Malleshwaram",
+      slug: "malleshwaram",
+      description: "Historic cultural heritage locality celebrated for iconic dosas, temples, and flower bazaars.",
+      highlights: ["CTR (Shri Sagar)","8th Cross Road","Kadu Malleshwara Temple"],
+    },
+    {
+      name: "Yelahanka",
+      slug: "yelahanka",
+      description: "Spacious green northern suburb enjoying direct connectivity to Kempegowda Airport.",
+      highlights: ["Yelahanka New Town","Allalasandra Lake","Rail Wheel Factory"],
+    },
+    {
+      name: "Hebbal",
+      slug: "hebbal",
+      description: "Prominent northern Bangalore gateway centered around the scenic Hebbal Flyover and lake.",
+      highlights: ["Hebbal Lake","Manyata Tech Park","Bellary Road"],
+    },
+    {
+      name: "Banashankari",
+      slug: "banashankari",
+      description: "Expansive traditional neighborhood known for ancient temples and tranquil parks.",
+      highlights: ["Banashankari Temple","BSK 2nd Stage","Deve Gowda Petrol Bunk Road"],
+    },
+    {
+      name: "JP Nagar",
+      slug: "jp-nagar",
+      description: "Lively residential destination with cultural arts theaters and craft microbreweries.",
+      highlights: ["Ranga Shankara","Sarakki Lake","Dollar Layout"],
+    },
+    {
+      name: "Bellandur",
+      slug: "bellandur",
+      description: "High-density IT corridor housing international tech parks along the Outer Ring Road.",
+      highlights: ["EcoWorld","EcoSpace","Bellandur Lake Road"],
+    },
+    {
+      name: "Sarjapur Road",
+      slug: "sarjapur-road",
+      description: "Fast-developing residential corridor with international schools, tech parks, and villas.",
+      highlights: ["Wipro SEZ","Carmelaram","Rainbow Drive"],
     },
   ],
-  kolkata: [
+  "hyderabad": [
+    {
+      name: "Banjara Hills",
+      slug: "banjara-hills",
+      description: "Elite urban district featuring luxury boutique hotels, fine dining, and diplomatic homes.",
+      highlights: ["Road No. 12","Road No. 1","GVK One Mall","KBR National Park"],
+    },
+    {
+      name: "Jubilee Hills",
+      slug: "jubilee-hills",
+      description: "Prestigious neighborhood home to celebrities, media conglomerates, and luxury lounges.",
+      highlights: ["Road No. 36","Peddamma Temple","Film Nagar","Road No. 45"],
+    },
+    {
+      name: "Hitech City",
+      slug: "hitech-city",
+      description: "The beating technology heart of Cyberabad hosting global Silicon Valley campuses.",
+      highlights: ["Cyber Towers","Mindspace IT Park","Inorbit Mall","Durgam Cheruvu Bridge"],
+    },
+    {
+      name: "Madhapur",
+      slug: "madhapur",
+      description: "Energetic tech district filled with modern apartments, food streets, and metro stations.",
+      highlights: ["100 Feet Road","Image Hospitals","Ayyappa Society"],
+    },
+    {
+      name: "Gachibowli",
+      slug: "gachibowli",
+      description: "Vibrant IT and sports corridor housing the Financial District and athletic stadiums.",
+      highlights: ["Financial District","ISB Campus","GMC Balayogi Stadium"],
+    },
+    {
+      name: "Kondapur",
+      slug: "kondapur",
+      description: "Rapidly flourishing residential suburb close to HITEC City tech offices and botanical gardens.",
+      highlights: ["Botanical Garden","Raghavendra Colony","Kothaguda Junction"],
+    },
+    {
+      name: "Kukatpally",
+      slug: "kukatpally",
+      description: "Massive commercial and residential hub famous for bustling street bazaars and shopping.",
+      highlights: ["Forum Sujana Mall","KPHB Colony","JNTU Road"],
+    },
+    {
+      name: "Begumpet",
+      slug: "begumpet",
+      description: "Historic central corridor linking Secunderabad with Hyderabad, famous for airfields and malls.",
+      highlights: ["Begumpet Airport","Prakasam Panthulu Ring","Shoppers Stop"],
+    },
+    {
+      name: "Secunderabad",
+      slug: "secunderabad",
+      description: "The historic twin city featuring colonial cantonment avenues, markets, and railway links.",
+      highlights: ["Clock Tower","Paradise Biryani","RP Road"],
+    },
+    {
+      name: "Ameerpet",
+      slug: "ameerpet",
+      description: "Bustling education and software training epicenter with lively food joints.",
+      highlights: ["Mytrivanam","Ameerpet Crossroads","Big Bazaar"],
+    },
+    {
+      name: "Mehdipatnam",
+      slug: "mehdipatnam",
+      description: "Vital transit and retail nexus on the expressway to Rajiv Gandhi International Airport.",
+      highlights: ["PVNR Elevated Expressway","Rythu Bazaar","Rethi Bowli"],
+    },
+    {
+      name: "Manikonda",
+      slug: "manikonda",
+      description: "Fast-developing residential destination popular with tech professionals near Lanco Hills.",
+      highlights: ["Lanco Hills","Puppalaguda Road","Khajaguda Lake"],
+    },
+  ],
+  "kolkata": [
     {
       name: "Park Street",
       slug: "park-street",
-      description: "Kolkata's historic entertainment and dining boulevard famous for music, nightlife, and heritage eateries.",
-      highlights: ["Flurys", "Peter Cat", "St. Xavier's", "Allen Park"],
+      description: "Historic entertainment and culinary avenue famed for iconic heritage tearooms and music.",
+      highlights: ["Flurys","Peter Cat","Allen Park","St. Xavier's"],
     },
     {
       name: "Salt Lake",
       slug: "salt-lake",
-      description: "Carefully planned satellite city featuring technology campuses, stadium, and lush green parks.",
-      highlights: ["Sector V IT Hub", "City Centre 1", "Central Park", "Salt Lake Stadium"],
+      description: "Planned satellite township housing Sector V technology parks and expansive greenery.",
+      highlights: ["Sector V IT Hub","City Centre 1","Central Park"],
     },
     {
       name: "New Town",
       slug: "new-town",
-      description: "Futuristic smart city hub hosting top multinational offices, eco-parks, and premier hotels.",
-      highlights: ["Eco Park", "Biswa Bangla Gate", "Axis Mall", "Mother's Wax Museum"],
+      description: "Smart satellite city featuring futuristic offices, world-class convention centers, and eco-parks.",
+      highlights: ["Eco Park","Biswa Bangla Gate","Axis Mall"],
     },
     {
       name: "Ballygunge",
       slug: "ballygunge",
-      description: "Prestigious South Kolkata locality known for tranquil avenues, clubs, and upscale lifestyle.",
-      highlights: ["Ballygunge Circular Road", "Quest Mall", "Birla Mandir", "Lake Club"],
+      description: "Prestigious South Kolkata locality known for quiet tree-lined avenues and heritage estates.",
+      highlights: ["Quest Mall","Birla Mandir","Ballygunge Circular Road"],
+    },
+    {
+      name: "Alipore",
+      slug: "alipore",
+      description: "Kolkata's most affluent residential address housing the National Library and zoological gardens.",
+      highlights: ["Alipore Zoo","National Library","Belvedere Estate"],
+    },
+    {
+      name: "Gariahat",
+      slug: "gariahat",
+      description: "The retail shopping heart of South Kolkata famous for traditional sarees, street jewelry, and kathi rolls.",
+      highlights: ["Gariahat Crossing","Basanti Devi College","Dhakuria Lake"],
+    },
+    {
+      name: "Jadavpur",
+      slug: "jadavpur",
+      description: "Intellectual and academic center renowned for Jadavpur University and evening cafes.",
+      highlights: ["Jadavpur University","8B Bus Stand","Sukanta Setu"],
+    },
+    {
+      name: "Behala",
+      slug: "behala",
+      description: "Vibrant traditional South-West Kolkata residential neighborhood with historic Durga Pujas.",
+      highlights: ["Diamond Harbour Road","Taratala","Sakher Bazaar"],
+    },
+    {
+      name: "Dum Dum",
+      slug: "dum-dum",
+      description: "Major northern transit hub connecting Netaji Subhash Chandra Bose International Airport.",
+      highlights: ["Dum Dum Metro Station","Jessore Road","Nagerbazar"],
+    },
+    {
+      name: "Shyambazar",
+      slug: "shyambazar",
+      description: "Heritage North Kolkata cultural crossroad famous for five-point crossing and theater halls.",
+      highlights: ["Five Point Crossing","Star Theatre","Hatibagan Market"],
     },
   ],
-  chennai: [
+  "chennai": [
     {
       name: "T Nagar",
       slug: "t-nagar",
-      description: "India's commercial retail powerhouse renowned for gold jewelry, silks, and buzzing bazaars.",
-      highlights: ["Ranganathan Street", "Usman Road", "Panagal Park", "Pondy Bazaar"],
+      description: "India's commercial retail powerhouse renowned for gold jewellery, silk sarees, and bazaars.",
+      highlights: ["Ranganathan Street","Usman Road","Pondy Bazaar","Panagal Park"],
     },
     {
       name: "Anna Nagar",
       slug: "anna-nagar",
-      description: "Prestigious North-West Chennai neighborhood with planned avenues, tower park, and cafes.",
-      highlights: ["Anna Nagar Tower Park", "2nd Avenue", "VR Chennai Mall", "Roundtana"],
+      description: "Prestigious planned North-West Chennai neighborhood with avenues, tower park, and cafes.",
+      highlights: ["Anna Nagar Tower Park","2nd Avenue","VR Chennai Mall"],
     },
     {
       name: "Adyar",
       slug: "adyar",
       description: "Serene coastal and riverside district known for natural beauty, heritage, and elite residences.",
-      highlights: ["Elliot's Beach (Besant Nagar)", "Theosophical Society", "Adyar Eco Park", "Kasturba Nagar"],
+      highlights: ["Elliot's Beach","Theosophical Society","Adyar Eco Park"],
     },
     {
       name: "Velachery",
       slug: "velachery",
       description: "Fast-developing transit and residential hub directly connecting to the IT Expressway.",
-      highlights: ["Phoenix Marketcity", "Grand Square", "Velachery Railway Station", "Bypass Road"],
+      highlights: ["Phoenix Marketcity","Grand Square","Velachery MRTS"],
+    },
+    {
+      name: "Mylapore",
+      slug: "mylapore",
+      description: "Historic cultural heart of Chennai celebrated for ancient Kapaleeshwarar temple and Carnatic music.",
+      highlights: ["Kapaleeshwarar Temple","Luz Corner","San Thome Cathedral"],
+    },
+    {
+      name: "Nungambakkam",
+      slug: "nungambakkam",
+      description: "High-end commercial district hosting foreign consulates, luxury hotels, and colleges.",
+      highlights: ["Khader Nawaz Khan Road","Loyola College","Sterling Road"],
+    },
+    {
+      name: "Guindy",
+      slug: "guindy",
+      description: "Important industrial and transit junction featuring Guindy National Park and tech estates.",
+      highlights: ["Guindy National Park","Olympia Tech Park","Kathipara Flyover"],
+    },
+    {
+      name: "Thiruvanmiyur",
+      slug: "thiruvanmiyur",
+      description: "Tranquil seaside neighborhood marking the start of the scenic East Coast Road (ECR).",
+      highlights: ["Thiruvanmiyur Beach","Marundeeswarar Temple","Valmiki Nagar"],
+    },
+    {
+      name: "OMR",
+      slug: "omr",
+      description: "The legendary IT corridor of Chennai flanked by global tech parks and modern townships.",
+      highlights: ["Tidel Park","Sholinganallur Junction","Perungudi"],
+    },
+    {
+      name: "Tambaram",
+      slug: "tambaram",
+      description: "Vibrant southern gateway of Chennai with historic air force base, universities, and railway hub.",
+      highlights: ["Tambaram Sanatorium","MCC Campus","GST Road"],
     },
   ],
-  hyderabad: [
-    {
-      name: "Hitec City",
-      slug: "hitec-city",
-      description: "The technology nerve-center of Hyderabad featuring iconic modern architecture and tech campuses.",
-      highlights: ["Cyber Towers", "Mindspace IT Park", "Inorbit Mall", "Durgam Cheruvu Bridge"],
-    },
-    {
-      name: "Gachibowli",
-      slug: "gachibowli",
-      description: "Modern sports and IT corridor housing international corporations, universities, and stadiums.",
-      highlights: ["Financial District", "GMC Balayogi Stadium", "ORR Junction", "ISB Road"],
-    },
-    {
-      name: "Banjara Hills",
-      slug: "banjara-hills",
-      description: "Elite residential and commercial district with luxury hotels, fine dining, and hospitals.",
-      highlights: ["Road No. 12", "Road No. 1", "GVK One Mall", "KBR National Park"],
-    },
-    {
-      name: "Jubilee Hills",
-      slug: "jubilee-hills",
-      description: "High-end neighborhood home to prominent personalities, media houses, and upscale lounges.",
-      highlights: ["Road No. 36", "Peddamma Temple", "Road No. 45", "Film Nagar"],
-    },
-    {
-      name: "Madhapur",
-      slug: "madhapur",
-      description: "The heart of Cyberabad packed with modern apartments, restaurants, and direct metro link.",
-      highlights: ["Ayyappa Society", "Image Hospitals Road", "100 Feet Road", "Durgam Cheruvu"],
-    },
-  ],
-  pune: [
+  "pune": [
     {
       name: "Koregaon Park",
       slug: "koregaon-park",
       description: "Cosmopolitan leaf-shaded neighborhood famed for fine dining, boutiques, and nightlife.",
-      highlights: ["North Main Road", "South Main Road", "Osho Teerth Park", "German Bakery"],
+      highlights: ["North Main Road","South Main Road","Osho Teerth Park","German Bakery"],
     },
     {
       name: "Viman Nagar",
       slug: "viman-nagar",
       description: "Dynamic neighborhood close to the airport with popular student spots and premium malls.",
-      highlights: ["Phoenix Marketcity", "Symbiosis Campus", "Datta Mandir Chowk", "Air Force Station"],
+      highlights: ["Phoenix Marketcity","Symbiosis Campus","Datta Mandir Chowk"],
     },
     {
       name: "Baner",
       slug: "baner",
       description: "Rapidly expanding residential and corporate hub with trendy cafes along Baner Road.",
-      highlights: ["Baner Road", "High Street Balewadi", "Baner Hill", "Pashan Link Road"],
+      highlights: ["Baner High Street","Balewadi High Street","Baner Hill"],
     },
     {
       name: "Hinjawadi",
       slug: "hinjawadi",
       description: "Pune's biggest IT park cluster powering global software exports.",
-      highlights: ["Rajiv Gandhi Infotech Park Phase 1-3", "Wakad Link", "Maan", "Megapolis"],
+      highlights: ["Rajiv Gandhi Infotech Park","Wakad Link","Phase 1 to 3"],
     },
     {
       name: "Kothrud",
       slug: "kothrud",
       description: "Culturally rich residential area with excellent connectivity, parks, and colleges.",
-      highlights: ["Paud Road", "Karve Road", "MIT College", "Vanaz Metro Station"],
+      highlights: ["Paud Road","Karve Road","Vanaz Metro Station"],
+    },
+    {
+      name: "Wakad",
+      slug: "wakad",
+      description: "Booming residential and lifestyle destination adjacent to the Mumbai-Pune Expressway.",
+      highlights: ["Dutta Mandir Road","Wakad Bridge","Thergaon Link"],
+    },
+    {
+      name: "Aundh",
+      slug: "aundh",
+      description: "Sophisticated residential suburb renowned for upscale shopping, gourmet stores, and cafes.",
+      highlights: ["DP Road","Westend Mall","Bremen Square"],
+    },
+    {
+      name: "Kalyani Nagar",
+      slug: "kalyani-nagar",
+      description: "Posh residential and IT locality housing cyber cities and relaxed riverfront cafes.",
+      highlights: ["East Avenue","Jogger's Park","Marigold Complex"],
+    },
+    {
+      name: "Shivaji Nagar",
+      slug: "shivaji-nagar",
+      description: "Historic central government, legal, and academic nexus of Pune.",
+      highlights: ["COEP Campus","FC Road","JM Road","Agricultural College"],
+    },
+    {
+      name: "Hadapsar",
+      slug: "hadapsar",
+      description: "Major industrial and IT township home to Magarpatta City and SP Infocity.",
+      highlights: ["Magarpatta City","Amanora Town Centre","Solapur Road"],
     },
   ],
-  jaipur: [
-    {
-      name: "Malviya Nagar",
-      slug: "malviya-nagar",
-      description: "Upscale residential and commercial locality housing Jaipur's premier malls and universities.",
-      highlights: ["World Trade Park (WTP)", "Gaurav Tower (GT)", "Apex Circle", "Jawahar Circle"],
-    },
-    {
-      name: "Vaishali Nagar",
-      slug: "vaishali-nagar",
-      description: "Vibrant and affluent western Jaipur hub filled with boutiques, cafes, and entertainment.",
-      highlights: ["Amrapali Circle", "National Handloom", "Queens Road", "Gandhi Path"],
-    },
-    {
-      name: "C Scheme",
-      slug: "c-scheme",
-      description: "Prestigious central district with heritage cafes, government offices, and lush avenues.",
-      highlights: ["Statue Circle", "Ahinsa Circle", "MI Road Junction", "Central Park"],
-    },
-    {
-      name: "Mansarovar",
-      slug: "mansarovar",
-      description: "One of Asia's largest residential colonies, equipped with metro connectivity and bustling markets.",
-      highlights: ["Mansarovar Metro", "VT Road", "Madhyam Marg", "City Park Mansarovar"],
-    },
-  ],
-  ahmedabad: [
+  "ahmedabad": [
     {
       name: "SG Highway",
       slug: "sg-highway",
       description: "The modern commercial spine of Ahmedabad linking top IT towers, malls, and entertainment.",
-      highlights: ["Iskcon Cross Road", "Pakwan Cross Road", "Sola", "Gota"],
+      highlights: ["Iskcon Cross Road","Pakwan Cross Road","Sola","Gota"],
     },
     {
       name: "Satellite",
       slug: "satellite",
       description: "Lively, upscale neighborhood featuring premier residential communities and shopping streets.",
-      highlights: ["Shivranjani Cross Road", "Jodhpur Cross Road", "Star Bazaar", "ISRO Colony"],
+      highlights: ["Shivranjani Cross Road","Jodhpur Cross Road","ISRO Colony"],
     },
     {
       name: "Vastrapur",
       slug: "vastrapur",
       description: "Scenic and bustling hub surrounding the lake, popular with college students and families.",
-      highlights: ["Vastrapur Lake", "IIM Ahmedabad", "Alpha One Mall", "Gurukul Road"],
+      highlights: ["Vastrapur Lake","IIM Ahmedabad","Alpha One Mall"],
     },
     {
       name: "Bodakdev",
       slug: "bodakdev",
       description: "Elite residential district renowned for fine-dining restaurants and designer showrooms.",
-      highlights: ["Judges Bungalow Road", "Sindhu Bhavan Road", "Pakwan", "Rajpath Club"],
+      highlights: ["Sindhu Bhavan Road","Judges Bungalow Road","Rajpath Club"],
+    },
+    {
+      name: "Navrangpura",
+      slug: "navrangpura",
+      description: "Academic and financial epicenter home to Gujarat University and bustling CG Road.",
+      highlights: ["CG Road","Gujarat University","Mithakhali Six Roads"],
+    },
+    {
+      name: "Prahlad Nagar",
+      slug: "prahlad-nagar",
+      description: "Premium corporate and residential address with lush public gardens and corporate towers.",
+      highlights: ["Prahlad Nagar Garden","Corporate Road","Venus Atlantis"],
+    },
+    {
+      name: "Maninagar",
+      slug: "maninagar",
+      description: "Historic southern cultural hub famous for Kankaria Lake and traditional Gujarati street foods.",
+      highlights: ["Kankaria Lake","Maninagar Railway Station","Balvatika"],
+    },
+    {
+      name: "Bopal",
+      slug: "bopal",
+      description: "Rapidly expanding residential suburb on the SP Ring Road popular with young professionals.",
+      highlights: ["South Bopal (SoBo)","Bopal Cross Road","TRP Mall"],
     },
   ],
-  surat: [
+  "jaipur": [
+    {
+      name: "Malviya Nagar",
+      slug: "malviya-nagar",
+      description: "Upscale residential and commercial locality housing Jaipur's premier malls and universities.",
+      highlights: ["World Trade Park (WTP)","Gaurav Tower (GT)","Jawahar Circle"],
+    },
+    {
+      name: "Vaishali Nagar",
+      slug: "vaishali-nagar",
+      description: "Vibrant and affluent western Jaipur hub filled with boutiques, cafes, and entertainment.",
+      highlights: ["Amrapali Circle","Queens Road","Gandhi Path"],
+    },
+    {
+      name: "C Scheme",
+      slug: "c-scheme",
+      description: "Prestigious central district with heritage cafes, government offices, and lush avenues.",
+      highlights: ["Statue Circle","Ahinsa Circle","Central Park"],
+    },
+    {
+      name: "Mansarovar",
+      slug: "mansarovar",
+      description: "One of Asia's largest residential colonies, equipped with metro connectivity and bustling markets.",
+      highlights: ["Mansarovar Metro","VT Road","City Park Mansarovar"],
+    },
+    {
+      name: "Raja Park",
+      slug: "raja-park",
+      description: "Famous shopping and culinary neighborhood renowned for Punjabi eateries and street snacks.",
+      highlights: ["Lal Kothi","Dhurv Marg","Laxmi Mandir Cinema"],
+    },
+    {
+      name: "Tonk Road",
+      slug: "tonk-road",
+      description: "Crucial commercial corridor connecting southern Jaipur to the international airport.",
+      highlights: ["Airport Road Junction","Chokhi Dhani Link","Glass Factory"],
+    },
+    {
+      name: "Bani Park",
+      slug: "bani-park",
+      description: "Historic central residential neighborhood known for heritage boutique hotels and greenery.",
+      highlights: ["Collectorate Circle","Kabir Marg","Kanti Chandra Road"],
+    },
+  ],
+  "surat": [
     {
       name: "Vesu",
       slug: "vesu",
       description: "Modern, high-end residential corridor with wide boulevards and university campuses.",
-      highlights: ["VIP Road", "University Road", "Surat Airport Road", "Udhna-Magdalla Road"],
+      highlights: ["VIP Road","University Road","Surat Airport Road"],
     },
     {
       name: "Adajan",
       slug: "adajan",
       description: "Well-established residential neighborhood across the Tapi river with lively markets.",
-      highlights: ["Pal-Adajan Road", "Prime Arcade", "Cable Bridge", "Gujarat Gas Circle"],
+      highlights: ["Pal-Adajan Road","Cable Bridge","Prime Arcade"],
     },
     {
       name: "Varachha",
       slug: "varachha",
       description: "The global epicenter of diamond cutting and polishing with vibrant trade culture.",
-      highlights: ["Mini Bazaar", "Hirabaug", "Varachha Main Road", "Sarthana"],
+      highlights: ["Mini Bazaar","Hirabaug","Varachha Main Road"],
+    },
+    {
+      name: "City Light",
+      slug: "city-light",
+      description: "Affluent residential neighborhood renowned for shopping malls, designer boutiques, and cafes.",
+      highlights: ["City Light Road","Science Centre","Agrasen Bhavan"],
+    },
+    {
+      name: "Piplod",
+      slug: "piplod",
+      description: "Prime lifestyle and entertainment district along Dumas Road with multiplexes and lakes.",
+      highlights: ["Dumas Road","VR Surat Mall","Kargil Chowk"],
+    },
+    {
+      name: "Althan",
+      slug: "althan",
+      description: "Fast-growing planned southern residential locality with pleasant parks and wide avenues.",
+      highlights: ["Althan Canal Road","Bhimrad Road","SMC Garden"],
     },
   ],
-  lucknow: [
+  "lucknow": [
     {
       name: "Gomti Nagar",
       slug: "gomti-nagar",
       description: "Premier planned residential and commercial township featuring riverfront parks and malls.",
-      highlights: ["Riverside Mall", "Lulu Mall", "Patrakar Puram", "Gomti Riverfront Park"],
+      highlights: ["Riverside Mall","Lulu Mall","Patrakar Puram","Gomti Riverfront Park"],
     },
     {
       name: "Hazratganj",
       slug: "hazratganj",
       description: "The historic downtown shopping heart of Lucknow with Victorian-style facades and kebabs.",
-      highlights: ["Ganj Carnival", "Janpath Market", "Mayfair", "Halwasiya"],
+      highlights: ["Ganj Carnival","Janpath Market","Mayfair","Halwasiya"],
     },
     {
       name: "Indira Nagar",
       slug: "indira-nagar",
       description: "Sprawling residential colony with prominent medical centers and commercial markets.",
-      highlights: ["Bhootnath Market", "Munshipulia", "Aravalli Market", "Lekhraj"],
+      highlights: ["Bhootnath Market","Munshipulia","Aravalli Market"],
+    },
+    {
+      name: "Alambagh",
+      slug: "alambagh",
+      description: "Major transit and bustling commercial center connected directly by metro and bus terminals.",
+      highlights: ["Alambagh Bus Terminal","Phoenix United Mall","Chander Nagar"],
+    },
+    {
+      name: "Mahanagar",
+      slug: "mahanagar",
+      description: "Established central residential locality known for tree-shaded avenues and peaceful colonies.",
+      highlights: ["Gole Market","Kapoorthala","Badshahnagar"],
+    },
+    {
+      name: "Chowk",
+      slug: "chowk",
+      description: "Old Lucknow's historic cultural epicenter famed for Chikankari embroidery and royal Awadhi kebabs.",
+      highlights: ["Tunday Kababi","Rumi Darwaza","Akbari Gate"],
     },
   ],
-  chandigarh: [
+  "chandigarh": [
     {
       name: "Sector 17",
       slug: "sector-17",
       description: "Chandigarh's central heritage plaza with open-air shopping, fountains, and government buildings.",
-      highlights: ["Sector 17 Plaza", "Musical Fountain", "Neelam Cinema", "Shivalik View"],
+      highlights: ["Sector 17 Plaza","Musical Fountain","Neelam Cinema"],
     },
     {
       name: "Sector 35",
       slug: "sector-35",
       description: "Popular lifestyle and hospitality sector packed with hotels, pubs, and trendy cafes.",
-      highlights: ["Sector 35 Inner Market", "JW Marriott", "Aroma Light Point", "Kisan Bhawan"],
+      highlights: ["Sector 35 Inner Market","JW Marriott","Aroma Light Point"],
     },
     {
       name: "Sector 22",
       slug: "sector-22",
       description: "One of the oldest and liveliest shopping districts famous for Shastri Market.",
-      highlights: ["Shastri Market", "Mobile Market", "Kiran Cinema", "Sector 22-B"],
+      highlights: ["Shastri Market","Mobile Market","Kiran Cinema"],
+    },
+    {
+      name: "Sector 8",
+      slug: "sector-8",
+      description: "Sophisticated inner sector famous for upscale boutique cafes and leafy residential avenues.",
+      highlights: ["Sector 8 Inner Market","Madhya Marg","Cafe Corridor"],
+    },
+    {
+      name: "Sector 9",
+      slug: "sector-9",
+      description: "Elite residential and government district hosting secretariat offices and dining spots.",
+      highlights: ["Madhya Marg","Sector 9 Market","Carmel Convent Road"],
+    },
+    {
+      name: "Sector 26",
+      slug: "sector-26",
+      description: "Vibrant dining and lounge corridor packed with microbreweries, clubs, and grain markets.",
+      highlights: ["Madhya Marg Food Strip","Grain Market","Club Strip"],
+    },
+    {
+      name: "Manimajra",
+      slug: "manimajra",
+      description: "Historic township in eastern Chandigarh featuring bustling bazaars and modern malls.",
+      highlights: ["DLF City Centre","Old Ropar Road","Housing Board Chowk"],
+    },
+  ],
+  "ludhiana": [
+    {
+      name: "Sarabha Nagar",
+      slug: "sarabha-nagar",
+      description: "Ludhiana's most upscale residential and entertainment hub famous for Kip's Market.",
+      highlights: ["Kip's Market","Malhar Road","Main Market"],
+    },
+    {
+      name: "Civil Lines",
+      slug: "civil-lines",
+      description: "Prestigious central administrative district with colonial heritage and clubs.",
+      highlights: ["Ludhiana Club","Rakh Bagh","Fountain Chowk"],
+    },
+    {
+      name: "Model Town",
+      slug: "model-town",
+      description: "Bustling retail and residential area famed for fashion showrooms and street chaat.",
+      highlights: ["Tuition Market","Gol Market","Model Town Chowk"],
+    },
+    {
+      name: "Ferozepur Road",
+      slug: "ferozepur-road",
+      description: "The modern commercial corridor housing premier shopping malls and hotels.",
+      highlights: ["MBD Neopolis","Westend Mall","PAU Campus"],
+    },
+    {
+      name: "BRS Nagar",
+      slug: "brs-nagar",
+      description: "Well-developed residential neighborhood with parks and commercial markets.",
+      highlights: ["Block C Market","Canal Road","Sunet Chowk"],
+    },
+  ],
+  "amritsar": [
+    {
+      name: "Lawrence Road",
+      slug: "lawrence-road",
+      description: "Amritsar's premier high-street avenue packed with food joints, bakeries, and boutiques.",
+      highlights: ["Novelty Sweets","Custom Chowk","Nehru Shopping Complex"],
+    },
+    {
+      name: "Ranjit Avenue",
+      slug: "ranjit-avenue",
+      description: "Modern upscale commercial district featuring luxury hotels, cafes, and offices.",
+      highlights: ["D Block Market","B Block","District Shopping Complex"],
+    },
+    {
+      name: "Mall Road",
+      slug: "mall-road",
+      description: "Historic boulevard connecting the civil lines with historic parks and eateries.",
+      highlights: ["Company Bagh","Court Road","Crystal Chowk"],
+    },
+    {
+      name: "Golden Temple Area",
+      slug: "golden-temple-area",
+      description: "Spiritual heart of Amritsar surrounding the sacred Harmandir Sahib.",
+      highlights: ["Heritage Street","Jallianwala Bagh","Katra Jaimal Singh"],
+    },
+  ],
+  "jalandhar": [
+    {
+      name: "Model Town",
+      slug: "model-town-jalandhar",
+      description: "Vibrant lifestyle and shopping district with cafes, bakeries, and brand outlets.",
+      highlights: ["Model Town Market","Nikku Park","Geeta Mandir"],
+    },
+    {
+      name: "Civil Lines",
+      slug: "civil-lines-jalandhar",
+      description: "Established administrative district with government bungalows and greenery.",
+      highlights: ["Company Bagh","Gymkhana Club","BMC Chowk"],
+    },
+    {
+      name: "Cantt Road",
+      slug: "cantt-road",
+      description: "Peaceful corridor connecting the city with Jalandhar Cantonment.",
+      highlights: ["Jalandhar Cantt Station","Rama Mandi Chowk","Defence Colony"],
+    },
+  ],
+  "patna": [
+    {
+      name: "Boring Road",
+      slug: "boring-road",
+      description: "Patna's energetic commercial and student hub filled with coaching centers, cafes, and malls.",
+      highlights: ["Boring Canal Road","Alankar Place","Pani Tanki More"],
+    },
+    {
+      name: "Kankarbagh",
+      slug: "kankarbagh",
+      description: "One of Asia's largest residential colonies with bustling markets and sports complexes.",
+      highlights: ["Patliputra Sports Complex","Tempo Stand","Tiwaribhai Chowk"],
+    },
+    {
+      name: "Fraser Road",
+      slug: "fraser-road",
+      description: "Historic downtown commercial avenue near Patna Junction railway station.",
+      highlights: ["Dak Bungalow Crossing","Maurya Lok Complex","Patna Museum"],
+    },
+    {
+      name: "Bailey Road",
+      slug: "bailey-road",
+      description: "The major arterial road connecting government secretariats, zoo, and airport.",
+      highlights: ["Patna Zoo","Bihar Museum","High Court"],
+    },
+    {
+      name: "Rajendra Nagar",
+      slug: "rajendra-nagar",
+      description: "Key transit and residential district centered around Rajendra Nagar Terminal.",
+      highlights: ["Moin-ul-Haq Stadium","Dingra Chowk","Terminal Station"],
+    },
+  ],
+  "bhopal": [
+    {
+      name: "MP Nagar",
+      slug: "mp-nagar",
+      description: "Maharana Pratap Nagar is Bhopal's primary commercial, retail, and corporate center.",
+      highlights: ["Zone 1","Zone 2","DB City Mall"],
+    },
+    {
+      name: "Arera Colony",
+      slug: "arera-colony",
+      description: "Prestigious green residential neighborhood divided into leafy sectors E-1 to E-8.",
+      highlights: ["Bittan Market","E-6 Commercial Strip","10 No. Market"],
+    },
+    {
+      name: "New Market",
+      slug: "new-market",
+      description: "Bhopal's central shopping bazaar famous for apparel, footwear, and street food.",
+      highlights: ["Top N Town","Roshanpura Chowk","TT Nagar Stadium"],
+    },
+    {
+      name: "Kolar Road",
+      slug: "kolar-road",
+      description: "Rapidly expanding residential township scenic along the Kolar river belt.",
+      highlights: ["Sarvdharm Colony","Chuna Bhatti","Mandakini Colony"],
+    },
+  ],
+  "indore": [
+    {
+      name: "Vijay Nagar",
+      slug: "vijay-nagar",
+      description: "Indore's bustling modern commercial and nightlife center featuring malls and tech offices.",
+      highlights: ["C21 Mall","Malhar Mega Mall","Sayaji Hotel"],
+    },
+    {
+      name: "Palasia",
+      slug: "palasia",
+      description: "High-end residential and commercial district with lively cafes and dining strips.",
+      highlights: ["Old Palasia","New Palasia","Industry House","Chappan Dukan Link"],
+    },
+    {
+      name: "Rajwada",
+      slug: "rajwada",
+      description: "Historic 7-story Holkar palace heart of old Indore renowned for bustling street bazaars.",
+      highlights: ["Rajwada Palace","Sarafa Night Market","Cloth Market"],
+    },
+    {
+      name: "Chappan Dukan",
+      slug: "chappan-dukan",
+      description: "World-famous 56-shop clean street food paradise serving iconic Malwa street bites.",
+      highlights: ["Johnny Hot Dog","Vijay Chaat","Madhuram Sweets"],
+    },
+  ],
+  "visakhapatnam": [
+    {
+      name: "MVP Colony",
+      slug: "mvp-colony",
+      description: "One of Asia's largest well-planned residential colonies with wide parks and beaches.",
+      highlights: ["Sector 1 to Sector 12","AS Raja Grounds","Tenneti Park Link"],
+    },
+    {
+      name: "Beach Road",
+      slug: "beach-road",
+      description: "Iconic coastal promenade offering panoramic views of the Bay of Bengal and naval museum.",
+      highlights: ["RK Beach","INS Kursura Submarine Museum","TU 142 Aircraft Museum"],
+    },
+    {
+      name: "Gajuwaka",
+      slug: "gajuwaka",
+      description: "Massive industrial and commercial hub near Visakhapatnam Steel Plant.",
+      highlights: ["Steel Plant Road","Old Gajuwaka Junction","New Gajuwaka Market"],
+    },
+    {
+      name: "Madhurawada",
+      slug: "madhurawada",
+      description: "Modern IT and residential suburb home to tech campuses and cricket stadiums.",
+      highlights: ["IT SEZ Hill 2 & 3","ACA-VDCA Cricket Stadium","Rushikonda Link"],
+    },
+  ],
+  "bhubaneswar": [
+    {
+      name: "Saheed Nagar",
+      slug: "saheed-nagar",
+      description: "Prominent central commercial and retail district in Bhubaneswar.",
+      highlights: ["Bhawani Mall","Saheed Nagar Market","Angan Food Plaza"],
+    },
+    {
+      name: "Jayadev Vihar",
+      slug: "jayadev-vihar",
+      description: "Bustling transit and lifestyle junction housing luxury hotels and malls.",
+      highlights: ["Pal Heights Mall","Biju Patnaik Park","NH16 Junction"],
+    },
+    {
+      name: "Patia",
+      slug: "patia",
+      description: "Education and IT corridor home to KIIT University, Infocity, and software parks.",
+      highlights: ["Infocity","KIIT Campus","DLF Cybercity"],
+    },
+    {
+      name: "Chandrasekharpur",
+      slug: "chandrasekharpur",
+      description: "Major planned residential and institutional hub in northern Bhubaneswar.",
+      highlights: ["Sailashree Vihar","Damana Chowk","Kanan Vihar"],
+    },
+  ],
+  "kochi": [
+    {
+      name: "Marine Drive",
+      slug: "marine-drive",
+      description: "Iconic scenic waterfront promenade overlooking the tranquil Kochi backwaters.",
+      highlights: ["Rainbow Bridge","Boating Jetties","GCDA Shopping Complex"],
+    },
+    {
+      name: "MG Road",
+      slug: "mg-road-kochi",
+      description: "The historic commercial shopping boulevard of Ernakulam city.",
+      highlights: ["Jos Junction","Shenoys","Maharajas College Ground"],
+    },
+    {
+      name: "Kakkanad",
+      slug: "kakkanad",
+      description: "Technology capital of Kerala hosting the sprawling SmartCity and InfoPark.",
+      highlights: ["InfoPark Phase 1 & 2","SmartCity Kochi","Civil Station"],
+    },
+    {
+      name: "Edappally",
+      slug: "edappally",
+      description: "High-density retail and transit nexus famous for LuLu Mall and historic church.",
+      highlights: ["LuLu International Shopping Mall","Edappally Toll","St. George Forane Church"],
+    },
+    {
+      name: "Fort Kochi",
+      slug: "fort-kochi",
+      description: "World-renowned heritage seaside district famous for Chinese fishing nets and art cafes.",
+      highlights: ["Chinese Fishing Nets","Jew Town & Synagogue","Mattancherry Palace"],
+    },
+  ],
+  "thiruvananthapuram": [
+    {
+      name: "Kowdiar",
+      slug: "kowdiar",
+      description: "Royal and elite residential avenue leading to Kowdiar Palace.",
+      highlights: ["Kowdiar Palace","Trivandrum Club","Golf Club"],
+    },
+    {
+      name: "Kazhakkoottam",
+      slug: "kazhakkoottam",
+      description: "The Silicon Valley of Kerala housing Technopark and digital universities.",
+      highlights: ["Technopark Phase 1-4","Karyavattom Campus","Bypass Junction"],
+    },
+    {
+      name: "Palayam",
+      slug: "palayam",
+      description: "Central cultural and commercial crossroad famous for Saphalyam complex and library.",
+      highlights: ["Palayam Mosque & Church","Connemara Market","University Library"],
+    },
+    {
+      name: "Pattom",
+      slug: "pattom",
+      description: "Vital healthcare and educational transit nexus in north-central Trivandrum.",
+      highlights: ["Pattom Junction","LIC Divisional Office","St. Mary's School"],
+    },
+  ],
+  "coimbatore": [
+    {
+      name: "RS Puram",
+      slug: "rs-puram",
+      description: "Upscale residential and retail neighborhood with tree-lined avenues and boutique stores.",
+      highlights: ["DB Road","Diwan Bahadur Road","Brookefields Mall Link"],
+    },
+    {
+      name: "Gandhipuram",
+      slug: "gandhipuram",
+      description: "The central commercial and transit nerve-center of Coimbatore with major bus terminals.",
+      highlights: ["Cross Cut Road","100 Feet Road","Central Bus Stand"],
+    },
+    {
+      name: "Peelamedu",
+      slug: "peelamedu",
+      description: "Education and IT corridor home to premier colleges, hospitals, and tech parks.",
+      highlights: ["Avinashi Road","PSG Tech","Fun Republic Mall"],
+    },
+    {
+      name: "Saibaba Colony",
+      slug: "saibaba-colony",
+      description: "Peaceful residential neighborhood known for temples, parks, and dining options.",
+      highlights: ["NSR Road","Alagesan Road","Sai Baba Temple"],
+    },
+  ],
+  "guwahati": [
+    {
+      name: "GS Road",
+      slug: "gs-road",
+      description: "The modern commercial and retail lifeline of Guwahati packed with malls and hotels.",
+      highlights: ["Christian Basti","Bhangagarh","City Centre Mall"],
+    },
+    {
+      name: "Dispur",
+      slug: "dispur-locality",
+      description: "The capital complex area of Assam housing secretariat buildings and tea auction center.",
+      highlights: ["Assam Secretariat","Ganeshguri Market","Tea Auction Centre"],
+    },
+    {
+      name: "Paltan Bazaar",
+      slug: "paltan-bazaar",
+      description: "Busy transit and commercial hub right next to Guwahati Central Railway Station.",
+      highlights: ["Guwahati Station","Nepali Mandir","Transport Hub"],
+    },
+    {
+      name: "Pan Bazaar",
+      slug: "pan-bazaar",
+      description: "Historic academic and book-publishing district on the banks of the Brahmaputra.",
+      highlights: ["Cotton University","Dighalipukhuri Lake","Nehru Park"],
+    },
+  ],
+  "dehradun": [
+    {
+      name: "Rajpur Road",
+      slug: "rajpur-road",
+      description: "Prestigious high-street avenue leading to Mussoorie with premium cafes and malls.",
+      highlights: ["Clock Tower","Pacific Mall","Jakhan"],
+    },
+    {
+      name: "Clock Tower",
+      slug: "clock-tower",
+      description: "Historic Ghanta Ghar heart of old Dehradun surrounded by colorful local bazaars.",
+      highlights: ["Paltan Bazaar","Chakrata Road","Gandhi Park"],
+    },
+    {
+      name: "Jakhan",
+      slug: "jakhan",
+      description: "Fashionable upper Rajpur Road locality with luxury apartments and restaurants.",
+      highlights: ["Scholars Home","Pacific Hills","Old Rajpur Link"],
+    },
+    {
+      name: "Ballupur",
+      slug: "ballupur",
+      description: "Key residential and transit nexus connecting Chakrata Road and FRI.",
+      highlights: ["Ballupur Chowk","FRI Gate","Kaulagarh Road"],
+    },
+  ],
+  "srinagar": [
+    {
+      name: "Lal Chowk",
+      slug: "lal-chowk",
+      description: "The historic city center and bustling commercial heart of Srinagar.",
+      highlights: ["Ghanta Ghar","Residency Road","Maisuma"],
+    },
+    {
+      name: "Rajbagh",
+      slug: "rajbagh",
+      description: "Upscale residential and commercial area on the banks of the Jhelum river.",
+      highlights: ["Zero Bridge","Jhelum Bund","Kursoo Rajbagh"],
+    },
+    {
+      name: "Dal Gate",
+      slug: "dal-gate",
+      description: "Gateway to the iconic Dal Lake filled with shikara ghats and houseboats.",
+      highlights: ["Boulevard Road","Shikara Stand","Dalgate Bridge"],
+    },
+    {
+      name: "Hazratbal",
+      slug: "hazratbal",
+      description: "Historic lakeside locality famous for the revered white marble Hazratbal Shrine.",
+      highlights: ["Hazratbal Shrine","Kashmir University","Nigeen Lake Link"],
+    },
+  ],
+  "panaji": [
+    {
+      name: "Miramar",
+      slug: "miramar",
+      description: "Scenic beachfront residential locality situated at the mouth of the Mandovi river.",
+      highlights: ["Miramar Beach","Gaspar Dias","Dona Paula Road"],
+    },
+    {
+      name: "Fontainhas",
+      slug: "fontainhas",
+      description: "Historic Latin Quarter of Panaji famed for colorful Portuguese colonial villas and cafes.",
+      highlights: ["St. Sebastian Chapel","31st January Road","Ourem Creek"],
+    },
+    {
+      name: "Campal",
+      slug: "campal",
+      description: "Picturesque heritage boulevard lined with broad gardens, heritage villas, and sports grounds.",
+      highlights: ["Campal Heritage","Kala Academy","Bandodkar Ground"],
+    },
+    {
+      name: "Dona Paula",
+      slug: "dona-paula",
+      description: "Affluent seaside promontory offering panoramic views of Mormugao harbor.",
+      highlights: ["Dona Paula View Point","NIO Campus","Raj Bhavan Road"],
+    },
+  ],
+  "gurugram": [
+    {
+      name: "Cyber City",
+      slug: "cyber-city",
+      description: "Iconic futuristic IT and corporate headquarters hub with modern rapid metro link.",
+      highlights: ["DLF CyberHub","Building 10","Rapid Metro"],
+    },
+    {
+      name: "DLF Phase 1",
+      slug: "dlf-phase-1",
+      description: "Prestigious established residential enclave along the Faridabad-Gurgaon road.",
+      highlights: ["Qutub Plaza","Silver Oaks","Golf Course Road"],
+    },
+    {
+      name: "DLF Phase 2",
+      slug: "dlf-phase-2",
+      description: "Prime central residential sector adjacent to MG Road and Cyber City.",
+      highlights: ["Central Arcade","Jacaranda Marg","Sikanderpur Metro"],
+    },
+    {
+      name: "DLF Phase 5",
+      slug: "dlf-phase-5",
+      description: "Ultra-luxury high-rise residential corridor along the signature Golf Course Road.",
+      highlights: ["The Aralias","The Magnolias","One Horizon Center"],
+    },
+    {
+      name: "Sohna Road",
+      slug: "sohna-road",
+      description: "Rapidly booming corporate and residential corridor with tech parks and townships.",
+      highlights: ["Subhash Chowk","Vipul Tech Square","Badshahpur"],
+    },
+    {
+      name: "Sector 29",
+      slug: "sector-29",
+      description: "Gurugram's ultimate entertainment, dining, and microbrewery capital.",
+      highlights: ["Food Strip","Leisure Valley Park","Kingdom of Dreams"],
+    },
+  ],
+  "noida": [
+    {
+      name: "Sector 18",
+      slug: "sector-18",
+      description: "The premier commercial, entertainment, and shopping hub of Noida.",
+      highlights: ["Atta Market","DLF Mall of India","Wave Mall"],
+    },
+    {
+      name: "Sector 62",
+      slug: "sector-62",
+      description: "Major institutional and IT corporate hub housing engineering institutes and software campuses.",
+      highlights: ["Noida Electronic City Metro","Fortis Hospital","Logix Cyber Park"],
+    },
+    {
+      name: "Sector 50",
+      slug: "sector-50",
+      description: "Established affluent residential neighborhood known for central markets and metro links.",
+      highlights: ["Central Market Sector 50","Meghdootam Park","Golf Course Link"],
+    },
+    {
+      name: "Sector 137",
+      slug: "sector-137",
+      description: "High-density residential corridor along the Noida-Greater Noida Expressway.",
+      highlights: ["Expressway Towers","Felix Hospital","Aqua Line Metro"],
+    },
+    {
+      name: "Pari Chowk",
+      slug: "pari-chowk",
+      description: "The iconic central entry roundabout and gateway to Greater Noida.",
+      highlights: ["Expo Mart","Knowledge Park","Ansal Plaza"],
+    },
+  ],
+  "kanpur": [
+    {
+      name: "Civil Lines",
+      slug: "civil-lines-kanpur",
+      description: "Kanpur's premier administrative and commercial hub with shopping complexes and clubs.",
+      highlights: ["Mall Road","Green Park Stadium","Ganga Barrage Link"],
+    },
+    {
+      name: "Swaroop Nagar",
+      slug: "swaroop-nagar",
+      description: "Upscale residential and dining locality famed for boutique cafes and food joints.",
+      highlights: ["Motijheel","Chat Chauraha","Arya Nagar Crossing"],
+    },
+    {
+      name: "Kakadeo",
+      slug: "kakadeo",
+      description: "Major student and coaching education district with lively street food stalls.",
+      highlights: ["Coaching Hub","Deoki Cinema","Geeta Nagar"],
+    },
+    {
+      name: "Gumti No. 5",
+      slug: "gumti-no-5",
+      description: "Bustling retail and garment bazaar along the Grand Trunk Road.",
+      highlights: ["GT Road","Market Strip","Sant Nagar"],
+    },
+    {
+      name: "Govind Nagar",
+      slug: "govind-nagar",
+      description: "Dense commercial and residential neighborhood in southern Kanpur.",
+      highlights: ["C Block Market","Nandlal Chauraha","Dada Nagar Link"],
+    },
+  ],
+  "varanasi": [
+    {
+      name: "Assi Ghat",
+      slug: "assi-ghat",
+      description: "Historic southernmost ghat renowned for morning subah-e-banaras rituals and cultural cafes.",
+      highlights: ["Assi Ghat","Ganga Aarti","Pappu Tea Stall"],
+    },
+    {
+      name: "Godowlia",
+      slug: "godowlia",
+      description: "The bustling cultural and commercial crossroads leading to Kashi Vishwanath temple.",
+      highlights: ["Kashi Vishwanath Corridor","Dashashwamedh Link","Thatheri Bazaar"],
+    },
+    {
+      name: "Lanka",
+      slug: "lanka",
+      description: "Academic and book publishing hub right outside the gates of Banaras Hindu University.",
+      highlights: ["BHU Main Gate","Malaviya Bhavan","Sankat Mochan Road"],
+    },
+    {
+      name: "Sigra",
+      slug: "sigra",
+      description: "Modern central commercial district hosting premier malls and sports stadiums.",
+      highlights: ["IP Sigra Mall","Dr. Sampurnanand Stadium","Rath Yatra Crossing"],
+    },
+    {
+      name: "Cantt",
+      slug: "cantt-varanasi",
+      description: "Clean cantonment zone adjacent to Varanasi Junction railway station.",
+      highlights: ["Varanasi Junction","Taj Ganges","Mall Road"],
+    },
+  ],
+  "agra": [
+    {
+      name: "Fatehabad Road",
+      slug: "fatehabad-road",
+      description: "Tourism and luxury hotel avenue leading directly towards the Taj Mahal.",
+      highlights: ["Taj Protected Zone","TDI Mall","Trident & Marriott Strip"],
+    },
+    {
+      name: "Sanjay Place",
+      slug: "sanjay-place",
+      description: "The financial and corporate center of Agra housing bank headquarters and showrooms.",
+      highlights: ["LIC Building","Civil Courts","Cosmos Mall"],
+    },
+    {
+      name: "Dayalbagh",
+      slug: "dayalbagh",
+      description: "Peaceful educational and spiritual township renowned for Radhasoami memorial temple.",
+      highlights: ["Dayalbagh Temple","DEI University","Poiyaghat Link"],
+    },
+    {
+      name: "Kamla Nagar",
+      slug: "kamla-nagar",
+      description: "Affluent residential neighborhood packed with designer boutiques and sweet shops.",
+      highlights: ["Block E Market","Mughal Road","Balkeshwar Link"],
+    },
+    {
+      name: "Sadar Bazaar",
+      slug: "sadar-bazaar-agra",
+      description: "Famous cantonment shopping bazaar celebrated for leathercraft, petha, and street chaat.",
+      highlights: ["Chaat Gali","Cantt Station Link","Gwalior Road"],
+    },
+  ],
+  "nagpur": [
+    {
+      name: "Dharampeth",
+      slug: "dharampeth",
+      description: "High-end shopping, jewelry, and residential district in central-west Nagpur.",
+      highlights: ["West High Court (WHC) Road","Coffee House","Laxmi Nagar Link"],
+    },
+    {
+      name: "Sadar",
+      slug: "sadar-nagpur",
+      description: "Cosmopolitan dining and lifestyle center famous for heritage eateries and boutiques.",
+      highlights: ["Residency Road","Mount Road","Chhaoni"],
+    },
+    {
+      name: "Ramdaspeth",
+      slug: "ramdaspeth",
+      description: "Prestigious central residential locality home to specialty healthcare and hotels.",
+      highlights: ["Canal Road","Central Bazaar Road","Kachipura"],
+    },
+    {
+      name: "Sitabuldi",
+      slug: "sitabuldi",
+      description: "The historic trading heart and interchange metro hub of Nagpur.",
+      highlights: ["Sitabuldi Fort","Main Road Market","Metro Interchange"],
+    },
+    {
+      name: "Pratap Nagar",
+      slug: "pratap-nagar",
+      description: "Flourishing residential neighborhood with parks and dining options along Ring Road.",
+      highlights: ["Ring Road","Khamla","Pande Layout"],
+    },
+  ],
+  "nashik": [
+    {
+      name: "College Road",
+      slug: "college-road",
+      description: "Nashik's liveliest lifestyle and shopping boulevard lined with cafes and boutiques.",
+      highlights: ["BYK College","Bhosala Military School","Big Bazaar"],
+    },
+    {
+      name: "Gangapur Road",
+      slug: "gangapur-road",
+      description: "Upscale residential and educational avenue leading to picturesque vineyard valleys.",
+      highlights: ["Sula Vineyards Route","KTHM College","Jehan Circle"],
+    },
+    {
+      name: "Indira Nagar",
+      slug: "indira-nagar-nashik",
+      description: "Fast-developing planned residential suburb with direct highway connectivity.",
+      highlights: ["Mumbai-Agra Highway","Govind Nagar","Rane Nagar"],
+    },
+    {
+      name: "Panchavati",
+      slug: "panchavati",
+      description: "Sacred historic cultural area on the Godavari riverbanks famed for ancient temples.",
+      highlights: ["Kalaram Temple","Ramkund","Sita Gufa"],
+    },
+  ],
+  "vadodara": [
+    {
+      name: "Alkapuri",
+      slug: "alkapuri",
+      description: "Vadodara's most prestigious commercial and residential hub with luxury hotels and malls.",
+      highlights: ["RC Dutt Road","Vadodara Central","Sayaji Garden Link"],
+    },
+    {
+      name: "Gotri",
+      slug: "gotri",
+      description: "Modern residential and healthcare corridor in western Vadodara.",
+      highlights: ["Gotri Road","GMERS Medical College","Sevasi Canal Road"],
+    },
+    {
+      name: "Akota",
+      slug: "akota",
+      description: "Historic cultural neighborhood housing art galleries and peaceful residential parks.",
+      highlights: ["Akota Garden","Stadium Link","Dandia Bazaar Link"],
+    },
+    {
+      name: "Karelibaug",
+      slug: "karelibaug",
+      description: "Vibrant traditional residential locality in northern Vadodara.",
+      highlights: ["Amrapali Complex","Bright School Road","Ratnabhumi"],
+    },
+    {
+      name: "Vasna-Bhayli Road",
+      slug: "vasna-bhayli-road",
+      description: "Fastest-growing luxury township and villa corridor with international schools.",
+      highlights: ["Bhayli Canal","Bright International","Wave Club"],
+    },
+  ],
+  "rajkot": [
+    {
+      name: "Yagnik Road",
+      slug: "yagnik-road",
+      description: "The premier high-street retail and dining strip in Rajkot.",
+      highlights: ["Jagnath Plot","Imperial Palace Link","Dr. Yagnik Road"],
+    },
+    {
+      name: "Kalawad Road",
+      slug: "kalawad-road",
+      description: "Modern western commercial and residential lifeline with universities and malls.",
+      highlights: ["KKV Hall","Crystal Mall","Cosmoplex"],
+    },
+    {
+      name: "Race Course Ring Road",
+      slug: "race-course-ring-road",
+      description: "Iconic circular park boulevard loved for evening walks, food stalls, and fairs.",
+      highlights: ["Madhavrao Scindia Stadium","Fun World","Children Traffic Park"],
+    },
+  ],
+  "ranchi": [
+    {
+      name: "Lalpur",
+      slug: "lalpur",
+      description: "Ranchi's prime commercial and educational nerve-center with bustling shopping centers.",
+      highlights: ["Circular Road","Peace Road","Lalpur Chowk"],
+    },
+    {
+      name: "Main Road",
+      slug: "main-road-ranchi",
+      description: "The historic central retail and commercial corridor of Ranchi.",
+      highlights: ["Albert Ekka Chowk","Overbridge","Sujata Cinema"],
+    },
+    {
+      name: "Harmu",
+      slug: "harmu",
+      description: "Planned housing colony famous for MS Dhoni's residence and wide residential avenues.",
+      highlights: ["Harmu Housing Colony","Harmu Bypass","Vidhan Sabha Link"],
+    },
+    {
+      name: "Morabadi",
+      slug: "morabadi",
+      description: "Expansive green cultural and sports grounds overlooked by Tagore Hill.",
+      highlights: ["Tagore Hill","Birsa Munda Football Stadium","Oxygen Park"],
+    },
+  ],
+  "raipur": [
+    {
+      name: "Shankar Nagar",
+      slug: "shankar-nagar",
+      description: "Affluent residential neighborhood housing VIPs, bureaucrats, and premium cafes.",
+      highlights: ["Shankar Nagar Chowk","VIP Club Road","Lodhi Para"],
+    },
+    {
+      name: "Telibandha",
+      slug: "telibandha",
+      description: "Raipur's premier waterfront entertainment hub centered around Marine Drive.",
+      highlights: ["Marine Drive Raipur","Telibandha Lake","GE Road Link"],
+    },
+    {
+      name: "Pandri",
+      slug: "pandri",
+      description: "The textile and wholesale garment capital of Chhattisgarh.",
+      highlights: ["Cloth Market","City Mall 36","Devendra Nagar Link"],
+    },
+    {
+      name: "Civil Lines",
+      slug: "civil-lines-raipur",
+      description: "Prestigious green administrative heart housing Raj Bhavan and ministers' residences.",
+      highlights: ["Raj Bhavan","Circuit House","Ghadi Chowk"],
+    },
+  ],
+  "mysuru": [
+    {
+      name: "Gokulam",
+      slug: "gokulam",
+      description: "World-famous Ashtanga yoga capital featuring yoga shalas, organic cafes, and green avenues.",
+      highlights: ["KPJAYI Shala","Contour Road","Gokulam 3rd Stage"],
+    },
+    {
+      name: "Jayalakshmipuram",
+      slug: "jayalakshmipuram",
+      description: "Prestigious central residential district with boutique dining and universities.",
+      highlights: ["Kalidasa Road","BM Habitat Mall","Vontikoppal"],
+    },
+    {
+      name: "Vijayanagar",
+      slug: "vijayanagar-mysuru",
+      description: "Sprawling well-planned residential suburb in western Mysuru.",
+      highlights: ["Water Tank","Yoga Narasimha Swamy Temple","Ring Road"],
+    },
+    {
+      name: "Kuvempunagar",
+      slug: "kuvempunagar",
+      description: "Major southern residential and commercial locality named after Karnataka's poet laureate.",
+      highlights: ["Complex","Navodaya Circle","Akshay Bhandar"],
+    },
+  ],
+  "madurai": [
+    {
+      name: "KK Nagar",
+      slug: "kk-nagar-madurai",
+      description: "Planned upscale residential area featuring wide avenues, parks, and hospital hubs.",
+      highlights: ["Lake View Road","Apollo Hospital","MGR Bus Stand"],
+    },
+    {
+      name: "Anna Nagar",
+      slug: "anna-nagar-madurai",
+      description: "Prime commercial and residential hub in eastern Madurai with trendy eateries.",
+      highlights: ["80 Feet Road","Kuruvikaran Salai","Ambika Theatre"],
+    },
+    {
+      name: "Simmakkal",
+      slug: "simmakkal",
+      description: "Historic trading center close to the Vaigai river and Meenakshi Temple.",
+      highlights: ["Vaigai Riverfront","North Veli Street","Pechiamman Padithurai"],
+    },
+  ],
+  "tirupati": [
+    {
+      name: "Korlagunta",
+      slug: "korlagunta",
+      description: "Busy central residential and retail hub near the railway station and bus stands.",
+      highlights: ["Maruti Nagar","Old Tirchanoor Road","Bhavani Nagar Link"],
+    },
+    {
+      name: "Renigunta Road",
+      slug: "renigunta-road",
+      description: "Commercial lifeline connecting Tirupati to the airport and electronic manufacturing SEZ.",
+      highlights: ["Tirupati Airport Route","Tiruchanur Cross","TCS & Tech Parks"],
+    },
+    {
+      name: "MR Palli",
+      slug: "mr-palli",
+      description: "Modern residential neighborhood on the way to Chandragiri.",
+      highlights: ["MR Palli Circle","SV University Link","New Balaji Nagar"],
+    },
+  ],
+  "jodhpur": [
+    {
+      name: "Sardarpura",
+      slug: "sardarpura",
+      description: "Jodhpur's premier shopping and dining district with high-street fashion and sweet shops.",
+      highlights: ["C Road","B Road","Jaljog Circle"],
+    },
+    {
+      name: "Ratanada",
+      slug: "ratanada",
+      description: "Affluent residential neighborhood adjacent to the airport with luxury heritage hotels.",
+      highlights: ["Circuit House","Air Force Road","Bhati Circle"],
+    },
+    {
+      name: "Shastri Nagar",
+      slug: "shastri-nagar-jodhpur",
+      description: "Major medical and institutional residential hub in western Jodhpur.",
+      highlights: ["MDM Hospital","Geeta Bhawan","Heavy Industrial Area"],
+    },
+  ],
+  "udaipur": [
+    {
+      name: "Sukhadia Circle",
+      slug: "sukhadia-circle",
+      description: "Famous illuminated fountain circle and evening street food square.",
+      highlights: ["Sukhadia Circle Fountain","Panchwati","Saheli Nagar Link"],
+    },
+    {
+      name: "Fatehpura",
+      slug: "fatehpura",
+      description: "Prime northern residential neighborhood close to the scenic Fateh Sagar lake.",
+      highlights: ["Fateh Sagar Lake Route","Bedla Road","Syphon Choraha"],
+    },
+    {
+      name: "Hiran Magri",
+      slug: "hiran-magri",
+      description: "Massive planned residential township in south-eastern Udaipur divided into sectors 3 to 14.",
+      highlights: ["Sector 4 Market","Sector 11","Savina Vegetable Market"],
+    },
+  ],
+  "jammu": [
+    {
+      name: "Gandhi Nagar",
+      slug: "gandhi-nagar",
+      description: "Jammu's most affluent residential and lifestyle neighborhood with upscale boutiques.",
+      highlights: ["Gole Market","Apsara Road","Green Belt Park"],
+    },
+    {
+      name: "Trikuta Nagar",
+      slug: "trikuta-nagar",
+      description: "Planned modern residential and commercial sector with railway station proximity.",
+      highlights: ["Railway Station Link","Basant Nagar","Marble Market"],
+    },
+    {
+      name: "Channi Himmat",
+      slug: "channi-himmat",
+      description: "Picturesque hillside residential township along the National Highway.",
+      highlights: ["Sector 1 to Sector 7","National Highway 44","Wave Mall"],
+    },
+  ],
+  "shimla": [
+    {
+      name: "The Mall",
+      slug: "the-mall-shimla",
+      description: "The iconic pedestrian-only colonial promenade at the heart of Shimla.",
+      highlights: ["Gaiety Theatre","Scandal Point","Town Hall"],
+    },
+    {
+      name: "The Ridge",
+      slug: "the-ridge",
+      description: "Sprawling open cultural space offering panoramic Himalayan views.",
+      highlights: ["Christ Church","Tudor Library","Lakkar Bazaar Link"],
+    },
+    {
+      name: "Sanjauli",
+      slug: "sanjauli",
+      description: "Vibrant high-density suburban hub connecting Dhalli and the upper hills.",
+      highlights: ["Sanjauli Chowk","IGMC Hospital Link","Cemetery Tunnel"],
+    },
+    {
+      name: "Chotta Shimla",
+      slug: "chotta-shimla",
+      description: "Historic administrative suburb housing the Raj Bhavan and government secretariats.",
+      highlights: ["Raj Bhavan","Oakover","Brockhurst"],
     },
   ],
 };
@@ -477,16 +1753,29 @@ for (const [citySlug, areas] of Object.entries(POPULAR_LOCAL_AREAS_MAP)) {
 
 /**
  * Get all default local areas for a given city slug or name.
+ * Resolves canonical aliases (e.g. Bangalore -> Bengaluru, Bombay -> Mumbai).
  * Constant-time O(1) Hash Map lookup.
  */
 export function getDefaultLocalAreasForCity(citySlugOrName: string): LocalAreaEntry[] {
   if (!citySlugOrName) return [];
+
+  // Direct lookup
   const normalized = slugify(citySlugOrName);
-  return (
+  const direct =
     POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(normalized) ??
-    POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(citySlugOrName.toLowerCase().trim()) ??
-    []
-  );
+    POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(citySlugOrName.toLowerCase().trim());
+  if (direct && direct.length > 0) return direct;
+
+  // Canonical alias lookup
+  const canonical = resolveCanonicalCity(citySlugOrName);
+  if (canonical.slug && canonical.slug !== normalized) {
+    const aliasMatched =
+      POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(canonical.slug) ??
+      POPULAR_LOCAL_AREAS_BY_CITY_MAP.get(canonical.canonicalName.toLowerCase().trim());
+    if (aliasMatched && aliasMatched.length > 0) return aliasMatched;
+  }
+
+  return [];
 }
 
 /**
@@ -498,8 +1787,11 @@ export function findDefaultLocalArea(
   areaSlug: string
 ): LocalAreaEntry | null {
   if (!citySlug || !areaSlug) return null;
-  const normCity = slugify(citySlug);
+
+  const canonical = resolveCanonicalCity(citySlug);
+  const normCity = canonical.slug || slugify(citySlug);
   const normArea = slugify(areaSlug);
+
   const key = `${normCity}::${normArea}`;
   return POPULAR_LOCAL_AREAS_BY_SLUG_MAP.get(key) ?? null;
 }

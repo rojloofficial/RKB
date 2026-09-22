@@ -39,9 +39,9 @@ async function verifyPassword(
   return bcrypt.compare(password, passwordHash);
 }
 
-function sanitizeSubAdmin(doc: any): SubAdmin {
+function sanitizeSubAdmin(doc: SubAdmin | Record<string, unknown>): SubAdmin {
   return {
-    _id: String(doc._id || doc.id),
+    _id: String(doc._id || (doc as Record<string, unknown>).id),
     email: String(doc.email || "").toLowerCase().trim(),
     passwordHash: String(doc.passwordHash || ""),
     sessionToken: doc.sessionToken ? String(doc.sessionToken) : undefined,
@@ -56,7 +56,7 @@ export async function listSubAdmins(): Promise<SubAdmin[]> {
   try {
     const db = await getDb();
     if (db) {
-      const col = db.collection<any>("subadmins");
+      const col = db.collection<SubAdmin>("subadmins");
       const docs = await col.find({ role: { $ne: "main" } }).toArray();
       if (docs && docs.length > 0) {
         return docs.map(sanitizeSubAdmin);
@@ -87,7 +87,7 @@ export async function getSubAdminById(id: string): Promise<SubAdmin | null> {
   try {
     const db = await getDb();
     if (db) {
-      const doc = await db.collection<any>("subadmins").findOne({ _id: id });
+      const doc = await db.collection<SubAdmin>("subadmins").findOne({ _id: id });
       if (doc) return sanitizeSubAdmin(doc);
     }
   } catch (err) {
@@ -108,7 +108,7 @@ export async function getSubAdminByEmail(
   try {
     const db = await getDb();
     if (db) {
-      const doc = await db.collection<any>("subadmins").findOne({
+      const doc = await db.collection<SubAdmin>("subadmins").findOne({
         email: normalizedEmail,
         role: { $ne: "main" },
       });
@@ -134,7 +134,7 @@ export async function getSubAdminBySession(
   try {
     const db = await getDb();
     if (db) {
-      const doc = await db.collection<any>("subadmins").findOne({
+      const doc = await db.collection<SubAdmin>("subadmins").findOne({
         sessionToken: token,
         role: { $ne: "main" },
       });
@@ -158,7 +158,7 @@ export async function getAdminByEmail(
   try {
     const db = await getDb();
     if (db) {
-      const doc = await db.collection<any>("subadmins").findOne({ email: normalizedEmail });
+      const doc = await db.collection<SubAdmin>("subadmins").findOne({ email: normalizedEmail });
       if (doc) return sanitizeSubAdmin(doc);
     }
   } catch (err) {
@@ -179,7 +179,7 @@ export async function getAdminBySession(
   try {
     const db = await getDb();
     if (db) {
-      const doc = await db.collection<any>("subadmins").findOne({ sessionToken: token });
+      const doc = await db.collection<SubAdmin>("subadmins").findOne({ sessionToken: token });
       if (doc) return sanitizeSubAdmin(doc);
     }
   } catch (err) {
@@ -218,7 +218,7 @@ export async function ensureMainAdmin(
     try {
       const db = await getDb();
       if (db) {
-        await db.collection<any>("subadmins").updateOne(
+        await db.collection<SubAdmin>("subadmins").updateOne(
           { _id: existing._id },
           { $set: updated },
           { upsert: true }
@@ -246,7 +246,7 @@ export async function ensureMainAdmin(
   try {
     const db = await getDb();
     if (db) {
-      await db.collection<any>("subadmins").updateOne(
+      await db.collection<SubAdmin>("subadmins").updateOne(
         { _id: record._id },
         { $set: record },
         { upsert: true }
@@ -286,7 +286,7 @@ export async function createSubAdmin(
   try {
     const db = await getDb();
     if (db) {
-      await db.collection<any>("subadmins").insertOne({ ...record });
+      await db.collection<SubAdmin>("subadmins").insertOne({ ...record });
     }
   } catch (err) {
     console.error("[admin-user] createSubAdmin Mongo write error:", err);
@@ -352,7 +352,7 @@ export async function updateSubAdmin(
   try {
     const db = await getDb();
     if (db) {
-      await db.collection<any>("subadmins").updateOne(
+      await db.collection<SubAdmin>("subadmins").updateOne(
         { _id: id },
         { $set: updatedRecord },
         { upsert: true }
@@ -380,7 +380,7 @@ export async function deleteSubAdmin(id: string): Promise<boolean> {
   try {
     const db = await getDb();
     if (db) {
-      const res = await db.collection<any>("subadmins").deleteOne({ _id: id });
+      const res = await db.collection<SubAdmin>("subadmins").deleteOne({ _id: id });
       if (res.deletedCount && res.deletedCount > 0) {
         removed = true;
       }
@@ -428,7 +428,7 @@ export async function verifyAdmin(
   try {
     const db = await getDb();
     if (db) {
-      await db.collection<any>("subadmins").updateOne(
+      await db.collection<SubAdmin>("subadmins").updateOne(
         { _id: admin._id },
         { $set: updatedAdmin },
         { upsert: true }
