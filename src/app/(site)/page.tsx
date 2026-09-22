@@ -116,7 +116,7 @@ export default function Home() {
             <Button
               href="/post-ad/new"
               variant="solid"
-              className="!bg-white !text-neutral-950 hover:!bg-neutral-200 font-bold"
+              className="!bg-white !text-black text-black hover:!bg-neutral-200 font-bold"
             >
               Post an Ad
             </Button>

@@ -13,7 +13,7 @@ const base =
   "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none";
 
 const variants: Record<Variant, string> = {
-  solid: "bg-black !text-white text-white hover:bg-neutral-800 active:scale-[0.98] shadow-sm",
+  solid: "bg-black text-white hover:bg-neutral-800 active:scale-[0.98] shadow-sm",
   soft: "border border-neutral-300 bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:scale-[0.98]",
   outline: "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
   ghost: "text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
@@ -27,7 +27,7 @@ const sizes: Record<Size, string> = {
 };
 
 const activeClass =
-  "bg-black !text-white text-white shadow-sm hover:bg-neutral-800";
+  "bg-black text-white shadow-sm hover:bg-neutral-800";
 
 type CommonProps = {
   variant?: Variant;
