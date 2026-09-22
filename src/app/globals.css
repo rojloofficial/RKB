@@ -73,42 +73,52 @@ button {
 }
 
 /* Enforce crisp white text on any button or button-like element with a black or dark background */
-button[class*="bg-black"],
-button[class*="bg-neutral-950"],
-button[class*="bg-neutral-900"],
-button[class*="bg-neutral-800"],
-button[class*="bg-red-950"],
-button[class*="bg-red-900"],
-button[class*="bg-red-800"],
-button[class*="bg-zinc-950"],
-button[class*="bg-zinc-900"],
-button[class*="bg-zinc-800"],
-button[class*="bg-gray-950"],
-button[class*="bg-gray-900"],
-a[role="button"][class*="bg-black"],
-a[role="button"][class*="bg-neutral-950"],
-a[role="button"][class*="bg-neutral-900"],
-a[role="button"][class*="bg-neutral-800"],
-a[role="button"][class*="bg-red-950"],
-a[class*="rounded"][class*="bg-black"],
-a[class*="rounded"][class*="bg-neutral-950"],
-a[class*="rounded"][class*="bg-neutral-900"],
-a[class*="rounded"][class*="bg-neutral-800"],
-a[class*="rounded"][class*="bg-red-950"] {
+button[class~="bg-black"],
+button[class~="bg-neutral-950"],
+button[class~="bg-neutral-900"],
+button[class~="bg-neutral-800"],
+button[class~="bg-red-950"],
+button[class~="bg-red-900"],
+button[class~="bg-red-800"],
+button[class~="bg-zinc-950"],
+button[class~="bg-zinc-900"],
+button[class~="bg-zinc-800"],
+button[class~="bg-gray-950"],
+button[class~="bg-gray-900"],
+a[role="button"][class~="bg-black"],
+a[role="button"][class~="bg-neutral-950"],
+a[role="button"][class~="bg-neutral-900"],
+a[role="button"][class~="bg-neutral-800"],
+a[role="button"][class~="bg-red-950"],
+a[class*="rounded"][class~="bg-black"],
+a[class*="rounded"][class~="bg-neutral-950"],
+a[class*="rounded"][class~="bg-neutral-900"],
+a[class*="rounded"][class~="bg-neutral-800"],
+a[class*="rounded"][class~="bg-red-950"] {
   color: #ffffff !important;
 }
 
-button[class*="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
-button[class*="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
-button[class*="bg-neutral-900"] > span:not([class*="bg-"]):not([class*="text-"]),
-button[class*="bg-neutral-800"] > span:not([class*="bg-"]):not([class*="text-"]),
-button[class*="bg-red-950"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[role="button"][class*="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[role="button"][class*="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[class*="rounded"][class*="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[class*="rounded"][class*="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[class*="rounded"][class*="bg-neutral-900"] > span:not([class*="bg-"]):not([class*="text-"]),
-a[class*="rounded"][class*="bg-red-950"] > span:not([class*="bg-"]):not([class*="text-"]) {
+button[class~="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
+button[class~="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
+button[class~="bg-neutral-900"] > span:not([class*="bg-"]):not([class*="text-"]),
+button[class~="bg-neutral-800"] > span:not([class*="bg-"]):not([class*="text-"]),
+button[class~="bg-red-950"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[role="button"][class~="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[role="button"][class~="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[class*="rounded"][class~="bg-black"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[class*="rounded"][class~="bg-neutral-950"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[class*="rounded"][class~="bg-neutral-900"] > span:not([class*="bg-"]):not([class*="text-"]),
+a[class*="rounded"][class~="bg-red-950"] > span:not([class*="bg-"]):not([class*="text-"]) {
+  color: #ffffff !important;
+}
+
+/* When hovering on elements with hover:bg-black or hover:bg-neutral-950, enforce white text */
+button[class*="hover:bg-black"]:hover,
+button[class*="hover:bg-neutral-950"]:hover,
+button[class*="hover:bg-neutral-900"]:hover,
+a[class*="hover:bg-black"]:hover,
+a[class*="hover:bg-neutral-950"]:hover,
+a[class*="hover:bg-neutral-900"]:hover {
   color: #ffffff !important;
 }
 

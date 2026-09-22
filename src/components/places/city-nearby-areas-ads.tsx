@@ -93,8 +93,8 @@ export default function CityNearbyAreasAds({
               onClick={() => handleSelectArea(null)}
               className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer shadow-2xs ${
                 selectedAreaSlug === null
-                  ? "border border-neutral-950 bg-neutral-950 !text-white text-white"
-                  : "border border-neutral-200 bg-neutral-100 text-black hover:bg-neutral-950 hover:text-white hover:border-neutral-950"
+                  ? "border border-black bg-black !text-white text-white"
+                  : "border border-neutral-300 bg-neutral-100 !text-black text-black hover:bg-black hover:!text-white hover:text-white hover:border-black"
               }`}
             >
               All ({ads.length})
@@ -111,8 +111,8 @@ export default function CityNearbyAreasAds({
                   onClick={() => handleSelectArea(isSelected ? null : area.slug)}
                   className={`rounded-xl px-3 py-1.5 text-xs font-bold transition cursor-pointer shadow-2xs ${
                     isSelected
-                      ? "border border-neutral-950 bg-neutral-950 !text-white text-white"
-                      : "border border-neutral-200 bg-neutral-100 text-black hover:bg-neutral-950 hover:text-white hover:border-neutral-950"
+                      ? "border border-black bg-black !text-white text-white"
+                      : "border border-neutral-300 bg-neutral-100 !text-black text-black hover:bg-black hover:!text-white hover:text-white hover:border-black"
                   }`}
                 >
                   {area.name}
