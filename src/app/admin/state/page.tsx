@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AdminStateHierarchySkeleton } from "@/components/skeletons/admin-skeletons";
 import { useAdminContext } from "@/components/admin/use-admin-context";
@@ -14,34 +15,23 @@ type StateRecord = {
 type CityRow = {
   _id?: string;
   name: string;
+  slug?: string;
   region: string;
   state?: string;
   source?: "Custom" | "Static";
 };
 
-type LocalAreaRow = {
-  _id?: string;
-  name: string;
-  slug: string;
-  cityName: string;
-  citySlug: string;
-  stateName?: string;
-};
-
 type JsonSummary = {
   totalStates: number;
   totalCities: number;
-  totalLocalAreas: number;
   newStates: number;
   newCities: number;
-  newLocalAreas: number;
 };
 
 const COUNTRY_OPTIONS = ["India"];
 
-// UI-only sentinel values for inline creation options
+// UI-only sentinel value for inline creation option
 const ADD_CITY_VALUE = "__ADD_CITY__";
-const ADD_LOCAL_AREA_VALUE = "__ADD_LOCAL_AREA__";
 
 function normalizeState(s?: string): string {
   return (s ?? "")
@@ -52,8 +42,7 @@ function normalizeState(s?: string): string {
 }
 
 /**
- * Dependency-free fuzzy matching:
- * Matches direct substring, token words, and character sequence.
+ * Dependency-free fuzzy matching
  */
 function fuzzyMatch(target: string, query: string): boolean {
   if (!query) return true;
@@ -64,13 +53,13 @@ function fuzzyMatch(target: string, query: string): boolean {
   // 1. Direct substring
   if (t.includes(q)) return true;
 
-  // 2. Token / word-level match (all words in query must be in target)
+  // 2. Token / word-level match
   const tokens = q.split(/[\s\-_,]+/).filter(Boolean);
   if (tokens.length > 0 && tokens.every((token) => t.includes(token))) {
     return true;
   }
 
-  // 3. Subsequence matching (letters in query appear in order in target)
+  // 3. Subsequence matching
   let tIdx = 0;
   let qIdx = 0;
   while (tIdx < t.length && qIdx < q.length) {
@@ -87,7 +76,6 @@ export default function AdminStates() {
   const me = useAdminContext();
   const [states, setStates] = useState<StateRecord[]>([]);
   const [cities, setCities] = useState<CityRow[]>([]);
-  const [allLocalAreas, setAllLocalAreas] = useState<LocalAreaRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [stateName, setStateName] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -108,18 +96,14 @@ export default function AdminStates() {
 
   // Collapsible state tracking
   const [expandedStates, setExpandedStates] = useState<Set<string>>(new Set());
-  const [expandedCities, setExpandedCities] = useState<Set<string>>(new Set());
 
-  // Cascading Location Selector State: State -> City -> Local Area
+  // Cascading Location Selector State: State -> City
   const [selectedState, setSelectedState] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
-  const [selectedLocalArea, setSelectedLocalArea] = useState("");
 
   // Inline Creation Form States
   const [newCityName, setNewCityName] = useState("");
   const [creatingCity, setCreatingCity] = useState(false);
-  const [newLocalAreaName, setNewLocalAreaName] = useState("");
-  const [creatingLocalArea, setCreatingLocalArea] = useState(false);
 
   // JSON File Upload / Validation state
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -135,14 +119,13 @@ export default function AdminStates() {
   // Backup Export State
   const [downloadingBackup, setDownloadingBackup] = useState(false);
 
-  // Load all States, Cities, and Local Areas
+  // Load all States and Cities
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [sRes, cRes, aRes] = await Promise.all([
+      const [sRes, cRes] = await Promise.all([
         fetch("/api/admin/states", { credentials: "include" }),
         fetch("/api/admin/cities", { credentials: "include" }),
-        fetch("/api/admin/local-areas", { credentials: "include" }),
       ]);
       if (sRes.status === 401 || cRes.status === 401) {
         router.replace("/admin/login");
@@ -150,7 +133,6 @@ export default function AdminStates() {
       }
       if (sRes.ok) setStates((await sRes.json()).states ?? []);
       if (cRes.ok) setCities((await cRes.json()).cities ?? []);
-      if (aRes.ok) setAllLocalAreas((await aRes.json()).localAreas ?? []);
     } catch {
       setError("Failed to load data. Please refresh.");
     } finally {
@@ -169,45 +151,22 @@ export default function AdminStates() {
     });
   }, [load, me, router]);
 
-  // State Collapse Toggle
+  // Toggle state expansion in hierarchy
   function toggleState(stateKey: string) {
     setExpandedStates((prev) => {
       const next = new Set(prev);
-      if (next.has(stateKey)) {
-        next.delete(stateKey);
-      } else {
-        next.add(stateKey);
-      }
+      if (next.has(stateKey)) next.delete(stateKey);
+      else next.add(stateKey);
       return next;
     });
   }
 
-  // City Collapse Toggle
-  function toggleCity(cityKey: string) {
-    setExpandedCities((prev) => {
-      const next = new Set(prev);
-      if (next.has(cityKey)) {
-        next.delete(cityKey);
-      } else {
-        next.add(cityKey);
-      }
-      return next;
-    });
+  function expandAll() {
+    setExpandedStates(new Set(states.map((s) => s._id ?? s.slug ?? s.name)));
   }
 
-  // Expand / Collapse All
-  function handleExpandAll() {
-    const allStateKeys = new Set(states.map((s) => s._id ?? s.slug ?? s.name));
-    const allCityKeys = new Set(
-      cities.map((c) => `${c.state ?? ""}-${c.name}`)
-    );
-    setExpandedStates(allStateKeys);
-    setExpandedCities(allCityKeys);
-  }
-
-  function handleCollapseAll() {
+  function collapseAll() {
     setExpandedStates(new Set());
-    setExpandedCities(new Set());
   }
 
   // Hierarchy Fuzzy Filter
@@ -229,37 +188,9 @@ export default function AdminStates() {
           );
         });
 
-        const matchingCities = stateCities
-          .map((city) => {
-            const cityKey = `${state.name}-${city.name}`;
-            const cityMatches = fuzzyMatch(city.name, q);
-
-            const cityAreas = allLocalAreas.filter(
-              (a) =>
-                a.cityName.toLowerCase() === city.name.toLowerCase() &&
-                (!a.stateName ||
-                  a.stateName.toLowerCase() === state.name.toLowerCase())
-            );
-
-            const matchingAreas = cityAreas.filter((area) =>
-              fuzzyMatch(area.name, q)
-            );
-
-            const hasAreaMatch = matchingAreas.length > 0;
-            const isCityVisible =
-              !q || stateMatches || cityMatches || hasAreaMatch;
-
-            return {
-              city,
-              cityKey,
-              cityMatches,
-              cityAreas,
-              matchingAreas,
-              hasAreaMatch,
-              isCityVisible,
-            };
-          })
-          .filter((c) => c.isCityVisible);
+        const matchingCities = stateCities.filter(
+          (city) => !q || stateMatches || fuzzyMatch(city.name, q)
+        );
 
         const isStateVisible = !q || stateMatches || matchingCities.length > 0;
 
@@ -272,7 +203,7 @@ export default function AdminStates() {
         };
       })
       .filter((s) => s.isStateVisible);
-  }, [states, cities, allLocalAreas, debouncedSearch]);
+  }, [states, cities, debouncedSearch]);
 
   async function addState(e: React.FormEvent) {
     e.preventDefault();
@@ -280,6 +211,7 @@ export default function AdminStates() {
     setSubmitting(true);
     setError("");
     setSuccess("");
+
     try {
       const res = await fetch("/api/admin/states", {
         method: "POST",
@@ -287,18 +219,41 @@ export default function AdminStates() {
         credentials: "include",
         body: JSON.stringify({ name: stateName }),
       });
-      const data = await res.json().catch(() => ({} as Record<string, unknown>));
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError((data.error as string) || "Failed to add state.");
+        setError((data.error as string) || "Failed to create state.");
         return;
       }
+      setSuccess(`State "${stateName}" created.`);
       setStateName("");
-      setSuccess("State added successfully.");
       await load();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Failed to create state.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function removeCity(id?: string) {
+    if (!id) return;
+    if (!confirm("Delete this city?")) return;
+    try {
+      const res = await fetch("/api/admin/cities", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError((data.error as string) || "Failed to delete city.");
+        return;
+      }
+      setSuccess("City deleted successfully.");
+      setSelectedCity("");
+      await load();
+    } catch {
+      setError("Failed to delete city.");
     }
   }
 
@@ -320,35 +275,9 @@ export default function AdminStates() {
       setSuccess("State deleted successfully.");
       setSelectedState("");
       setSelectedCity("");
-      setSelectedLocalArea("");
       await load();
     } catch {
       setError("Failed to delete state.");
-    }
-  }
-
-  // Local Area Delete
-  async function handleDeleteLocalArea(id?: string) {
-    if (!id) return;
-    if (!confirm("Delete this local area?")) return;
-    setError("");
-    setSuccess("");
-    try {
-      const res = await fetch("/api/admin/local-areas", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError((data.error as string) || "Failed to delete local area.");
-        return;
-      }
-      setSuccess("Local area deleted.");
-      await load();
-    } catch {
-      setError("Failed to delete local area.");
     }
   }
 
@@ -420,7 +349,7 @@ export default function AdminStates() {
 
       const summary = data.summary as JsonSummary;
       setSuccess(
-        `Import complete! Processed ${summary.totalStates} states (${summary.newStates} new), ${summary.totalCities} cities (${summary.newCities} new), and ${summary.totalLocalAreas} local areas (${summary.newLocalAreas} new).`
+        `Import complete! Processed ${summary.totalStates} states (${summary.newStates} new), ${summary.totalCities} cities (${summary.newCities} new).`
       );
       setImportSummary(null);
       setPendingPayload(null);
@@ -464,12 +393,10 @@ export default function AdminStates() {
       setDeleteAllConfirmed(false);
       setSelectedState("");
       setSelectedCity("");
-      setSelectedLocalArea("");
       setNewCityName("");
-      setNewLocalAreaName("");
       setSuccess(
         (data.message as string) ||
-          "All states, cities, and local areas have been permanently deleted."
+          "All states and cities have been permanently deleted."
       );
       await load();
     } catch {
@@ -483,27 +410,17 @@ export default function AdminStates() {
   function handleStateSelect(newState: string) {
     setSelectedState(newState);
     setSelectedCity("");
-    setSelectedLocalArea("");
     setNewCityName("");
-    setNewLocalAreaName("");
     setError("");
   }
 
   function handleCitySelect(newCity: string) {
     setSelectedCity(newCity);
-    setSelectedLocalArea("");
-    setNewLocalAreaName("");
     setNewCityName("");
     setError("");
   }
 
-  function handleLocalAreaSelect(newArea: string) {
-    setSelectedLocalArea(newArea);
-    setNewLocalAreaName("");
-    setError("");
-  }
-
-  // Inline Add City Handler (triggered when + Add City is selected)
+  // Inline Add City Handler
   async function handleInlineAddCity(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = newCityName.trim();
@@ -533,12 +450,9 @@ export default function AdminStates() {
 
       setSuccess(`City "${trimmed}" created successfully in ${selectedState}.`);
       setNewCityName("");
-      // Expand the state where city was added so admin sees it immediately
       setExpandedStates((prev) => new Set(prev).add(selectedState));
       await load();
-      // Select the newly created city and close inline form
       setSelectedCity(trimmed);
-      setSelectedLocalArea("");
     } catch {
       setError("An error occurred while creating city.");
     } finally {
@@ -546,84 +460,17 @@ export default function AdminStates() {
     }
   }
 
-  // Inline Add Local Area Handler (triggered when + Add Local Area is selected)
-  async function handleInlineAddLocalArea(e: React.FormEvent) {
-    e.preventDefault();
-    const trimmed = newLocalAreaName.trim();
-    if (
-      !selectedState ||
-      !selectedCity ||
-      selectedCity === ADD_CITY_VALUE ||
-      !trimmed ||
-      creatingLocalArea
-    ) {
-      return;
-    }
-    setCreatingLocalArea(true);
-    setError("");
-    setSuccess("");
-
-    try {
-      const res = await fetch("/api/admin/local-areas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: trimmed,
-          cityName: selectedCity,
-          stateName: selectedState,
-        }),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError((data.error as string) || "Failed to add local area.");
-        return;
-      }
-
-      setSuccess(`Local area "${trimmed}" added successfully to ${selectedCity}.`);
-      setNewLocalAreaName("");
-      // Expand state and city in hierarchy
-      setExpandedStates((prev) => new Set(prev).add(selectedState));
-      setExpandedCities((prev) =>
-        new Set(prev).add(`${selectedState}-${selectedCity}`)
-      );
-      await load();
-      // Select the newly created local area and close inline form
-      setSelectedLocalArea(trimmed);
-    } catch {
-      setError("An error occurred while adding local area.");
-    } finally {
-      setCreatingLocalArea(false);
-    }
-  }
-
   // Available Cities for currently selected State
   const citiesForSelectedState = useMemo(() => {
     if (!selectedState) return [];
-    const sLower = selectedState.trim().toLowerCase();
+    const sLower = selectedState.toLowerCase();
     const sNorm = normalizeState(selectedState);
     return cities.filter((c) => {
       if (!c.state) return false;
-      const cLower = c.state.trim().toLowerCase();
-      return cLower === sLower || normalizeState(c.state) === sNorm;
+      const cState = c.state.trim().toLowerCase();
+      return cState === sLower || normalizeState(c.state) === sNorm;
     });
   }, [cities, selectedState]);
-
-  // Available Local Areas for currently selected City & State
-  const areasForSelectedCity = useMemo(() => {
-    if (!selectedCity || selectedCity === ADD_CITY_VALUE) return [];
-    const cLower = selectedCity.toLowerCase();
-    const sLower = selectedState.toLowerCase();
-    const sNorm = normalizeState(selectedState);
-    return allLocalAreas.filter(
-      (a) =>
-        a.cityName.toLowerCase() === cLower &&
-        (!a.stateName ||
-          a.stateName.toLowerCase() === sLower ||
-          normalizeState(a.stateName) === sNorm)
-    );
-  }, [allLocalAreas, selectedCity, selectedState]);
 
   // Download Location Backup Handler
   async function handleDownloadBackup() {
@@ -670,10 +517,10 @@ export default function AdminStates() {
       <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            States & <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Jurisdictions</span>
+            States &amp; <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Cities</span>
           </h1>
           <p className="mt-1 text-xs sm:text-sm text-slate-400">
-            Add states, manage cities, and structure micro-localities hierarchically.
+            Add states, manage cities, and structure regional coverage hierarchically.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -682,9 +529,6 @@ export default function AdminStates() {
           </span>
           <span className="rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-300">
             Cities: {cities.length}
-          </span>
-          <span className="rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-300">
-            Areas: {allLocalAreas.length}
           </span>
           <button
             type="button"
@@ -706,16 +550,15 @@ export default function AdminStates() {
             className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 transition"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Fuzzy search State, City, or Area..."
+            placeholder="Fuzzy search State or City..."
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="absolute right-3 top-2.5 text-xs font-bold text-amber-400 hover:text-amber-300"
-              title="Clear search"
+              className="absolute right-3 top-2.5 text-xs font-bold text-slate-400 hover:text-white"
             >
-              Clear
+              &times;
             </button>
           )}
         </div>
@@ -723,79 +566,188 @@ export default function AdminStates() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={handleExpandAll}
-            className="rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition"
+            onClick={expandAll}
+            className="rounded-xl border border-white/10 bg-slate-800/70 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition"
           >
             Expand All
           </button>
           <button
             type="button"
-            onClick={handleCollapseAll}
-            className="rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-1.5 text-xs font-semibold text-slate-200 hover:bg-slate-700 hover:text-white transition"
+            onClick={collapseAll}
+            className="rounded-xl border border-white/10 bg-slate-800/70 hover:bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 transition"
           >
             Collapse All
           </button>
         </div>
       </div>
 
-      {/* Add State Form + Upload JSON Button */}
-      <form
-        onSubmit={addState}
-        className="mt-6 flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md lg:flex-row lg:items-end"
-      >
-        <label className="block flex-1">
-          <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-            New State
-          </span>
-          <input
-            className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 transition"
-            value={stateName}
-            onChange={(e) => setStateName(e.target.value)}
-            placeholder="e.g. Maharashtra"
-            required
-          />
-        </label>
-        <button
-          type="submit"
-          disabled={submitting || loading}
-          className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold px-5 py-2.5 text-sm shadow-md transition disabled:opacity-50"
-        >
-          {submitting ? "Adding..." : "Add State"}
-        </button>
-        <div className="flex flex-wrap gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileSelect}
-            accept=".json,application/json"
-            className="hidden"
-          />
+      {/* Success / Error Messages */}
+      {error && (
+        <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-xs font-medium text-rose-300 flex items-center justify-between">
+          <span>{error}</span>
           <button
             type="button"
-            disabled={importing}
-            onClick={() => fileInputRef.current?.click()}
-            className="rounded-xl border border-white/15 bg-slate-800 hover:bg-slate-700 px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-50"
+            onClick={() => setError("")}
+            className="font-bold text-rose-400 hover:text-rose-200"
           >
-            {importing ? "Processing..." : "Upload JSON"}
-          </button>
-          <button
-            type="button"
-            disabled={downloadingBackup || loading}
-            onClick={handleDownloadBackup}
-            className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-4 py-2.5 text-sm font-semibold text-amber-300 transition disabled:opacity-50"
-          >
-            {downloadingBackup ? "Exporting..." : "Download JSON Backup"}
+            &times;
           </button>
         </div>
-      </form>
+      )}
+      {success && (
+        <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs font-medium text-emerald-300 flex items-center justify-between">
+          <span>{success}</span>
+          <button
+            type="button"
+            onClick={() => setSuccess("")}
+            className="font-bold text-emerald-400 hover:text-emerald-200"
+          >
+            &times;
+          </button>
+        </div>
+      )}
 
-      {/* Cascading Location Selector + Inline Creation Options */}
-      <section className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-amber-400 mb-3 flex items-center gap-2">
-          <span>Cascading Hierarchy Selector</span>
+      {/* Primary Actions: Add State Form & JSON Import / Export */}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Add State Form */}
+        <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
+          <h2 className="text-base font-bold text-white mb-1">Add New State</h2>
+          <p className="text-xs text-slate-400 mb-4">
+            Register a state or union territory.
+          </p>
+          <form onSubmit={addState} className="flex flex-wrap gap-2">
+            <input
+              className="flex-1 min-w-[200px] rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 transition"
+              value={stateName}
+              onChange={(e) => setStateName(e.target.value)}
+              placeholder="e.g. Maharashtra, Karnataka, Delhi"
+              required
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2.5 text-xs font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 disabled:opacity-50 transition shadow-sm cursor-pointer"
+            >
+              {submitting ? "Adding..." : "Add State"}
+            </button>
+          </form>
+        </section>
+
+        {/* JSON Import & Backup Box */}
+        <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
+          <div className="flex items-center justify-between mb-1">
+            <h2 className="text-base font-bold text-white">Import &amp; Backup</h2>
+            <button
+              type="button"
+              onClick={handleDownloadBackup}
+              disabled={downloadingBackup}
+              className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-bold text-amber-300 transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <span>📥</span>
+              {downloadingBackup ? "Preparing..." : "Download Backup"}
+            </button>
+          </div>
+          <p className="text-xs text-slate-400 mb-4">
+            Upload a structured JSON file to bulk-import States and Cities.
+          </p>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="cursor-pointer rounded-xl border border-white/15 bg-slate-800/90 hover:bg-slate-800 px-4 py-2.5 text-xs font-semibold text-slate-200 transition">
+              <span>{importing ? "Validating JSON..." : "Select JSON File"}</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,application/json"
+                className="hidden"
+                disabled={importing}
+                onChange={handleFileSelect}
+              />
+            </label>
+          </div>
+        </section>
+      </div>
+
+      {/* JSON Import Preview Modal */}
+      {importSummary && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-lg rounded-2xl border border-amber-500/30 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white mb-2">
+              Confirm JSON Hierarchy Import
+            </h3>
+            <p className="text-xs text-slate-300 mb-4">
+              Review parsed locations before applying to your database:
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              <div className="rounded-xl border border-white/10 bg-slate-800/80 p-3 text-center">
+                <span className="block text-xl font-black text-amber-400">
+                  {importSummary.totalStates}
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  States ({importSummary.newStates} new)
+                </span>
+              </div>
+              <div className="rounded-xl border border-white/10 bg-slate-800/80 p-3 text-center">
+                <span className="block text-xl font-black text-amber-400">
+                  {importSummary.totalCities}
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400">
+                  Cities ({importSummary.newCities} new)
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={cancelImport}
+                disabled={importing}
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmImport}
+                disabled={importing}
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2 text-xs font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 transition shadow-md"
+              >
+                {importing ? "Importing..." : "Confirm & Import"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cascading Location Hierarchy Selector: State -> City */}
+      <section className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md">
+        <h2 className="text-base font-bold text-white mb-1">
+          Cascading Hierarchy Selector
         </h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Select a State to view or add Cities.
+        </p>
+
         <div className="grid gap-3 sm:grid-cols-3">
-          {/* 1. State Dropdown */}
+          {/* 1. Country Dropdown */}
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Country
+            </span>
+            <select
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-2.5 text-sm text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40"
+              defaultValue="India"
+              disabled
+            >
+              {COUNTRY_OPTIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          {/* 2. State Dropdown */}
           <label className="block">
             <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               State
@@ -814,7 +766,7 @@ export default function AdminStates() {
             </select>
           </label>
 
-          {/* 2. City Dropdown */}
+          {/* 3. City Dropdown */}
           <label className="block">
             <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               City
@@ -826,10 +778,12 @@ export default function AdminStates() {
               disabled={!selectedState}
             >
               <option value="">
-                {!selectedState ? "-- Select State First --" : "-- Select City --"}
+                {!selectedState
+                  ? "-- Select State First --"
+                  : "-- Select City --"}
               </option>
               {citiesForSelectedState.map((c) => (
-                <option key={`${c.source}-${c._id}`} value={c.name}>
+                <option key={c._id ?? c.name} value={c.name}>
                   {c.name}
                 </option>
               ))}
@@ -843,43 +797,6 @@ export default function AdminStates() {
                     className="font-bold text-amber-400"
                   >
                     + Add City
-                  </option>
-                </>
-              )}
-            </select>
-          </label>
-
-          {/* 3. Local Area Dropdown */}
-          <label className="block">
-            <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Local Area
-            </span>
-            <select
-              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-2.5 text-sm text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 disabled:opacity-40"
-              value={selectedLocalArea}
-              onChange={(e) => handleLocalAreaSelect(e.target.value)}
-              disabled={!selectedCity || selectedCity === ADD_CITY_VALUE}
-            >
-              <option value="">
-                {!selectedCity || selectedCity === ADD_CITY_VALUE
-                  ? "-- Select City First --"
-                  : "-- Select Local Area --"}
-              </option>
-              {areasForSelectedCity.map((a) => (
-                <option key={a._id ?? a.slug} value={a.name}>
-                  {a.name}
-                </option>
-              ))}
-              {selectedCity && selectedCity !== ADD_CITY_VALUE && (
-                <>
-                  <option disabled value="">
-                    ────────────
-                  </option>
-                  <option
-                    value={ADD_LOCAL_AREA_VALUE}
-                    className="font-bold text-amber-400"
-                  >
-                    + Add Local Area
                   </option>
                 </>
               )}
@@ -931,122 +848,17 @@ export default function AdminStates() {
             </div>
           </form>
         )}
-
-        {/* Inline Add Local Area Form */}
-        {selectedLocalArea === ADD_LOCAL_AREA_VALUE && (
-          <form
-            onSubmit={handleInlineAddLocalArea}
-            className="mt-4 rounded-xl border border-amber-500/30 bg-slate-800/80 p-4"
-          >
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-white">
-                Add New Local Area to <span className="text-amber-400">{selectedCity}</span>, {selectedState}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSelectedLocalArea("")}
-                className="text-xs font-medium text-slate-400 hover:text-white"
-              >
-                Cancel
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <input
-                className="flex-1 min-w-[200px] rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2 text-sm text-white outline-none focus:border-amber-500 placeholder:text-slate-500"
-                value={newLocalAreaName}
-                onChange={(e) => setNewLocalAreaName(e.target.value)}
-                placeholder="Enter local area name..."
-                required
-                autoFocus
-              />
-              <button
-                type="submit"
-                disabled={creatingLocalArea || !newLocalAreaName.trim()}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2 text-xs font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 disabled:opacity-50 transition"
-              >
-                {creatingLocalArea ? "Adding..." : "Add Local Area"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedLocalArea("")}
-                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        )}
       </section>
 
-      {/* Feedback Messages */}
-      {error && (
-        <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
-          {error}
-        </div>
-      )}
-      {success && (
-        <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-xs font-semibold text-emerald-300">
-          {success}
-        </div>
-      )}
-
-      {/* JSON Import Confirmation Modal */}
-      {importSummary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-white/15 p-6 shadow-2xl text-white">
-            <h3 className="text-xl font-black text-white">Confirm JSON Import</h3>
-            <p className="mt-2 text-sm text-slate-400">
-              The JSON file was successfully validated. Review detected locations:
-            </p>
-            <div className="mt-4 space-y-2 rounded-xl bg-slate-800/90 border border-white/10 p-4 text-sm text-slate-200">
-              <div className="flex justify-between">
-                <span>States:</span>
-                <span className="font-bold text-amber-400">
-                  {importSummary.totalStates} ({importSummary.newStates} new)
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Cities:</span>
-                <span className="font-bold text-amber-400">
-                  {importSummary.totalCities} ({importSummary.newCities} new)
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Local Areas:</span>
-                <span className="font-bold text-amber-400">
-                  {importSummary.totalLocalAreas} ({importSummary.newLocalAreas} new)
-                </span>
-              </div>
-            </div>
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                disabled={importing}
-                onClick={cancelImport}
-                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/10"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={importing}
-                onClick={confirmImport}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2 text-sm font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 disabled:opacity-50"
-              >
-                {importing ? "Importing..." : "Confirm & Import"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete All Locations Modal */}
+      {/* Delete All Confirmation Modal */}
       {showDeleteAllModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-rose-500/30 p-6 shadow-2xl text-white">
-            <div className="flex items-center gap-2 text-rose-400">
-              <span className="text-xl">⚠️</span>
-              <h3 className="text-xl font-black text-white">Delete All Locations?</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl border border-rose-500/40 bg-slate-900 p-6 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-400 mb-2">
+              <span className="text-2xl">⚠️</span>
+              <h3 className="text-lg font-bold text-white">
+                Delete All Locations?
+              </h3>
             </div>
 
             <p className="mt-3 text-sm text-slate-300">
@@ -1062,15 +874,7 @@ export default function AdminStates() {
                 <span>• All Cities:</span>
                 <span className="font-bold text-rose-400">{cities.length}</span>
               </li>
-              <li className="flex justify-between">
-                <span>• All Local Areas:</span>
-                <span className="font-bold text-rose-400">{allLocalAreas.length}</span>
-              </li>
             </ul>
-
-            <p className="mt-3 text-xs font-semibold text-rose-400">
-              This action cannot be undone. All public directory menus will be empty until new data is imported.
-            </p>
 
             <label className="mt-4 flex items-start gap-2.5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs font-medium text-rose-200 cursor-pointer">
               <input
@@ -1080,7 +884,7 @@ export default function AdminStates() {
                 className="mt-0.5 h-4 w-4 rounded accent-rose-500 cursor-pointer"
               />
               <span>
-                I understand that all states, cities, and local areas will be permanently deleted.
+                I understand that all states and cities will be permanently deleted.
               </span>
             </label>
 
@@ -1109,10 +913,10 @@ export default function AdminStates() {
         </div>
       )}
 
-      {/* Hierarchical States, Cities & Local Areas Cards */}
+      {/* Hierarchical States & Cities Cards */}
       <div className="mt-8">
         <h2 className="text-xl font-black text-white mb-4">
-          All States, Cities &amp; Local Areas
+          All States &amp; Cities
           {isSearching && (
             <span className="ml-2 text-xs font-normal text-amber-400">
               (Filtered by: &ldquo;{debouncedSearch}&rdquo;)
@@ -1128,7 +932,7 @@ export default function AdminStates() {
           </div>
         ) : filteredHierarchy.length === 0 ? (
           <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center text-slate-400 text-sm">
-            No matching states, cities, or local areas.
+            No matching states or cities.
           </div>
         ) : (
           <div className="space-y-4">
@@ -1141,14 +945,11 @@ export default function AdminStates() {
                   key={stateKey}
                   state={state}
                   isExpanded={isStateExpanded}
-                  isSearching={isSearching}
                   matchingCities={matchingCities}
-                  expandedCities={expandedCities}
                   onToggleState={() => toggleState(stateKey)}
-                  onToggleCity={toggleCity}
-                  onDeleteLocalArea={handleDeleteLocalArea}
-                  onChanged={load}
+                  onRemoveCity={removeCity}
                   onRemoveState={removeState}
+                  onCityAdded={load}
                 />
               );
             })}
@@ -1162,376 +963,171 @@ export default function AdminStates() {
 function StateHierarchyCard({
   state,
   isExpanded,
-  isSearching,
   matchingCities,
-  expandedCities,
   onToggleState,
-  onToggleCity,
-  onDeleteLocalArea,
-  onChanged,
+  onRemoveCity,
   onRemoveState,
+  onCityAdded,
 }: {
   state: StateRecord;
   isExpanded: boolean;
-  isSearching: boolean;
-  matchingCities: Array<{
-    city: CityRow;
-    cityKey: string;
-    cityMatches: boolean;
-    cityAreas: LocalAreaRow[];
-    matchingAreas: LocalAreaRow[];
-    hasAreaMatch: boolean;
-  }>;
-  expandedCities: Set<string>;
+  matchingCities: CityRow[];
   onToggleState: () => void;
-  onToggleCity: (cityKey: string) => void;
-  onDeleteLocalArea: (id?: string) => Promise<void>;
-  onChanged: () => void;
-  onRemoveState: (id?: string) => void;
+  onRemoveCity: (id?: string) => Promise<void>;
+  onRemoveState: (id?: string) => Promise<void>;
+  onCityAdded: () => Promise<void>;
 }) {
-  const [cityName, setCityName] = useState("");
-  const [country, setCountry] = useState("India");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [inlineCityName, setInlineCityName] = useState("");
+  const [isAddingCity, setIsAddingCity] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
 
-  const totalAreasInState = matchingCities.reduce(
-    (acc, curr) => acc + curr.cityAreas.length,
-    0
-  );
-
-  async function addCity(e: React.FormEvent) {
+  async function handleAddCity(e: React.FormEvent) {
     e.preventDefault();
-    if (submitting) return;
-    setSubmitting(true);
-    setError("");
+    const trimmed = inlineCityName.trim();
+    if (!trimmed || isAddingCity) return;
+    setIsAddingCity(true);
+
     try {
       const res = await fetch("/api/admin/cities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
-          name: cityName,
-          country,
+          name: trimmed,
           state: state.name,
+          region: state.name,
+          country: "India",
         }),
       });
-      const data = await res.json().catch(() => ({} as Record<string, unknown>));
-      if (!res.ok) {
-        setError((data.error as string) || "Failed to add city.");
-        return;
+      if (res.ok) {
+        setInlineCityName("");
+        setShowAddForm(false);
+        await onCityAdded();
+      } else {
+        alert("Failed to add city.");
       }
-      setCityName("");
-      setCountry("India");
-      onChanged();
     } catch {
-      setError("Something went wrong. Please try again.");
+      alert("Failed to add city.");
     } finally {
-      setSubmitting(false);
-    }
-  }
-
-  async function removeCity(id?: string) {
-    if (!id) return;
-    if (!confirm("Delete this city?")) return;
-    try {
-      const res = await fetch("/api/admin/cities", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ id }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError((data.error as string) || "Failed to delete city.");
-        return;
-      }
-      onChanged();
-    } catch {
-      setError("Failed to delete city.");
+      setIsAddingCity(false);
     }
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/30">
-      {/* State Header */}
+    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-5 shadow-xl transition-all">
+      {/* State Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onToggleState}
             aria-expanded={isExpanded}
             aria-label={`Toggle ${state.name}`}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-xs font-bold text-amber-400 transition-colors hover:bg-slate-700"
-          >
-            {isExpanded ? "▼" : "▶"}
-          </button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2
-                onClick={onToggleState}
-                className="cursor-pointer text-xl font-black text-white hover:text-amber-400 transition"
-              >
-                {state.name}
-              </h2>
-              <span className="rounded-full bg-slate-800 border border-white/10 px-2.5 py-0.5 text-xs font-bold text-amber-400">
-                {matchingCities.length} {matchingCities.length === 1 ? "City" : "Cities"}
-              </span>
-              {totalAreasInState > 0 && (
-                <span className="rounded-full bg-slate-800/60 px-2.5 py-0.5 text-xs font-medium text-slate-300">
-                  {totalAreasInState} {totalAreasInState === 1 ? "Area" : "Areas"}
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => onRemoveState(state._id || state.slug || state.name)}
-          className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 transition"
-        >
-          Delete State
-        </button>
-      </div>
-
-      {/* Collapsible Content */}
-      {isExpanded && (
-        <div className="mt-5 border-t border-white/10 pt-4">
-          {/* Add City Form */}
-          <form onSubmit={addCity} className="grid gap-3 sm:grid-cols-2">
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-                City Name
-              </span>
-              <input
-                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-2 text-sm text-white placeholder-slate-400 outline-none focus:border-amber-500"
-                value={cityName}
-                onChange={(e) => setCityName(e.target.value)}
-                placeholder="City name"
-                required
-              />
-            </label>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-                Country
-              </span>
-              <select
-                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3.5 py-2 text-sm text-white outline-none focus:border-amber-500"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                required
-              >
-                {COUNTRY_OPTIONS.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="flex items-end sm:col-span-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-bold px-5 py-2 text-xs shadow-md transition disabled:opacity-50"
-              >
-                {submitting ? "Adding..." : "Add City"}
-              </button>
-            </div>
-          </form>
-
-          {error && (
-            <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300">
-              {error}
-            </div>
-          )}
-
-          {/* Cities & Local Areas List */}
-          <div className="mt-5 space-y-3">
-            {matchingCities.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">No cities in this state yet.</p>
-            ) : (
-              matchingCities.map(
-                ({
-                  city,
-                  cityKey,
-                  cityAreas,
-                  hasAreaMatch,
-                }) => {
-                  const isCityExpanded =
-                    (isSearching && hasAreaMatch) ||
-                    expandedCities.has(cityKey);
-
-                  return (
-                    <CityHierarchyItem
-                      key={`${city.source}-${city._id || city.name}`}
-                      city={city}
-                      stateName={state.name}
-                      cityAreas={cityAreas}
-                      isExpanded={isCityExpanded}
-                      onToggleCity={() => onToggleCity(cityKey)}
-                      onDeleteCity={() => removeCity(city._id || city.name)}
-                      onDeleteLocalArea={onDeleteLocalArea}
-                      onChanged={onChanged}
-                    />
-                  );
-                }
-              )
-            )}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function CityHierarchyItem({
-  city,
-  stateName,
-  cityAreas,
-  isExpanded,
-  onToggleCity,
-  onDeleteCity,
-  onDeleteLocalArea,
-  onChanged,
-}: {
-  city: CityRow;
-  stateName: string;
-  cityAreas: LocalAreaRow[];
-  isExpanded: boolean;
-  onToggleCity: () => void;
-  onDeleteCity: () => void;
-  onDeleteLocalArea: (id?: string) => Promise<void>;
-  onChanged: () => void;
-}) {
-  const [newArea, setNewArea] = useState("");
-  const [addingArea, setAddingArea] = useState(false);
-  const [areaError, setAreaError] = useState("");
-
-  async function handleAddArea(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newArea.trim() || addingArea) return;
-    setAddingArea(true);
-    setAreaError("");
-    try {
-      const res = await fetch("/api/admin/local-areas", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: newArea.trim(),
-          cityName: city.name,
-          stateName,
-        }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAreaError((data.error as string) || "Failed to add local area.");
-        return;
-      }
-      setNewArea("");
-      onChanged();
-    } catch {
-      setAreaError("Failed to add local area.");
-    } finally {
-      setAddingArea(false);
-    }
-  }
-
-  return (
-    <div className="rounded-xl border border-white/10 bg-slate-800/50 p-3.5 transition-colors">
-      {/* City Header */}
-      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-          <button
-            type="button"
-            onClick={onToggleCity}
-            aria-expanded={isExpanded}
-            aria-label={`Toggle ${city.name}`}
-            className="flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-slate-800 text-[10px] font-bold text-amber-400 hover:bg-slate-700"
+            className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-slate-800 text-xs font-bold text-amber-400 hover:bg-slate-700 transition"
           >
             {isExpanded ? "▼" : "▶"}
           </button>
           <span
-            onClick={onToggleCity}
-            className="cursor-pointer font-bold text-sm text-white hover:text-amber-400 transition"
+            onClick={onToggleState}
+            className="cursor-pointer text-lg font-bold text-white hover:text-amber-400 transition"
           >
-            {city.name}
+            {state.name}
           </span>
-          <span className="rounded-full bg-slate-900/80 px-2 py-0.5 text-[11px] font-medium text-slate-300 border border-white/5">
-            {cityAreas.length} {cityAreas.length === 1 ? "Area" : "Areas"}
+          <span className="rounded-full bg-slate-800 px-2.5 py-0.5 text-xs font-semibold text-slate-300 border border-white/5">
+            {matchingCities.length} {matchingCities.length === 1 ? "City" : "Cities"}
           </span>
         </div>
 
-        <button
-          type="button"
-          onClick={onDeleteCity}
-          className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-2.5 py-1 text-[11px] font-semibold text-rose-300 transition"
-        >
-          Delete City
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAddForm((prev) => !prev)}
+            className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
+          >
+            {showAddForm ? "Cancel" : "+ Add City"}
+          </button>
+          <button
+            type="button"
+            onClick={() => onRemoveState(state._id || state.slug || state.name)}
+            className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 transition"
+          >
+            Delete State
+          </button>
+        </div>
       </div>
 
-      {/* Collapsible Local Areas Section */}
+      {/* Inline Add City in State Card */}
+      {showAddForm && (
+        <form onSubmit={handleAddCity} className="mt-4 flex flex-wrap gap-2 rounded-xl bg-slate-800/80 p-3 border border-amber-500/30">
+          <input
+            className="flex-1 min-w-[200px] rounded-lg border border-white/15 bg-slate-900 px-3 py-1.5 text-xs text-white placeholder-slate-400 outline-none focus:border-amber-500"
+            value={inlineCityName}
+            onChange={(e) => setInlineCityName(e.target.value)}
+            placeholder={`Add city in ${state.name}...`}
+            autoFocus
+            required
+          />
+          <button
+            type="submit"
+            disabled={isAddingCity || !inlineCityName.trim()}
+            className="rounded-lg bg-amber-500 px-4 py-1.5 text-xs font-bold text-slate-950 hover:bg-amber-400 disabled:opacity-50 transition"
+          >
+            {isAddingCity ? "Adding..." : "Add"}
+          </button>
+        </form>
+      )}
+
+      {/* Expanded Cities List */}
       {isExpanded && (
-        <div className="mt-3 pl-4 sm:pl-8">
-          <div className="rounded-xl border-l-2 border-amber-500 bg-slate-900/80 p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400">
-                Local Areas {cityAreas.length > 0 && `(${cityAreas.length})`}
-              </h4>
-            </div>
+        <div className="mt-4 pt-3 border-t border-white/10">
+          {matchingCities.length === 0 ? (
+            <p className="text-xs italic text-slate-500 py-2">
+              No cities registered in this state yet.
+            </p>
+          ) : (
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {matchingCities.map((city) => {
+                const citySlug =
+                  city.slug ||
+                  city.name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-            {/* Local Areas List */}
-            {cityAreas.length === 0 ? (
-              <p className="text-xs italic text-slate-500">No local areas added yet.</p>
-            ) : (
-              <ul className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3">
-                {cityAreas.map((area) => (
-                  <li
-                    key={area._id ?? area.slug}
-                    className="flex items-center justify-between gap-2 rounded-lg border border-white/10 bg-slate-800/90 px-3 py-1.5 text-xs text-slate-200 shadow-2xs"
+                return (
+                  <div
+                    key={city._id || city.name}
+                    className="flex items-center justify-between gap-2 rounded-xl border border-white/10 bg-slate-800/60 px-3.5 py-2.5 transition hover:bg-slate-800"
                   >
-                    <span className="flex items-center gap-1.5 truncate">
-                      <span className="text-amber-400 font-bold">•</span>
-                      <span className="font-medium truncate">{area.name}</span>
+                    <span className="font-semibold text-sm text-white truncate">
+                      {city.name}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => onDeleteLocalArea(area._id)}
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-rose-500/20 hover:text-rose-300 font-bold text-sm transition-colors"
-                      title={`Delete ${area.name}`}
-                      aria-label={`Delete ${area.name}`}
-                    >
-                      &times;
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {/* Quick Add Area Form */}
-            <form onSubmit={handleAddArea} className="mt-3 flex flex-wrap gap-2 pt-1">
-              <input
-                className="flex-1 min-w-[180px] rounded-xl border border-white/15 bg-slate-900 px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none focus:border-amber-500"
-                value={newArea}
-                onChange={(e) => setNewArea(e.target.value)}
-                placeholder="Local area name..."
-                required
-              />
-              <button
-                type="submit"
-                disabled={addingArea || !newArea.trim()}
-                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-1.5 text-xs font-bold text-slate-950 hover:from-amber-400 hover:to-orange-500 disabled:opacity-50 transition"
-              >
-                {addingArea ? "Adding..." : "Add Area"}
-              </button>
-            </form>
-            {areaError && (
-              <p className="text-xs font-medium text-rose-300">{areaError}</p>
-            )}
-          </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <Link
+                        href={`/places/${encodeURIComponent(citySlug)}`}
+                        className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2 py-1 text-[11px] font-semibold text-emerald-300 transition"
+                      >
+                        View
+                      </Link>
+                      <Link
+                        href={`/admin/city-seo?city=${encodeURIComponent(citySlug)}`}
+                        className="rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-2 py-1 text-[11px] font-semibold text-amber-300 transition"
+                      >
+                        SEO
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveCity(city._id || city.name)}
+                        className="rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-2 py-1 text-[11px] font-semibold text-rose-300 transition"
+                        title={`Delete ${city.name}`}
+                      >
+                        &times;
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

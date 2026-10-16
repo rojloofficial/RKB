@@ -14,7 +14,6 @@ export const ADMIN_SECTIONS = [
   { key: "state", name: "State" },
   { key: "city", name: "City List" },
   { key: "city-seo", name: "City SEO" },
-  { key: "dynamic-seo", name: "Dynamic SEO" },
   { key: "ads", name: "Ads" },
   { key: "users", name: "Users" },
   { key: "upi", name: "UPI" },
@@ -91,12 +90,5 @@ export function canAccess(
 ): boolean {
   if (!context) return false;
   if (context.role === "main") return true;
-  if (section === "dynamic-seo") {
-    return (
-      context.permissions.includes("dynamic-seo") ||
-      context.permissions.includes("city-seo") ||
-      context.permissions.includes("city")
-    );
-  }
   return context.permissions.includes(section);
 }

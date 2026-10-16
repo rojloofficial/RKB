@@ -11,7 +11,6 @@ export const ALL_SIDEBAR_SECTIONS = [
   { key: "state", label: "State" },
   { key: "city", label: "City List" },
   { key: "city-seo", label: "City SEO" },
-  { key: "dynamic-seo", label: "Dynamic SEO" },
   { key: "ads", label: "Ads" },
   { key: "users", label: "Users" },
   { key: "upi", label: "UPI" },

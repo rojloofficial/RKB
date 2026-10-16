@@ -39,12 +39,6 @@ export const adminNavItems: NavItem[] = [
     icon: "M11 3H5a2 2 0 00-2 2v14a2 2 0 002 2h6M9 12h12M9 8h12M9 16h12M19 4v16",
   },
   {
-    name: "Dynamic SEO",
-    href: "/admin/dynamic-seo",
-    key: "dynamic-seo",
-    icon: "M13 10V3L4 14h7v7l9-11h-7z",
-  },
-  {
     name: "Ads",
     href: "/admin/ads",
     key: "ads",

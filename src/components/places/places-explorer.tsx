@@ -11,14 +11,7 @@ export type PlaceCityItem = {
   adCount: number;
 };
 
-export type PlaceLocalAreaItem = {
-  name: string;
-  slug: string;
-  cityName: string;
-  citySlug: string;
-};
-
-type FilterMode = "all" | "city" | "state" | "area";
+type FilterMode = "all" | "city" | "state";
 
 // Common aliases for Indian cities and states
 const LOCATION_ALIASES: Record<string, { type: "city" | "state"; name: string }> = {
@@ -51,7 +44,7 @@ const SUGGESTED_SEARCHES = [
   "Pune",
 ];
 
-// Memory-optimized Damerau-Levenshtein calculation using 3 sliding row buffers (O(min(N, M)) space)
+// Memory-optimized Damerau-Levenshtein calculation
 function damerauLevenshtein(a: string, b: string): number {
   const al = a.length;
   const bl = b.length;
@@ -150,22 +143,15 @@ function getFuzzyScore(query: string, target: string): number {
 interface ExplorerIndex {
   exactCityMap: Map<string, PlaceCityItem>;
   stateAdjacencyMap: Map<string, PlaceCityItem[]>;
-  localAreaByCityMap: Map<string, PlaceLocalAreaItem[]>;
   uniqueStates: string[];
   cityPrefixTrie: PrefixTrie<PlaceCityItem>;
-  areaPrefixTrie: PrefixTrie<PlaceLocalAreaItem>;
 }
 
-function buildExplorerIndex(
-  cities: PlaceCityItem[],
-  localAreas: PlaceLocalAreaItem[]
-): ExplorerIndex {
+function buildExplorerIndex(cities: PlaceCityItem[]): ExplorerIndex {
   const exactCityMap = new Map<string, PlaceCityItem>();
   const stateAdjacencyMap = new Map<string, PlaceCityItem[]>();
-  const localAreaByCityMap = new Map<string, PlaceLocalAreaItem[]>();
   const statesSet = new Set<string>();
   const cityPrefixTrie = new PrefixTrie<PlaceCityItem>();
-  const areaPrefixTrie = new PrefixTrie<PlaceLocalAreaItem>();
 
   for (const c of cities) {
     const sName = c.name.toLowerCase().trim();
@@ -190,40 +176,22 @@ function buildExplorerIndex(
     }
   }
 
-  for (const a of localAreas) {
-    const cSlug = a.citySlug.toLowerCase().trim();
-    let cityAreaList = localAreaByCityMap.get(cSlug);
-    if (!cityAreaList) {
-      cityAreaList = [];
-      localAreaByCityMap.set(cSlug, cityAreaList);
-    }
-    cityAreaList.push(a);
-
-    areaPrefixTrie.insert(a.name, a);
-    areaPrefixTrie.insert(a.slug, a);
-    areaPrefixTrie.insert(`${a.cityName} ${a.name}`, a);
-  }
-
   return {
     exactCityMap,
     stateAdjacencyMap,
-    localAreaByCityMap,
     uniqueStates: Array.from(statesSet),
     cityPrefixTrie,
-    areaPrefixTrie,
   };
 }
 
 interface FilterResult {
   filteredCities: PlaceCityItem[];
-  filteredAreas: PlaceLocalAreaItem[];
   mode: FilterMode;
   matchedTarget?: string;
 }
 
 function filterPlaces(
   cities: PlaceCityItem[],
-  localAreas: PlaceLocalAreaItem[],
   query: string,
   index?: ExplorerIndex
 ): FilterResult {
@@ -231,7 +199,6 @@ function filterPlaces(
   if (!q) {
     return {
       filteredCities: cities,
-      filteredAreas: localAreas,
       mode: "all",
     };
   }
@@ -249,19 +216,15 @@ function filterPlaces(
       if (matched.length > 0) {
         return {
           filteredCities: matched,
-          filteredAreas: index?.localAreaByCityMap.get(matched[0].slug.toLowerCase()) ?? [],
           mode: "city",
           matchedTarget: alias.name,
         };
       }
-    } else if (alias.type === "state") {
-      const stateCities = index
-        ? index.stateAdjacencyMap.get(aliasLower) ?? []
-        : cities.filter((c) => c.state && c.state.toLowerCase() === aliasLower);
-      if (stateCities.length > 0) {
+    } else if (alias.type === "state" && index) {
+      const stateCities = index.stateAdjacencyMap.get(aliasLower);
+      if (stateCities && stateCities.length > 0) {
         return {
           filteredCities: stateCities,
-          filteredAreas: [],
           mode: "state",
           matchedTarget: alias.name,
         };
@@ -269,143 +232,90 @@ function filterPlaces(
     }
   }
 
-  // 2. Exact city match
+  // 2. Exact state match
   if (index) {
-    const exactCity = index.exactCityMap.get(q);
-    if (exactCity) {
-      return {
-        filteredCities: [exactCity],
-        filteredAreas: index.localAreaByCityMap.get(exactCity.slug.toLowerCase()) ?? [],
-        mode: "city",
-        matchedTarget: exactCity.name,
-      };
-    }
-
-    const exactStateCities = index.stateAdjacencyMap.get(q);
-    if (exactStateCities && exactStateCities.length > 0) {
-      return {
-        filteredCities: exactStateCities,
-        filteredAreas: [],
-        mode: "state",
-        matchedTarget: exactStateCities[0]?.state,
-      };
-    }
-  }
-
-  // 3. Local area search match (Trie fast-path + fuzzy fallback)
-  const matchedAreas: PlaceLocalAreaItem[] = [];
-  const matchedAreaKeys = new Set<string>();
-
-  // Trie prefix search fast-path (O(K))
-  if (index) {
-    const trieMatches = index.areaPrefixTrie.searchPrefix(q);
-    for (const a of trieMatches) {
-      const key = `${a.citySlug}:${a.slug}`;
-      if (!matchedAreaKeys.has(key)) {
-        matchedAreaKeys.add(key);
-        matchedAreas.push(a);
+    for (const [stKey, cityList] of index.stateAdjacencyMap.entries()) {
+      if (stKey === q || stKey.startsWith(q)) {
+        return {
+          filteredCities: cityList,
+          mode: "state",
+          matchedTarget: cityList[0]?.state ?? q,
+        };
       }
     }
   }
 
-  for (const area of localAreas) {
-    const key = `${area.citySlug}:${area.slug}`;
-    if (matchedAreaKeys.has(key)) continue;
+  // 3. Exact city match
+  if (index && index.exactCityMap.has(q)) {
+    const exactCity = index.exactCityMap.get(q)!;
+    return {
+      filteredCities: [exactCity],
+      mode: "city",
+      matchedTarget: exactCity.name,
+    };
+  }
 
-    const nameScore = getFuzzyScore(q, area.name);
-    const slugScore = getFuzzyScore(q, area.slug);
-    const combinedScore = getFuzzyScore(q, `${area.cityName} ${area.name}`);
-    if (Math.max(nameScore, slugScore, combinedScore) >= 0.55) {
-      matchedAreaKeys.add(key);
-      matchedAreas.push(area);
+  // 4. Prefix Trie Search
+  if (index && q.length >= 2) {
+    const trieCities = index.cityPrefixTrie.searchPrefix(q);
+    if (trieCities.length > 0) {
+      const cityMap = new Map<string, PlaceCityItem>();
+      for (const c of trieCities) cityMap.set(c.slug, c);
+      return {
+        filteredCities: Array.from(cityMap.values()),
+        mode: "city",
+        matchedTarget: q,
+      };
     }
   }
 
-  // 4. City scores calculation
-  const scoredCities: Array<{ city: PlaceCityItem; score: number }> = [];
-  let bestCityScore = 0;
+  // 5. Fuzzy matching with ranking
+  const matchedCities: { item: PlaceCityItem; score: number }[] = [];
 
   for (const city of cities) {
+    let bestScore = 0;
     const nameScore = getFuzzyScore(q, city.name);
+    if (nameScore > bestScore) bestScore = nameScore;
+
     const slugScore = getFuzzyScore(q, city.slug);
-    const maxScore = Math.max(nameScore, slugScore);
-    if (maxScore >= 0.5) {
-      scoredCities.push({ city, score: maxScore });
+    if (slugScore > bestScore) bestScore = slugScore;
+
+    if (city.state) {
+      const stateScore = getFuzzyScore(q, city.state);
+      if (stateScore > bestScore) bestScore = stateScore;
     }
-    if (maxScore > bestCityScore) {
-      bestCityScore = maxScore;
-    }
-  }
 
-  scoredCities.sort((a, b) => b.score - a.score);
-
-  // 5. State match calculation
-  const uniqueStates = index
-    ? index.uniqueStates
-    : (Array.from(new Set(cities.map((c) => c.state).filter(Boolean))) as string[]);
-
-  let bestState = "";
-  let bestStateScore = 0;
-  for (const st of uniqueStates) {
-    const score = getFuzzyScore(q, st);
-    if (score > bestStateScore) {
-      bestStateScore = score;
-      bestState = st;
+    if (bestScore >= 0.5) {
+      matchedCities.push({ item: city, score: bestScore });
     }
   }
 
-  if (bestStateScore >= 0.65 && bestStateScore > bestCityScore) {
-    const stateCities = cities.filter(
-      (c) => c.state && c.state.trim().toLowerCase() === bestState.toLowerCase()
-    );
-    return {
-      filteredCities: stateCities,
-      filteredAreas: matchedAreas,
-      mode: "state",
-      matchedTarget: bestState,
-    };
-  }
+  matchedCities.sort((a, b) => b.score - a.score);
 
-  if (matchedAreas.length > 0 && bestCityScore < 0.7) {
-    const areaCitySlugs = new Set(matchedAreas.map((a) => a.citySlug.toLowerCase()));
-    const relatedCities = cities.filter((c) => areaCitySlugs.has(c.slug.toLowerCase()));
-
-    return {
-      filteredCities: relatedCities.length > 0 ? relatedCities : scoredCities.map((sc) => sc.city),
-      filteredAreas: matchedAreas,
-      mode: "area",
-      matchedTarget: matchedAreas[0].name,
-    };
-  }
-
-  const resultCities = scoredCities.map((sc) => sc.city);
   return {
-    filteredCities: resultCities,
-    filteredAreas: matchedAreas,
-    mode: scoredCities.length > 0 ? "city" : "all",
-    matchedTarget: scoredCities[0]?.city.name,
+    filteredCities: matchedCities.map((m) => m.item),
+    mode: "city",
+    matchedTarget: q,
   };
 }
 
 export default function PlacesExplorer({
-  initialCities,
-  initialLocalAreas = [],
+  initialCities = [],
   initialQuery = "",
 }: {
   initialCities: PlaceCityItem[];
-  initialLocalAreas?: PlaceLocalAreaItem[];
   initialQuery?: string;
 }) {
   const [search, setSearch] = useState(initialQuery);
 
   const explorerIndex = useMemo(
-    () => buildExplorerIndex(initialCities, initialLocalAreas),
-    [initialCities, initialLocalAreas]
+    () => buildExplorerIndex(initialCities),
+    [initialCities]
   );
 
-  const { filteredCities, filteredAreas, mode, matchedTarget } = useMemo(() => {
-    return filterPlaces(initialCities, initialLocalAreas, search, explorerIndex);
-  }, [initialCities, initialLocalAreas, search, explorerIndex]);
+  const { filteredCities, mode, matchedTarget } = useMemo(() => {
+    return filterPlaces(initialCities, search, explorerIndex);
+  }, [initialCities, search, explorerIndex]);
 
   function handleSearchChange(val: string) {
     setSearch(val);
@@ -446,7 +356,7 @@ export default function PlacesExplorer({
           type="text"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          placeholder="Search city (e.g. Mumbai) or local area (e.g. Andheri, Koramangala)..."
+          placeholder="Search city (e.g. Mumbai, Bengaluru) or state (e.g. Maharashtra)..."
           className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-11 text-base text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 sm:text-sm transition-all"
         />
 
@@ -501,11 +411,6 @@ export default function PlacesExplorer({
               {filteredCities.length === 1 ? "city" : "cities"} in{" "}
               <span className="font-bold text-amber-700">{matchedTarget}</span>
             </p>
-          ) : mode === "area" && matchedTarget ? (
-            <p>
-              Found <strong className="text-slate-900">{filteredAreas.length}</strong> local areas matching &ldquo;
-              <span className="font-bold text-amber-700">{search.trim()}</span>&rdquo;
-            </p>
           ) : mode === "city" && matchedTarget ? (
             <p>
               Showing <strong className="text-slate-900">{filteredCities.length}</strong>{" "}
@@ -514,7 +419,8 @@ export default function PlacesExplorer({
             </p>
           ) : (
             <p>
-              Found <strong className="text-slate-900">{filteredCities.length}</strong> cities and <strong className="text-slate-900">{filteredAreas.length}</strong> local areas
+              Found <strong className="text-slate-900">{filteredCities.length}</strong> cities matching &ldquo;
+              <span className="font-bold text-amber-700">{search.trim()}</span>&rdquo;
             </p>
           )}
 
@@ -528,17 +434,17 @@ export default function PlacesExplorer({
         </div>
       )}
 
-      {/* ALL LOCATIONS (CITIES & LOCAL AREAS TOGETHER IN ONE GRID) */}
-      {filteredCities.length === 0 && filteredAreas.length === 0 ? (
+      {/* CITIES GRID */}
+      {filteredCities.length === 0 ? (
         <div className="rounded-3xl border border-slate-200 bg-slate-50 p-12 text-center">
           <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-200/60 flex items-center justify-center text-2xl mb-3">
             🔍
           </div>
           <p className="text-base font-bold text-slate-900">
-            No locations found matching &ldquo;{search.trim()}&rdquo;
+            No cities found matching &ldquo;{search.trim()}&rdquo;
           </p>
           <p className="mt-1 text-sm text-slate-500">
-            Try searching for another Indian state, city name, or popular neighborhood.
+            Try searching for another Indian state or city name.
           </p>
           <button
             type="button"
@@ -576,36 +482,6 @@ export default function PlacesExplorer({
               </div>
             </Link>
           ))}
-
-          {filteredAreas.map((area, idx) => {
-            const parentCity = explorerIndex.exactCityMap.get(area.citySlug.toLowerCase());
-
-            return (
-              <Link
-                key={`area-${area.citySlug}-${area.slug}-${idx}`}
-                href={`/places/${area.citySlug}/${area.slug}`}
-                className="group flex w-full min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all hover:border-indigo-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer text-left block"
-              >
-                <div className="flex w-full min-w-0 items-start justify-between gap-2.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-indigo-500">🏘️</span>
-                      <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-indigo-700 break-words">
-                        {area.name}
-                      </h3>
-                    </div>
-                    <p className="mt-1 pl-4 text-xs font-medium text-slate-500 truncate">
-                      {area.cityName}
-                      {parentCity?.state ? `, ${parentCity.state}` : ""}
-                    </p>
-                  </div>
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-bold text-indigo-700 transition-colors group-hover:bg-indigo-100 whitespace-nowrap">
-                    Local Area
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
         </div>
       )}
     </div>

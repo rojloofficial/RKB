@@ -10,7 +10,6 @@ import { SERVICES, TO_SERVE, PLACE_OF_SERVICE, DEFAULT_SERVICE_RATES, MAX_IMAGES
 type CityOption = { name: string; slug: string; state?: string };
 
 type StateOption = { name: string; slug: string };
-type LocalAreaOption = { name: string; slug: string };
 
 export default function PostAdSection({
   form,
@@ -45,7 +44,6 @@ export default function PostAdSection({
   const [allCities, setAllCities] = useState<CityOption[]>(cityPlaces);
   const [serverCities, setServerCities] = useState<CityOption[]>([]);
   const [cityLoading, setCityLoading] = useState<boolean>(false);
-  const [localAreaOptions, setLocalAreaOptions] = useState<LocalAreaOption[]>([]);
   const [showStatePrompt, setShowStatePrompt] = useState<boolean>(false);
   const [isStateHighlighted, setIsStateHighlighted] = useState<boolean>(false);
   const stateSelectRef = useRef<HTMLSelectElement | null>(null);
@@ -138,31 +136,6 @@ export default function PostAdSection({
     return combined.sort((a, b) => a.name.localeCompare(b.name));
   }, [form.state, serverCities, localMatches]);
 
-  useEffect(() => {
-    if (!form.city) {
-      return;
-    }
-    let ignore = false;
-    const params = new URLSearchParams({ cityName: form.city });
-    if (form.state) params.append("stateName", form.state);
-    fetch(`/api/local-areas?${params.toString()}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (!ignore && Array.isArray(data.localAreas)) {
-          setLocalAreaOptions(
-            data.localAreas.map((a: { name: string; slug: string }) => ({
-              name: a.name,
-              slug: a.slug,
-            }))
-          );
-        }
-      })
-      .catch(() => {});
-    return () => {
-      ignore = true;
-    };
-  }, [form.city, form.state]);
-
   function update<K extends keyof AdForm>(key: K, value: AdForm[K]) {
     setForm((prev) => ({ ...prev, [key]: value }) as AdForm);
   }
@@ -183,8 +156,6 @@ export default function PostAdSection({
     update("state", selectedState);
     if (selectedState !== form.state) {
       update("city", "");
-      update("localArea", "");
-      setLocalAreaOptions([]);
     }
     setShowStatePrompt(false);
     setIsStateHighlighted(false);
@@ -349,11 +320,7 @@ export default function PostAdSection({
               <Select
                 value={form.city}
                 disabled={!form.state?.trim()}
-                onChange={(e) => {
-                  update("city", e.target.value);
-                  update("localArea", "");
-                  setLocalAreaOptions([]);
-                }}
+                onChange={(e) => update("city", e.target.value)}
                 className={
                   !form.state?.trim()
                     ? "cursor-not-allowed opacity-60"
@@ -387,31 +354,6 @@ export default function PostAdSection({
                 <span>⚠️</span>
                 <span>Please select a state first to view cities.</span>
               </p>
-            )}
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Local Area (Optional)
-            </label>
-            {localAreaOptions.length > 0 ? (
-              <Select
-                value={form.localArea ?? ""}
-                onChange={(e) => update("localArea", e.target.value)}
-              >
-                <option value="">-- Select Local Area --</option>
-                {localAreaOptions.map((a) => (
-                  <option key={a.slug} value={a.name}>
-                    {a.name}
-                  </option>
-                ))}
-              </Select>
-            ) : (
-              <TextInput
-                value={form.localArea ?? ""}
-                onChange={(e) => update("localArea", e.target.value)}
-                placeholder="Neighborhood / Area"
-              />
             )}
           </div>
 

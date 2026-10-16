@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
@@ -37,15 +37,6 @@ type FaqItem = {
   id: string;
   question: string;
   answer: string;
-};
-
-type ParentCitySeo = {
-  title?: string;
-  description?: string;
-  primaryKeyword?: string;
-  popularSearches?: string[];
-  content?: Array<{ type: BlockType | string; text: string }>;
-  faqs?: Array<{ question: string; answer: string }>;
 };
 
 function slugify(value: string): string {
@@ -166,25 +157,13 @@ const inputClass =
 function CitySeoContent() {
   const params = useSearchParams();
   const editSlug = params.get("city") || "";
-  const editArea = params.get("area") || "";
-  const isAreaEdit = Boolean(editArea);
   const isEdit = Boolean(editSlug);
-
-  const jsonInputRef = useRef<HTMLInputElement | null>(null);
 
   const [allCities, setAllCities] = useState<
     { name: string; slug: string; state?: string }[]
   >([]);
   const [activeSlug, setActiveSlug] = useState(editSlug || "");
   const [stateName, setStateName] = useState("");
-
-  // Local Area & Parent City specific state
-  const [parentCityName, setParentCityName] = useState("");
-  const [parentCitySeo, setParentCitySeo] = useState<ParentCitySeo | null>(null);
-  const [areaMode, setAreaMode] = useState<"inherit" | "individual">("individual");
-  const [cityLocalAreas, setCityLocalAreas] = useState<
-    Array<{ name: string; slug: string; mode?: string }>
-  >([]);
 
   const [name, setName] = useState("");
   const [title, setTitle] = useState("");
@@ -207,11 +186,6 @@ function CitySeoContent() {
   const [uploading, setUploading] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [faqDragIndex, setFaqDragIndex] = useState<number | null>(null);
-  const [jsonPasteText, setJsonPasteText] = useState("");
-  const [jsonStatusMsg, setJsonStatusMsg] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -243,81 +217,7 @@ function CitySeoContent() {
         });
         setAllCities(uniqueCities);
 
-        // CASE A: Editing a Local Area (e.g. ?city=mumbai&area=andheri-west)
-        if (isAreaEdit && editSlug && editArea) {
-          const matchedCity = fetchedCities.find((c) => c.slug === editSlug);
-          const pName = matchedCity?.name || editSlug;
-          setParentCityName(pName);
-
-          // Fetch parent city SEO
-          const parentSeo = (seoRes.seo ?? []).find(
-            (s: { slug: string; urlSlug?: string }) =>
-              s.slug === editSlug || s.urlSlug === editSlug
-          );
-          setParentCitySeo(parentSeo || null);
-
-          // Fetch local area info and its custom SEO
-          const [areaListRes, localSeoRes] = await Promise.all([
-            fetch(`/api/admin/local-areas?citySlug=${encodeURIComponent(editSlug)}`, {
-              credentials: "include",
-            }).then((r) => r.json()).catch(() => ({ localAreas: [] })),
-            fetch(
-              `/api/admin/local-area-seo?citySlug=${encodeURIComponent(
-                editSlug
-              )}&areaSlug=${encodeURIComponent(editArea)}`,
-              { credentials: "include" }
-            ).then((r) => r.json()).catch(() => ({})),
-          ]);
-
-          const localAreaRecord = (areaListRes.localAreas ?? []).find(
-            (a: { slug: string; name: string }) => a.slug.toLowerCase() === editArea.toLowerCase()
-          );
-          const aName = localAreaRecord?.name || editArea;
-          setName(aName);
-          setUrlSlug(`${editSlug}/${editArea}`);
-
-          const existingAreaSeo = localSeoRes.seo;
-          if (existingAreaSeo) {
-            setAreaMode(existingAreaSeo.mode || "individual");
-            setTitle(existingAreaSeo.title ?? "");
-            setDescription(existingAreaSeo.description ?? "");
-            setPrimaryKeyword(existingAreaSeo.primaryKeyword ?? "");
-            setPopularSearches(existingAreaSeo.popularSearches ?? []);
-            setCanonicalUrl(existingAreaSeo.canonicalUrl ?? "");
-            setFeaturedImage(existingAreaSeo.featuredImage ?? "");
-            setImageAlt(existingAreaSeo.imageAlt ?? "");
-            setContent(
-              Array.isArray(existingAreaSeo.content) && existingAreaSeo.content.length
-                ? normalizeBlocks(existingAreaSeo.content)
-                : [
-                    { id: uid(), type: "h2", text: "" },
-                    { id: uid(), type: "p", text: "" },
-                  ]
-            );
-            setFaqs(Array.isArray(existingAreaSeo.faqs) ? existingAreaSeo.faqs : []);
-            setStatus(existingAreaSeo.status === "published" ? "published" : "draft");
-          } else {
-            // Default prefill for local area
-            setAreaMode("inherit");
-            setTitle(`Best Places & Services in ${aName}, ${pName} | RKB`);
-            setDescription(
-              `Explore top verified places, services, and attractions in ${aName}, ${pName} on RKB.`
-            );
-            setPrimaryKeyword(`${aName} ${pName}`);
-            setPopularSearches([
-              `${aName} services`,
-              `${aName} ${pName}`,
-              `Verified ads in ${aName}`,
-            ]);
-            setContent([
-              { id: uid(), type: "h2", text: `${aName}, ${pName}` },
-              { id: uid(), type: "p", text: "" },
-            ]);
-            setFaqs([]);
-            setStatus("draft");
-          }
-        } else if (editSlug || activeSlug) {
-          // CASE B: Editing a City (e.g. ?city=mumbai)
+        if (editSlug || activeSlug) {
           const targetSlug = editSlug || activeSlug;
           const city = fetchedCities.find((c) => c.slug === targetSlug);
           if (city) {
@@ -368,35 +268,6 @@ function CitySeoContent() {
             setFaqs([]);
             setPopularSearches([]);
           }
-
-          // Load local areas of this city for the Local Areas card section
-          try {
-            const [areasRes, areaSeoRes] = await Promise.all([
-              fetch(`/api/admin/local-areas?citySlug=${encodeURIComponent(targetSlug)}`, {
-                credentials: "include",
-              }).then((r) => r.json()),
-              fetch(`/api/admin/local-area-seo?citySlug=${encodeURIComponent(targetSlug)}`, {
-                credentials: "include",
-              }).then((r) => r.json()),
-            ]);
-
-            const areas = areasRes.localAreas ?? [];
-            const areaSeoList = areaSeoRes.seoList ?? [];
-            const areaSeoMap = new Map<string, string>();
-            areaSeoList.forEach((s: { areaSlug: string; mode?: string }) => {
-              areaSeoMap.set(s.areaSlug.toLowerCase(), s.mode || "inherit");
-            });
-
-            setCityLocalAreas(
-              areas.map((a: { name: string; slug: string }) => ({
-                name: a.name,
-                slug: a.slug,
-                mode: areaSeoMap.get(a.slug.toLowerCase()) || "inherit",
-              }))
-            );
-          } catch {
-            setCityLocalAreas([]);
-          }
         } else {
           setContent([
             { id: uid(), type: "h2", text: "" },
@@ -406,7 +277,7 @@ function CitySeoContent() {
           setPopularSearches([]);
         }
       } catch {
-        setError("Failed to load details.");
+        setError("Failed to load city SEO details.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -415,8 +286,7 @@ function CitySeoContent() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editSlug, editArea]);
+  }, [editSlug, activeSlug]);
 
   function handleCityNameChange(val: string) {
     setName(val);
@@ -498,425 +368,6 @@ function CitySeoContent() {
     }
   }
 
-  function getSampleJsonString(): string {
-    const cityName = name.trim() || "Mumbai";
-    const sample = {
-      name: cityName,
-      state: stateName.trim() || "Maharashtra",
-      title:
-        title ||
-        `Best Escort & Call Girl Services in ${cityName} | RKB`,
-      description:
-        description ||
-        `Find top verified escorts and independent call girls in ${cityName}. 100% genuine photos, safe booking, 24/7 service.`,
-      urlSlug: urlSlug || slugify(cityName),
-      primaryKeyword: primaryKeyword || `call girls in ${cityName.toLowerCase()}`,
-      popularSearches: popularSearches.length
-        ? popularSearches
-        : [
-            `escorts in ${cityName.toLowerCase()}`,
-            `${cityName.toLowerCase()} call girls`,
-            `independent escorts ${cityName.toLowerCase()}`,
-            `vip escort service in ${cityName.toLowerCase()}`,
-            `hotel delivery call girl ${cityName.toLowerCase()}`,
-          ],
-      canonicalUrl:
-        canonicalUrl ||
-        `https://rojloo.vercel.app/places/${urlSlug || slugify(cityName)}`,
-      featuredImage: featuredImage || "",
-      imageAlt: imageAlt || `${cityName} city guide`,
-      status: "draft",
-      content: content.length
-        ? content.map((c) => ({ type: c.type, text: c.text }))
-        : [
-            {
-              type: "h2",
-              text: `Top Escort Services in ${cityName}`,
-            },
-            {
-              type: "p",
-              text: `${cityName} offers unmatched nightlife and top-tier services across all major localities with verified contacts.`,
-            },
-            {
-              type: "h2",
-              text: "Why Choose Verified Services on RKB",
-            },
-            {
-              type: "p",
-              text: "Safety, genuine photos, and direct WhatsApp contact make booking fast and secure.",
-            },
-          ],
-      faqs: faqs.length
-        ? faqs.map((f) => ({ question: f.question, answer: f.answer }))
-        : [
-            {
-              question: `How do I contact service providers in ${cityName}?`,
-              answer:
-                "You can browse verified advertiser profiles and connect directly via phone call, WhatsApp, or Telegram.",
-            },
-            {
-              question: "Are advertiser photos verified?",
-              answer:
-                "Yes, our team verifies advertiser profile photos to ensure authentic listings.",
-            },
-          ],
-    };
-
-    return JSON.stringify(sample, null, 2);
-  }
-
-  function downloadSampleJson() {
-    const cityName = name.trim() || "Mumbai";
-    const sampleStr = getSampleJsonString();
-    const blob = new Blob([sampleStr], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${slugify(cityName)}-seo-sample.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
-
-  function applyJsonString(rawText: string): boolean {
-    const trimmed = rawText.trim();
-    if (!trimmed) {
-      const msg = "Please enter or paste JSON text first.";
-      setJsonStatusMsg({ type: "error", text: msg });
-      setError(msg);
-      return false;
-    }
-
-    setError("");
-    setSuccess("");
-
-    try {
-      const data = JSON.parse(trimmed);
-
-      if (!data || typeof data !== "object") {
-        const msg = "The JSON content is empty or not a valid JSON object.";
-        setJsonStatusMsg({ type: "error", text: msg });
-        setError(msg);
-        return false;
-      }
-
-      // 1. City Name & State
-      const parsedName = String(
-        data.name || data.cityName || data.city || ""
-      ).trim();
-      if (parsedName) {
-        setName(parsedName);
-        const match = allCities.find(
-          (c) =>
-            c.name.toLowerCase() === parsedName.toLowerCase() ||
-            c.slug.toLowerCase() === slugify(parsedName)
-        );
-        if (match) {
-          setActiveSlug(match.slug);
-          if (match.state) setStateName(match.state);
-        }
-      }
-
-      const parsedState = String(data.state || data.stateName || "").trim();
-      if (parsedState) setStateName(parsedState);
-
-      // 2. Title & Description
-      const parsedTitle = String(
-        data.title || data.seoTitle || data.metaTitle || ""
-      ).trim();
-      if (parsedTitle) setTitle(parsedTitle);
-
-      const parsedDesc = String(
-        data.description ||
-          data.metaDescription ||
-          data.meta_description ||
-          ""
-      ).trim();
-      if (parsedDesc) setDescription(parsedDesc);
-
-      // 3. Slug
-      const parsedSlug = String(
-        data.urlSlug || data.url_slug || data.slug || ""
-      ).trim();
-      if (parsedSlug) {
-        setUrlSlug(slugify(parsedSlug));
-        setSlugManual(true);
-      } else if (parsedTitle && !urlSlug) {
-        setUrlSlug(slugify(parsedTitle));
-      } else if (parsedName && !urlSlug) {
-        setUrlSlug(slugify(parsedName));
-      }
-
-      // 4. Keywords
-      const parsedPrimary = String(
-        data.primaryKeyword ||
-          data.primary_keyword ||
-          data.keyword ||
-          data.keywords ||
-          ""
-      ).trim();
-      if (parsedPrimary) setPrimaryKeyword(parsedPrimary);
-
-      const rawPop = data.popularSearches || data.popular_searches || data.searches;
-      const rawSec = data.secondaryKeywords || data.secondary_keywords;
-      const rawLong = data.longTailKeywords || data.long_tail_keywords;
-
-      const combinedKeywords: string[] = [];
-
-      const parseToArray = (val: unknown): string[] => {
-        if (Array.isArray(val)) {
-          return val.map(String).map((s) => s.trim()).filter(Boolean);
-        } else if (typeof val === "string" && val.trim()) {
-          return val.split(/[,;\n]+/).map((s) => s.trim()).filter(Boolean);
-        }
-        return [];
-      };
-
-      if (rawPop) combinedKeywords.push(...parseToArray(rawPop));
-      if (rawSec) combinedKeywords.push(...parseToArray(rawSec));
-      if (rawLong) combinedKeywords.push(...parseToArray(rawLong));
-
-      if (combinedKeywords.length > 0) {
-        setPopularSearches(Array.from(new Set(combinedKeywords)));
-      }
-
-      // 5. Canonical & Images
-      const parsedCanonical = String(
-        data.canonicalUrl || data.canonical_url || data.canonical || ""
-      ).trim();
-      if (parsedCanonical) setCanonicalUrl(parsedCanonical);
-
-      const parsedImage = String(
-        data.featuredImage || data.featured_image || data.image || ""
-      ).trim();
-      if (parsedImage) setFeaturedImage(parsedImage);
-
-      const parsedAlt = String(
-        data.imageAlt || data.image_alt || data.alt || ""
-      ).trim();
-      if (parsedAlt) setImageAlt(parsedAlt);
-
-      // 6. Content Blocks (support blocks array, strings array, markdown, sections)
-      const newBlocks: ContentBlock[] = [];
-      const rawContent =
-        data.content || data.blocks || data.body || data.sections;
-
-      if (Array.isArray(rawContent)) {
-        for (const item of rawContent) {
-          if (typeof item === "string") {
-            const str = item.trim();
-            if (!str) continue;
-            if (str.startsWith("### ")) {
-              newBlocks.push({ id: uid(), type: "h3", text: str.slice(4).trim() });
-            } else if (str.startsWith("## ") || str.startsWith("# ")) {
-              newBlocks.push({ id: uid(), type: "h2", text: str.replace(/^#+\s*/, "").trim() });
-            } else {
-              newBlocks.push({ id: uid(), type: "p", text: str });
-            }
-          } else if (typeof item === "object" && item !== null) {
-            const bType: BlockType =
-              item.type === "h1" || item.tag === "h1" || item.heading === 1 || item.type === "h2" || item.tag === "h2" || item.heading === 2
-                ? "h2"
-                : item.type === "h3" || item.tag === "h3" || item.heading === 3
-                ? "h3"
-                : "p";
-            const bText = String(
-              item.text ||
-                item.content ||
-                item.value ||
-                item.body ||
-                item.title ||
-                ""
-            ).trim();
-            if (bText) {
-              newBlocks.push({
-                id: item.id || uid(),
-                type: bType,
-                text: bText,
-              });
-            }
-          }
-        }
-      } else if (typeof rawContent === "string" && rawContent.trim()) {
-        const paragraphs = rawContent.split(/\r?\n\r?\n/);
-        for (const p of paragraphs) {
-          const trimmed = p.trim();
-          if (!trimmed) continue;
-          if (trimmed.startsWith("### ")) {
-            newBlocks.push({ id: uid(), type: "h3", text: trimmed.slice(4).trim() });
-          } else if (trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
-            newBlocks.push({ id: uid(), type: "h2", text: trimmed.replace(/^#+\s*/, "").trim() });
-          } else {
-            newBlocks.push({ id: uid(), type: "p", text: trimmed });
-          }
-        }
-      }
-
-      if (newBlocks.length > 0) {
-        setContent(newBlocks);
-      }
-
-      // 7. FAQs
-      const newFaqs: FaqItem[] = [];
-      const rawFaqs = data.faqs || data.faq || data.questions;
-      if (Array.isArray(rawFaqs)) {
-        for (const f of rawFaqs) {
-          if (typeof f === "object" && f !== null) {
-            const question = String(
-              f.question || f.q || f.title || ""
-            ).trim();
-            const answer = String(
-              f.answer ||
-                f.a ||
-                f.solution ||
-                f.description ||
-                f.content ||
-                ""
-            ).trim();
-            if (question || answer) {
-              newFaqs.push({
-                id: f.id || uid(),
-                question,
-                answer,
-              });
-            }
-          }
-        }
-      }
-
-      if (newFaqs.length > 0) {
-        setFaqs(newFaqs);
-      }
-
-      if (data.status === "published" || data.status === "draft") {
-        setStatus(data.status);
-      }
-
-      const successMsg = `JSON arranged successfully onto the form! Populated City, SEO Title, Description, Keywords, ${newBlocks.length} content block(s), and ${newFaqs.length} FAQ(s).`;
-      setJsonStatusMsg({ type: "success", text: successMsg });
-      setSuccess(successMsg);
-      return true;
-    } catch (err) {
-      const errMsg = `Failed to parse JSON: ${
-        err instanceof Error ? err.message : "Invalid JSON syntax"
-      }`;
-      setJsonStatusMsg({ type: "error", text: errMsg });
-      setError(errMsg);
-      return false;
-    }
-  }
-
-  async function handleJsonFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const text = await file.text();
-      setJsonPasteText(text);
-      applyJsonString(text);
-    } catch (err) {
-      setError(
-        `Failed to read file: ${
-          err instanceof Error ? err.message : "Unknown error"
-        }`
-      );
-    } finally {
-      if (e.target) e.target.value = "";
-    }
-  }
-
-  function handleApplyPastedJson() {
-    applyJsonString(jsonPasteText);
-  }
-
-  function handleClearJson() {
-    setJsonPasteText("");
-    setJsonStatusMsg(null);
-  }
-
-  function handleLoadSampleJson() {
-    const sample = getSampleJsonString();
-    setJsonPasteText(sample);
-    setJsonStatusMsg(null);
-  }
-
-  function copyFromParentCity() {
-    if (!parentCitySeo) return;
-    const aName = name || editArea || "";
-    const cName = parentCityName || editSlug || "";
-
-    let adaptedTitle = parentCitySeo.title || "";
-    if (adaptedTitle) {
-      if (adaptedTitle.toLowerCase().includes(cName.toLowerCase())) {
-        adaptedTitle = adaptedTitle.replace(
-          new RegExp(cName, "gi"),
-          `${aName}, ${cName}`
-        );
-      } else {
-        adaptedTitle = `${aName}, ${adaptedTitle}`;
-      }
-    } else {
-      adaptedTitle = `Best Places & Services in ${aName}, ${cName} | RKB`;
-    }
-
-    let adaptedDesc = parentCitySeo.description || "";
-    if (adaptedDesc) {
-      if (adaptedDesc.toLowerCase().includes(cName.toLowerCase())) {
-        adaptedDesc = adaptedDesc.replace(
-          new RegExp(cName, "gi"),
-          `${aName}, ${cName}`
-        );
-      } else {
-        adaptedDesc = `In ${aName}, ${cName}: ${adaptedDesc}`;
-      }
-    } else {
-      adaptedDesc = `Explore top verified places and local classifieds in ${aName}, ${cName} on RKB.`;
-    }
-
-    setTitle(adaptedTitle);
-    setDescription(adaptedDesc);
-    setPrimaryKeyword(`${aName} ${parentCitySeo.primaryKeyword || cName}`);
-    setPopularSearches(
-      Array.from(
-        new Set([
-          `${aName} services`,
-          `${aName} ${cName}`,
-          ...(parentCitySeo.popularSearches ?? []).map((s: string) =>
-            s.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`)
-          ),
-        ])
-      ).slice(0, 8)
-    );
-
-    const adaptedContent = (parentCitySeo.content ?? []).map((b: { type: BlockType | string; text: string }) => ({
-      id: uid(),
-      type: (b.type === "h1" ? "h2" : ["h2", "h3", "p"].includes(b.type) ? b.type : "p") as BlockType,
-      text: b.text.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
-    }));
-    setContent(
-      adaptedContent.length > 0
-        ? adaptedContent
-        : [
-            { id: uid(), type: "h2", text: `${aName}, ${cName}` },
-            { id: uid(), type: "p", text: "" },
-          ]
-    );
-
-    const adaptedFaqs = (parentCitySeo.faqs ?? []).map((f: { question: string; answer: string }) => ({
-      id: uid(),
-      question: f.question.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
-      answer: f.answer.replace(new RegExp(cName, "gi"), `${aName}, ${cName}`),
-    }));
-    setFaqs(adaptedFaqs);
-
-    setAreaMode("individual");
-    setSuccess(`Content copied and adapted from parent city ${cName}!`);
-    setTimeout(() => setSuccess(""), 4000);
-  }
-
   async function save(publish: boolean): Promise<string | null> {
     setError("");
     setSuccess("");
@@ -925,59 +376,11 @@ function CitySeoContent() {
     try {
       const targetName = name.trim();
       if (!targetName) {
-        setError(isAreaEdit ? "Local area name is required." : "City name is required.");
+        setError("City name is required.");
         setSaving(false);
         return null;
       }
 
-      // 1. If editing Local Area SEO
-      if (isAreaEdit) {
-        const sRes = await fetch("/api/admin/local-area-seo", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({
-            citySlug: editSlug,
-            cityName: parentCityName || editSlug,
-            areaSlug: editArea,
-            areaName: targetName,
-            mode: areaMode,
-            title,
-            description,
-            keywords: primaryKeyword,
-            primaryKeyword,
-            popularSearches,
-            secondaryKeywords: popularSearches,
-            canonicalUrl:
-              canonicalUrl.trim() ||
-              `https://rojloo.vercel.app/places/${editSlug}/${editArea}`,
-            featuredImage,
-            imageAlt,
-            content,
-            faqs,
-            status: publish ? "published" : "draft",
-          }),
-        });
-
-        const sData = await sRes.json();
-        if (!sRes.ok) {
-          setError(sData.error || "Failed to save Local Area SEO.");
-          setSaving(false);
-          return null;
-        }
-
-        setStatus(publish ? "published" : "draft");
-        setSuccess(
-          publish
-            ? "Local Area SEO published successfully!"
-            : "Local Area SEO draft saved successfully!"
-        );
-        setTimeout(() => setSuccess(""), 4000);
-        return editArea;
-      }
-
-      // 2. Editing City SEO
-      // Check if city exists in loaded cities
       let slug = activeSlug || editSlug || "";
       if (!slug) {
         const existing = allCities.find(
@@ -990,7 +393,6 @@ function CitySeoContent() {
         }
       }
 
-      // If brand new city, create via /api/admin/cities
       if (!slug) {
         const resolvedState = stateName.trim() || "India";
         const cRes = await fetch("/api/admin/cities", {
@@ -1053,7 +455,7 @@ function CitySeoContent() {
 
       const sData = await sRes.json();
       if (!sRes.ok) {
-        setError(sData.error || "Failed to save SEO.");
+        setError(sData.error || "Failed to save SEO content.");
         setSaving(false);
         return null;
       }
@@ -1061,20 +463,14 @@ function CitySeoContent() {
       setActiveSlug(slug);
       setStatus(publish ? "published" : "draft");
       setSuccess(
-        publish ? "Published successfully!" : "Draft saved successfully!"
+        publish
+          ? "City SEO published successfully!"
+          : "City SEO draft saved successfully!"
       );
-      if (typeof window !== "undefined") {
-        window.history.replaceState(
-          null,
-          "",
-          `/admin/city-seo?city=${encodeURIComponent(slug)}`
-        );
-      }
-
       setTimeout(() => setSuccess(""), 4000);
-      return slug;
+      return finalUrlSlug;
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("An error occurred while saving SEO.");
       return null;
     } finally {
       setSaving(false);
@@ -1082,25 +478,12 @@ function CitySeoContent() {
   }
 
   async function preview() {
-    setError("");
-    const targetName = name.trim();
-
-    if (isAreaEdit) {
-      const savedSlug = await save(false);
-      if (savedSlug || editArea) {
-        window.open(`/places/${editSlug}/${editArea}?preview=true`, "_blank");
-      }
+    const targetSlug = urlSlug.trim() || activeSlug || editSlug || slugify(name);
+    if (!targetSlug) {
+      setError("Please enter a city name or URL slug before previewing.");
       return;
     }
 
-    const targetSlug =
-      activeSlug || editSlug || urlSlug.trim() || slugify(targetName);
-    if (!targetSlug && !targetName) {
-      setError("Please enter a city name before previewing.");
-      return;
-    }
-
-    // Auto-save draft before previewing so latest changes are immediately reflected
     const savedSlug = await save(false);
     const slugToOpen = savedSlug || targetSlug;
     if (slugToOpen) {
@@ -1130,7 +513,7 @@ function CitySeoContent() {
     { label: "Meta description exists", ok: descLen > 0 },
     { label: "Primary keyword exists", ok: primaryKeyword.trim().length > 0 },
     { label: "URL slug exists", ok: urlSlug.trim().length > 0 },
-    { label: "Top page H1 exists", ok: Boolean(name.trim() || title.trim()) },
+    { label: "Top page heading exists", ok: Boolean(name.trim() || title.trim()) },
     { label: "At least one H2 heading exists", ok: h2Count >= 1 },
     { label: "Content has sufficient length", ok: wordCount >= 300 },
     { label: "Image has alt text", ok: Boolean(featuredImage && imageAlt.trim()) },
@@ -1154,17 +537,13 @@ function CitySeoContent() {
               </svg>
             </span>
             <span>
-              {isAreaEdit
-                ? `Local Area SEO — ${name || editArea}, ${parentCityName || editSlug}`
-                : isEdit
+              {isEdit
                 ? `SEO Editor — ${name || editSlug}`
                 : "Add New City & SEO"}
             </span>
           </h1>
           <p className="mt-2 text-sm text-slate-400">
-            {isAreaEdit
-              ? `Configure and optimize search engine metadata for ${name || editArea} (${parentCityName || editSlug}).`
-              : "Write and optimize SEO metadata, content blocks, and FAQs for the city page."}
+            Write and optimize SEO metadata, content blocks, and FAQs for the city page.
           </p>
           <div className="flex flex-wrap items-center gap-2 mt-3">
             <span
@@ -1176,87 +555,9 @@ function CitySeoContent() {
             >
               {status === "published" ? "Published" : "Draft"}
             </span>
-            {isAreaEdit && (
-              <span
-                className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
-                  areaMode === "individual"
-                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/30"
-                    : "bg-sky-500/15 text-sky-300 border border-sky-500/30"
-                }`}
-              >
-                {areaMode === "individual" ? "Mode: Individual SEO" : "Mode: Inherits City"}
-              </span>
-            )}
           </div>
-
-          {isAreaEdit && (
-            <div className="mt-4 flex flex-wrap items-center gap-2.5">
-              <Link
-                href={`/admin/city-seo?city=${encodeURIComponent(editSlug)}`}
-                className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-3.5 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition"
-              >
-                &larr; Back to {parentCityName || "City"} SEO
-              </Link>
-              <div className="inline-flex rounded-xl border border-white/10 bg-slate-900/90 p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setAreaMode("inherit")}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
-                    areaMode === "inherit"
-                      ? "bg-sky-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Same as City (Inherit)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAreaMode("individual")}
-                  className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
-                    areaMode === "individual"
-                      ? "bg-purple-600 text-white shadow-sm"
-                      : "text-slate-400 hover:text-white"
-                  }`}
-                >
-                  Individual SEO Content
-                </button>
-              </div>
-              {parentCitySeo && (
-                <button
-                  type="button"
-                  onClick={copyFromParentCity}
-                  className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-3.5 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition cursor-pointer"
-                >
-                  📋 Copy Content from {parentCityName || "City"}
-                </button>
-              )}
-            </div>
-          )}
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <input
-            ref={jsonInputRef}
-            type="file"
-            accept=".json,application/json"
-            className="hidden"
-            onChange={handleJsonFileSelect}
-          />
-          <button
-            type="button"
-            onClick={() => jsonInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-200 hover:bg-white/10 transition cursor-pointer"
-            title="Upload a .json file to automatically fill all SEO fields, content blocks, and FAQs"
-          >
-            <span>📁</span> Upload JSON
-          </button>
-          <button
-            type="button"
-            onClick={downloadSampleJson}
-            className="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition cursor-pointer"
-            title="Download an example JSON format template"
-          >
-            <span>⬇</span> Sample JSON
-          </button>
           <button
             type="button"
             onClick={() => save(false)}
@@ -1284,14 +585,12 @@ function CitySeoContent() {
         </div>
       </div>
 
-      {isEdit && (
-        <Link
-          href="/admin/city"
-          className="mt-4 inline-block text-sm font-bold text-amber-400 underline-offset-2 hover:underline"
-        >
-          &larr; Back to Cities
-        </Link>
-      )}
+      <Link
+        href="/admin/city"
+        className="mt-4 inline-block text-sm font-bold text-amber-400 underline-offset-2 hover:underline"
+      >
+        &larr; Back to City List
+      </Link>
 
       {error && (
         <div className="mt-4 rounded-xl bg-rose-500/10 border border-rose-500/30 p-3.5 text-sm font-semibold text-rose-300" role="alert">
@@ -1307,93 +606,6 @@ function CitySeoContent() {
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
-          {/* JSON Paste & Auto-Fill Section */}
-          <section className="rounded-2xl border border-amber-500/30 bg-slate-900/80 p-4 sm:p-6 shadow-xl backdrop-blur-md">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3 mb-3">
-              <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <span>Paste SEO JSON Content</span>
-                  <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-400">
-                    Fast Fill
-                  </span>
-                </h2>
-                <p className="text-xs text-slate-400 mt-1">
-                  Paste JSON file text here to automatically arrange and fill the full SEO form below.
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleLoadSampleJson}
-                  className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-white/10 transition cursor-pointer"
-                  title="Insert sample JSON format into textarea"
-                >
-                  Load Sample
-                </button>
-                {jsonPasteText && (
-                  <button
-                    type="button"
-                    onClick={handleClearJson}
-                    className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="relative">
-                <textarea
-                  rows={6}
-                  value={jsonPasteText}
-                  onChange={(e) => {
-                    setJsonPasteText(e.target.value);
-                    if (jsonStatusMsg) setJsonStatusMsg(null);
-                  }}
-                  onPaste={(e) => {
-                    const pasted = e.clipboardData.getData("text");
-                    if (pasted && pasted.trim().startsWith("{")) {
-                      setTimeout(() => {
-                        applyJsonString(pasted);
-                      }, 50);
-                    }
-                  }}
-                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Places & Services in Mumbai | RKB",\n  "description": "Find top verified profiles and classifieds in Mumbai...",\n  "primaryKeyword": "services in mumbai",\n  "popularSearches": ["mumbai services", "top verified in mumbai"],\n  "content": [\n    { "type": "h2", "text": "Top Classifieds in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
-                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-white/15 bg-slate-800/90 p-3 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none transition resize-y leading-relaxed"
-                  spellCheck={false}
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={handleApplyPastedJson}
-                  disabled={!jsonPasteText.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-2 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
-                >
-                  <span>Apply JSON to Form</span>
-                </button>
-
-                <p className="text-[11px] text-slate-400">
-                  Tip: Pasting valid JSON will auto-arrange and fill all fields on the page.
-                </p>
-              </div>
-
-              {jsonStatusMsg && (
-                <div
-                  className={`rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium animate-in fade-in ${
-                    jsonStatusMsg.type === "success"
-                      ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
-                      : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
-                  }`}
-                >
-                  {jsonStatusMsg.text}
-                </div>
-              )}
-            </div>
-          </section>
-
           <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-bold text-white">City Information</h2>
@@ -1791,85 +1003,6 @@ function CitySeoContent() {
           </section>
         </div>
       </div>
-
-      {/* LOCAL AREAS OF THIS CITY LIST WITH EDIT SEO BUTTONS */}
-      {!isAreaEdit && editSlug && (
-        <section className="mt-10 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7 shadow-xl backdrop-blur-md">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-white">
-                  Local Areas in {name || editSlug}
-                </h2>
-                <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-400">
-                  {cityLocalAreas.length} Areas
-                </span>
-              </div>
-              <p className="mt-1 text-xs text-slate-400">
-                Click <strong>Edit SEO</strong> on any local area to customize its individual SEO content or configure parent-child inheritance.
-              </p>
-            </div>
-            <Link
-              href="/admin/dynamic-seo"
-              className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 text-xs font-bold text-slate-200 transition flex items-center gap-1.5"
-            >
-              <span>⚡</span> Manage in Dynamic SEO
-            </Link>
-          </div>
-
-          {cityLocalAreas.length === 0 ? (
-            <p className="mt-4 text-xs text-slate-500 italic">
-              No local areas recorded under {name || editSlug}. You can add local areas in State/City management.
-            </p>
-          ) : (
-            <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {cityLocalAreas.map((area) => {
-                const isCustom = area.mode === "individual";
-                return (
-                  <div
-                    key={area.slug}
-                    className={`flex items-center justify-between gap-2 rounded-xl border p-3.5 transition ${
-                      isCustom
-                        ? "border-purple-500/30 bg-purple-500/10"
-                        : "border-white/10 bg-slate-800/40 hover:bg-slate-800/70"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        {isCustom ? (
-                          <span
-                            className="h-2 w-2 rounded-full bg-emerald-400 shrink-0"
-                            title="Individual Custom SEO active"
-                          />
-                        ) : (
-                          <span
-                            className="h-2 w-2 rounded-full bg-sky-400 shrink-0"
-                            title="Inherits Parent City SEO"
-                          />
-                        )}
-                        <p className="font-bold text-sm text-white truncate">
-                          {area.name}, {name || editSlug}
-                        </p>
-                      </div>
-                      <span className="block text-xs text-slate-400 mt-0.5">
-                        {isCustom ? "Individual SEO" : "Inherits City SEO"}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/admin/city-seo?city=${encodeURIComponent(
-                        editSlug
-                      )}&area=${encodeURIComponent(area.slug)}`}
-                      className="rounded-lg border border-purple-500/40 bg-purple-500/20 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-500/30 transition shrink-0"
-                    >
-                      Edit SEO
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
     </main>
   );
 }

@@ -82,7 +82,6 @@ export async function POST(request: NextRequest) {
       const count = await batchUpdateLocalAreaSeoModes(body.updates);
       try {
         revalidatePath("/places");
-        revalidatePath("/admin/dynamic-seo");
         revalidatePath("/admin/city-seo");
         revalidatePath("/admin/city");
       } catch {}
@@ -112,7 +111,6 @@ export async function POST(request: NextRequest) {
       revalidatePath(
         `/places/${citySlug.toLowerCase().trim()}/${areaSlug.toLowerCase().trim()}`
       );
-      revalidatePath("/admin/dynamic-seo");
       revalidatePath("/admin/city-seo");
       revalidatePath("/admin/city");
     } catch {}

@@ -11,14 +11,14 @@ import { JsonLd } from "@/components/seo/json-ld";
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: "Explore Places & Local Cities | RKB",
+  title: "Explore Places & Cities | RKB",
   description:
     "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
   alternates: {
     canonical: `${siteConfig.url}/places`,
   },
   openGraph: {
-    title: "Explore Places & Local Cities | RKB",
+    title: "Explore Places & Cities | RKB",
     description:
       "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
     url: `${siteConfig.url}/places`,
@@ -34,14 +34,12 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Explore Places & Local Cities | RKB",
+    title: "Explore Places & Cities | RKB",
     description:
       "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
     images: [`${siteConfig.url}/rojlo.png`],
   },
 };
-
-import { listLocalAreas } from "@/lib/models/localArea";
 
 export default async function Places({
   searchParams,
@@ -53,10 +51,9 @@ export default async function Places({
   const query = Array.isArray(q) ? q[0] : q;
   const initialQuery = query?.trim() ?? "";
 
-  const [allCities, adCounts, rawLocalAreas] = await Promise.all([
+  const [allCities, adCounts] = await Promise.all([
     listAllCities(),
     getAdCountsByCity(),
-    listLocalAreas(),
   ]);
 
   const citiesWithAds = allCities.map((city) => ({
@@ -67,13 +64,6 @@ export default async function Places({
       adCounts[city.name.toLowerCase()] ??
       adCounts[city.slug.toLowerCase()] ??
       0,
-  }));
-
-  const initialLocalAreas = rawLocalAreas.map((area) => ({
-    name: area.name,
-    slug: area.slug,
-    cityName: area.cityName,
-    citySlug: area.citySlug,
   }));
 
   const schema = [
@@ -98,14 +88,12 @@ export default async function Places({
     {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      name: "Explore Places & Local Cities",
+      name: "Explore Places & Cities",
       description:
         "Explore places and find trusted local services, classifieds, and verified ads across cities and states in India.",
       url: `${siteConfig.url}/places`,
     },
   ];
-
-  const totalLocationsCount = citiesWithAds.length + initialLocalAreas.length;
 
   return (
     <div className="w-full min-w-0 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
@@ -124,7 +112,7 @@ export default async function Places({
               Places Directory
             </h1>
             <p className="mt-1 text-sm text-neutral-600">
-              Browse and discover all cities and verified local neighborhoods across India.
+              Browse and discover all cities across India with verified services.
             </p>
           </div>
 
@@ -132,11 +120,11 @@ export default async function Places({
           <div className="shrink-0 self-start sm:self-auto">
             <div className="rounded-2xl border border-neutral-300 bg-neutral-100/90 px-4 sm:px-5 py-2.5 text-left sm:text-right shadow-xs">
               <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500 block">
-                Total Locations
+                Total Cities
               </span>
               <div className="flex items-baseline gap-1.5 sm:justify-end">
                 <span className="text-2xl sm:text-3xl font-black text-neutral-950">
-                  {totalLocationsCount}
+                  {citiesWithAds.length}
                 </span>
               </div>
             </div>
@@ -145,7 +133,6 @@ export default async function Places({
 
         <PlacesExplorer
           initialCities={citiesWithAds}
-          initialLocalAreas={initialLocalAreas}
           initialQuery={initialQuery}
         />
       </SectionPanel>

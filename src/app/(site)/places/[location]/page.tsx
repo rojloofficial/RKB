@@ -9,7 +9,6 @@ import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { listAdsByCity } from "@/lib/models/ad";
 import { getCitySeo } from "@/lib/models/city-seo";
 import { getCityBySlug, listAllCities } from "@/lib/models/city";
-import { listLocalAreas } from "@/lib/models/localArea";
 import { CityPageSkeleton } from "@/components/skeletons/places-skeletons";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
@@ -149,9 +148,8 @@ async function CityContent({
 
   if (!city) notFound();
 
-  const [ads, localAreas, allCities] = await Promise.all([
+  const [ads, allCities] = await Promise.all([
     listAdsByCity(city.name),
-    listLocalAreas({ cityName: city.name, citySlug: city.slug }),
     city.state ? listAllCities() : Promise.resolve([]),
   ]);
 
@@ -272,7 +270,6 @@ async function CityContent({
 
           <CityNearbyAreasAds
             ads={ads}
-            localAreas={localAreas}
             cityName={city.name}
             citySlug={city.slug}
           />
