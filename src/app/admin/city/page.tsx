@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDisplayDate } from "@/lib/date";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 import { useAdminContext } from "@/components/admin/use-admin-context";
@@ -90,6 +90,16 @@ function fuzzyMatch(target: string, query: string): boolean {
   return false;
 }
 
+export type CitySortOption =
+  | "updated-seo-last"
+  | "status-draft"
+  | "status-not-done"
+  | "status-published"
+  | "name-asc"
+  | "name-desc"
+  | "state"
+  | "updated";
+
 export default function AdminCities() {
   const router = useRouter();
   const me = useAdminContext();
@@ -99,7 +109,7 @@ export default function AdminCities() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "draft" | "not_done">("all");
   const [selectedState, setSelectedState] = useState<string>("all");
-  const [sortBy, setSortBy] = useState<"name-asc" | "name-desc" | "state" | "status-draft" | "status-published" | "updated">("name-asc");
+  const [sortBy, setSortBy] = useState<CitySortOption>("updated-seo-last");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [pageSize, setPageSize] = useState<number>(25);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -168,14 +178,29 @@ export default function AdminCities() {
     // Sorting
     const sorted = [...list];
     switch (sortBy) {
-      case "name-asc":
-        sorted.sort((a, b) => a.name.localeCompare(b.name));
+      case "updated-seo-last":
+        sorted.sort((a, b) => {
+          // 1. Move Updated SEO (Published) to the very last of the list
+          const aUpdated = a.seo.status === "published" ? 1 : 0;
+          const bUpdated = b.seo.status === "published" ? 1 : 0;
+          if (aUpdated !== bUpdated) {
+            return aUpdated - bUpdated; // 0 (pending) comes first, 1 (updated) comes last
+          }
+
+          // 2. Among pending cities, show in-progress drafts first, then not done
+          if (a.seo.status === "draft" && b.seo.status === "not_done") return -1;
+          if (b.seo.status === "draft" && a.seo.status === "not_done") return 1;
+
+          // 3. Alphabetical by city name
+          return a.name.localeCompare(b.name);
+        });
         break;
-      case "name-desc":
-        sorted.sort((a, b) => b.name.localeCompare(a.name));
-        break;
-      case "state":
-        sorted.sort((a, b) => (a.state || "").localeCompare(b.state || ""));
+      case "status-not-done":
+        sorted.sort((a, b) => {
+          if (a.seo.status === "not_done" && b.seo.status !== "not_done") return -1;
+          if (b.seo.status === "not_done" && a.seo.status !== "not_done") return 1;
+          return a.name.localeCompare(b.name);
+        });
         break;
       case "status-draft":
         sorted.sort((a, b) => {
@@ -191,6 +216,15 @@ export default function AdminCities() {
           return a.name.localeCompare(b.name);
         });
         break;
+      case "name-asc":
+        sorted.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "name-desc":
+        sorted.sort((a, b) => b.name.localeCompare(a.name));
+        break;
+      case "state":
+        sorted.sort((a, b) => (a.state || "").localeCompare(b.state || ""));
+        break;
       case "updated":
         sorted.sort((a, b) => {
           const dateA = a.seo.updatedAt ? new Date(a.seo.updatedAt).getTime() : 0;
@@ -202,6 +236,15 @@ export default function AdminCities() {
 
     return sorted;
   }, [cities, statusFilter, selectedState, debouncedSearch, sortBy]);
+
+  // Index in filteredAndSortedCities where Updated SEO (published) cities start
+  const firstUpdatedIndex = useMemo(() => {
+    if (statusFilter !== "all") return -1;
+    const hasPending = filteredAndSortedCities.some((c) => c.seo.status !== "published");
+    const hasPublished = filteredAndSortedCities.some((c) => c.seo.status === "published");
+    if (!hasPending || !hasPublished) return -1;
+    return filteredAndSortedCities.findIndex((c) => c.seo.status === "published");
+  }, [filteredAndSortedCities, statusFilter]);
 
   // Pagination calculation
   const totalItems = filteredAndSortedCities.length;
@@ -473,25 +516,25 @@ export default function AdminCities() {
           <span className="mt-1 block text-[11px] text-slate-400">All registered cities</span>
         </button>
 
-        {/* 🟢 SEO Published Live */}
+        {/* 🔴 SEO Not Done */}
         <button
           type="button"
           onClick={() => {
-            setStatusFilter("published");
+            setStatusFilter("not_done");
             setCurrentPage(1);
           }}
           className={`rounded-2xl border p-4 text-left transition cursor-pointer backdrop-blur-md ${
-            statusFilter === "published"
-              ? "border-emerald-500/50 bg-emerald-950/30 shadow-lg ring-2 ring-emerald-500/30"
+            statusFilter === "not_done"
+              ? "border-rose-500/50 bg-rose-950/30 shadow-lg ring-2 ring-rose-500/30"
               : "border-white/10 bg-slate-900/60 hover:bg-slate-800/60"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">SEO Published</span>
-            <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-rose-400">SEO Not Done</span>
+            <span className="inline-block h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
           </div>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-emerald-300">{publishedCount}</p>
-          <span className="mt-1 block text-[11px] text-emerald-400/80">Live on public site</span>
+          <p className="mt-2 text-2xl sm:text-3xl font-black text-rose-300">{notDoneCount}</p>
+          <span className="mt-1 block text-[11px] text-rose-400/80">Needs SEO setup</span>
         </button>
 
         {/* 🟡 In Draft */}
@@ -515,25 +558,25 @@ export default function AdminCities() {
           <span className="mt-1 block text-[11px] text-amber-400/80">Saved drafts ready to edit</span>
         </button>
 
-        {/* 🔴 SEO Not Done */}
+        {/* 🟢 SEO Published Live (Placed Last) */}
         <button
           type="button"
           onClick={() => {
-            setStatusFilter("not_done");
+            setStatusFilter("published");
             setCurrentPage(1);
           }}
           className={`rounded-2xl border p-4 text-left transition cursor-pointer backdrop-blur-md ${
-            statusFilter === "not_done"
-              ? "border-rose-500/50 bg-rose-950/30 shadow-lg ring-2 ring-rose-500/30"
+            statusFilter === "published"
+              ? "border-emerald-500/50 bg-emerald-950/30 shadow-lg ring-2 ring-emerald-500/30"
               : "border-white/10 bg-slate-900/60 hover:bg-slate-800/60"
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-rose-400">SEO Not Done</span>
-            <span className="inline-block h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">SEO Published</span>
+            <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
           </div>
-          <p className="mt-2 text-2xl sm:text-3xl font-black text-rose-300">{notDoneCount}</p>
-          <span className="mt-1 block text-[11px] text-rose-400/80">No SEO setup yet</span>
+          <p className="mt-2 text-2xl sm:text-3xl font-black text-emerald-300">{publishedCount}</p>
+          <span className="mt-1 block text-[11px] text-emerald-400/80">Live on public site</span>
         </button>
       </div>
 
@@ -544,16 +587,16 @@ export default function AdminCities() {
             SEO Indicator Dots:
           </span>
           <div className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
-            <span className="text-slate-200 font-semibold">Green: SEO Done (Published live)</span>
+            <span className="inline-block h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
+            <span className="text-slate-200 font-semibold">Red: SEO Not Done</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="inline-block h-3 w-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] shrink-0" />
             <span className="text-slate-200 font-semibold">Yellow: In Draft (Saved content, opens where you left off)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="inline-block h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
-            <span className="text-slate-200 font-semibold">Red: SEO Not Done</span>
+            <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+            <span className="text-slate-200 font-semibold">Green: SEO Done (Published live &mdash; placed in the last)</span>
           </div>
         </div>
 
@@ -614,14 +657,18 @@ export default function AdminCities() {
             {/* Sort Selector */}
             <select
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              onChange={(e) => setSortBy(e.target.value as CitySortOption)}
               className="rounded-xl border border-white/15 bg-slate-800/90 px-3 py-2 text-xs font-semibold text-white outline-none focus:border-amber-500"
             >
+              <option value="updated-seo-last" className="bg-slate-900">
+                Sort: Updated SEO at End (Pending First)
+              </option>
+              <option value="status-draft" className="bg-slate-900">Sort: Drafts First</option>
+              <option value="status-not-done" className="bg-slate-900">Sort: SEO Not Done First</option>
+              <option value="status-published" className="bg-slate-900">Sort: Updated SEO First</option>
               <option value="name-asc" className="bg-slate-900">Sort: Name (A &rarr; Z)</option>
               <option value="name-desc" className="bg-slate-900">Sort: Name (Z &rarr; A)</option>
               <option value="state" className="bg-slate-900">Sort: By State</option>
-              <option value="status-draft" className="bg-slate-900">Sort: Drafts First</option>
-              <option value="status-published" className="bg-slate-900">Sort: Published First</option>
               <option value="updated" className="bg-slate-900">Sort: Recently Updated</option>
             </select>
           </div>
@@ -647,17 +694,17 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={() => {
-                setStatusFilter("published");
+                setStatusFilter("not_done");
                 setCurrentPage(1);
               }}
               className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                statusFilter === "published"
-                  ? "bg-emerald-500 text-slate-950 shadow-md font-extrabold"
-                  : "bg-slate-800/70 border border-emerald-500/20 text-emerald-300 hover:bg-slate-800 hover:text-emerald-200"
+                statusFilter === "not_done"
+                  ? "bg-rose-500 text-white shadow-md font-extrabold"
+                  : "bg-slate-800/70 border border-rose-500/20 text-rose-300 hover:bg-slate-800 hover:text-rose-200"
               }`}
             >
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
-              SEO Done ({publishedCount})
+              <span className="inline-block h-2 w-2 rounded-full bg-rose-500" />
+              Not Done ({notDoneCount})
             </button>
             <button
               type="button"
@@ -677,17 +724,17 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={() => {
-                setStatusFilter("not_done");
+                setStatusFilter("published");
                 setCurrentPage(1);
               }}
               className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
-                statusFilter === "not_done"
-                  ? "bg-rose-500 text-white shadow-md font-extrabold"
-                  : "bg-slate-800/70 border border-rose-500/20 text-rose-300 hover:bg-slate-800 hover:text-rose-200"
+                statusFilter === "published"
+                  ? "bg-emerald-500 text-slate-950 shadow-md font-extrabold"
+                  : "bg-slate-800/70 border border-emerald-500/20 text-emerald-300 hover:bg-slate-800 hover:text-emerald-200"
               }`}
             >
-              <span className="inline-block h-2 w-2 rounded-full bg-rose-500" />
-              Not Done ({notDoneCount})
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
+              SEO Done ({publishedCount})
             </button>
           </div>
 
@@ -773,14 +820,31 @@ export default function AdminCities() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {paginatedCities.map((item) => {
+                {paginatedCities.map((item, idx) => {
                   const seoStatus = item.seo.status;
+                  const globalIndex = pageSize === -1 ? idx : (currentPage - 1) * pageSize + idx;
+                  const isFirstUpdatedRow = globalIndex === firstUpdatedIndex;
 
                   return (
-                    <tr
-                      key={item.id}
-                      className="hover:bg-slate-800/40 transition-colors group"
-                    >
+                    <Fragment key={item.id}>
+                      {isFirstUpdatedRow && (
+                        <tr className="bg-gradient-to-r from-emerald-950/60 via-emerald-900/40 to-slate-900/60 border-y border-emerald-500/30">
+                          <td colSpan={6} className="px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-emerald-300">
+                              <div className="flex items-center gap-2.5">
+                                <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0 animate-pulse" />
+                                <span>Updated SEO Cities (SEO Done &amp; Published &mdash; Placed at the End of the List)</span>
+                              </div>
+                              <span className="text-[11px] font-semibold text-emerald-400/90 rounded-md bg-emerald-500/20 px-2 py-0.5">
+                                {publishedCount} {publishedCount === 1 ? "City" : "Cities"} Completed
+                              </span>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      <tr
+                        className="hover:bg-slate-800/40 transition-colors group"
+                      >
                       {/* Checkbox */}
                       <td className="px-4 py-3.5">
                         <input
@@ -914,8 +978,9 @@ export default function AdminCities() {
                         </div>
                       </td>
                     </tr>
-                  );
-                })}
+                  </Fragment>
+                );
+              })}
               </tbody>
             </table>
           </div>

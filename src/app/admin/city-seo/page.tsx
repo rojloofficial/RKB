@@ -670,6 +670,20 @@ function CitySeoContent() {
     return map;
   }, [allSeo]);
 
+  // Sorted cities for dropdown: Pending cities (Drafts & Not Done) first, Updated SEO (Published) at the end of the list
+  const sortedCitiesForDropdown = useMemo(() => {
+    return [...allCities].sort((a, b) => {
+      const aInfo = citySeoStatusMap.get(a.slug.toLowerCase().trim());
+      const bInfo = citySeoStatusMap.get(b.slug.toLowerCase().trim());
+      const aDone = aInfo?.status === "published" ? 1 : 0;
+      const bDone = bInfo?.status === "published" ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone; // 0 (pending) comes first, 1 (updated) placed at the last of the list
+      if (aInfo?.status === "draft" && bInfo?.status !== "draft") return -1;
+      if (bInfo?.status === "draft" && aInfo?.status !== "draft") return 1;
+      return a.name.localeCompare(b.name);
+    });
+  }, [allCities, citySeoStatusMap]);
+
   if (loading) {
     return <AdminCitySeoSkeleton />;
   }
@@ -822,7 +836,7 @@ function CitySeoContent() {
                   onChange={(e) => handleSelectCity(e.target.value)}
                 >
                   <option value="">-- Choose a city to edit SEO --</option>
-                  {allCities.map((c) => {
+                  {sortedCitiesForDropdown.map((c) => {
                     const statusInfo = citySeoStatusMap.get(c.slug.toLowerCase().trim());
                     const dot =
                       statusInfo?.status === "published"
