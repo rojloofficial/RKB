@@ -177,16 +177,21 @@ export default function AdminNotFoundPage() {
   return (
     <main className="p-4 sm:p-6 lg:p-10 max-w-7xl mx-auto space-y-6 sm:space-y-8 min-w-0">
       {/* Header with Title and Actions */}
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between border-b border-red-200/60 pb-6">
+      <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-6">
         <div>
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 text-rose-800 text-xs font-bold uppercase tracking-wider mb-2">
-            <span className="w-2 h-2 rounded-full bg-rose-600 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold uppercase tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
             Error Tracking
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-red-950 sm:text-3xl lg:text-4xl">
-            404 Pages Monitor
+          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl lg:text-4xl flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </span>
+            <span>404 Pages Monitor</span>
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-red-900/80 max-w-2xl">
+          <p className="mt-2 text-sm leading-relaxed text-slate-400 max-w-2xl">
             Track all broken links, mistyped addresses, and missing pages visited by users in real-time. You can investigate, test, and mark them as resolved once fixed or redirected.
           </p>
         </div>
@@ -195,10 +200,10 @@ export default function AdminNotFoundPage() {
             type="button"
             onClick={() => loadData()}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-xs font-bold text-red-950 shadow-sm transition hover:bg-red-50 active:scale-95 disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-xs font-bold text-slate-200 shadow-sm transition hover:bg-white/10 active:scale-95 disabled:opacity-50"
           >
             <svg
-              className={`h-4 w-4 text-red-700 ${loading ? "animate-spin" : ""}`}
+              className={`h-4 w-4 text-amber-400 ${loading ? "animate-spin" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -217,9 +222,9 @@ export default function AdminNotFoundPage() {
               type="button"
               onClick={handleClearAll}
               disabled={clearing}
-              className="inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 py-2.5 text-xs font-bold text-rose-800 shadow-sm transition hover:bg-rose-100 active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-bold text-rose-300 shadow-sm transition hover:bg-rose-500/20 active:scale-95 disabled:opacity-50"
             >
-              <svg className="w-4 h-4 text-rose-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>
               {clearing ? "Clearing..." : "Clear All Logs"}
@@ -230,77 +235,77 @@ export default function AdminNotFoundPage() {
 
       {/* Metric Stat Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
-        <div className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md transition">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md hover:border-white/20 transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-800/70">Unique URLs</span>
-            <div className="p-2 rounded-xl bg-red-50 text-red-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Unique URLs</span>
+            <div className="p-2.5 rounded-xl bg-slate-800 border border-white/10 text-amber-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-red-950">
+          <div className="mt-3 text-3xl font-black text-white">
             {loading ? <AdminStatSkeleton /> : totalCount}
           </div>
-          <p className="mt-1 text-xs text-red-700/60 font-medium">Distinct broken paths</p>
+          <p className="mt-1 text-xs text-slate-400 font-medium">Distinct broken paths</p>
         </div>
 
-        <div className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm hover:shadow-md transition">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md hover:border-white/20 transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-800/70">Total 404 Hits</span>
-            <div className="p-2 rounded-xl bg-rose-50 text-rose-700">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total 404 Hits</span>
+            <div className="p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-rose-600">
+          <div className="mt-3 text-3xl font-black text-rose-400">
             {loading ? <AdminStatSkeleton /> : totalHits}
           </div>
-          <p className="mt-1 text-xs text-red-700/60 font-medium">Total user occurrences</p>
+          <p className="mt-1 text-xs text-slate-400 font-medium">Total user occurrences</p>
         </div>
 
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 sm:p-6 shadow-sm hover:shadow-md transition">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md hover:border-white/20 transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Needs Fix</span>
-            <div className="p-2 rounded-xl bg-amber-100 text-amber-800">
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Needs Fix</span>
+            <div className="p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-amber-950">
+          <div className="mt-3 text-3xl font-black text-amber-400">
             {loading ? <AdminStatSkeleton /> : unresolvedCount}
           </div>
-          <p className="mt-1 text-xs text-amber-800/70 font-medium">Require redirect or page</p>
+          <p className="mt-1 text-xs text-slate-400 font-medium">Require redirect or page</p>
         </div>
 
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 sm:p-6 shadow-sm hover:shadow-md transition">
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md hover:border-white/20 transition">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">Resolved</span>
-            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Resolved</span>
+            <div className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
           </div>
-          <div className="mt-3 text-3xl font-black text-emerald-950">
+          <div className="mt-3 text-3xl font-black text-emerald-400">
             {loading ? <AdminStatSkeleton /> : resolvedCount}
           </div>
-          <p className="mt-1 text-xs text-emerald-800/70 font-medium">Marked as handled</p>
+          <p className="mt-1 text-xs text-slate-400 font-medium">Marked as handled</p>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-red-100 bg-white p-4 sm:p-5 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-5 shadow-xl backdrop-blur-md">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           <button
             type="button"
             onClick={() => setFilter("all")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filter === "all"
-                ? "bg-neutral-900 text-white shadow-sm"
-                : "text-neutral-900 hover:bg-neutral-100 bg-neutral-50"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md shadow-amber-500/20"
+                : "text-slate-300 hover:bg-white/10 bg-white/5 border border-white/10"
             }`}
           >
             All ({totalCount})
@@ -310,8 +315,8 @@ export default function AdminNotFoundPage() {
             onClick={() => setFilter("unresolved")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filter === "unresolved"
-                ? "bg-amber-600 text-white shadow-sm"
-                : "text-amber-900 hover:bg-amber-50 bg-amber-50/40"
+                ? "bg-amber-500/20 text-amber-300 border border-amber-500/40"
+                : "text-amber-400 hover:bg-amber-500/10 bg-amber-500/5 border border-amber-500/20"
             }`}
           >
             Needs Fix ({unresolvedCount})
@@ -321,8 +326,8 @@ export default function AdminNotFoundPage() {
             onClick={() => setFilter("resolved")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filter === "resolved"
-                ? "bg-emerald-600 text-white shadow-sm"
-                : "text-emerald-900 hover:bg-emerald-50 bg-emerald-50/40"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                : "text-emerald-400 hover:bg-emerald-500/10 bg-emerald-500/5 border border-emerald-500/20"
             }`}
           >
             Resolved ({resolvedCount})
@@ -331,7 +336,7 @@ export default function AdminNotFoundPage() {
 
         <div className="relative w-full sm:w-72">
           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-            <svg className="h-4 w-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
@@ -340,13 +345,13 @@ export default function AdminNotFoundPage() {
             placeholder="Search broken URL path..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full rounded-xl border border-red-200 bg-red-50/30 pl-10 pr-8 py-2 text-xs text-red-950 placeholder-red-400 focus:border-red-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-200 transition"
+            className="w-full rounded-xl border border-white/15 bg-slate-800/90 pl-10 pr-8 py-2 text-xs text-white placeholder-slate-500 focus:border-amber-500 outline-none transition"
           />
           {searchTerm && (
             <button
               type="button"
               onClick={() => setSearchTerm("")}
-              className="absolute right-2.5 top-2 text-xs text-red-400 hover:text-red-700"
+              className="absolute right-2.5 top-2 text-xs text-slate-400 hover:text-white"
             >
               ✕
             </button>
@@ -355,17 +360,17 @@ export default function AdminNotFoundPage() {
       </div>
 
       {error && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm font-semibold text-rose-700">
+        <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm font-semibold text-rose-300">
           {error}
         </div>
       )}
 
       {/* Logs Table Card */}
-      <div className="rounded-2xl border border-red-100 bg-white shadow-sm overflow-hidden">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 shadow-xl overflow-hidden backdrop-blur-md">
         {loading ? (
           <div className="overflow-x-auto" aria-busy="true" aria-label="Loading 404 logs">
             <table className="w-full min-w-[700px] text-left text-xs">
-              <thead className="border-b border-red-100 bg-red-50/60 text-[11px] font-bold uppercase tracking-wider text-red-900/80">
+              <thead className="border-b border-white/10 bg-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-amber-400">
                 <tr>
                   <th className="px-5 py-4">Broken URL / Requested Path</th>
                   <th className="px-4 py-4 text-center">Hits</th>
@@ -375,26 +380,26 @@ export default function AdminNotFoundPage() {
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-red-50">
+              <tbody className="divide-y divide-white/5">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i}>
                     <td className="px-5 py-4">
-                      <div className="h-4 w-48 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="h-4 w-48 animate-pulse rounded bg-slate-800" />
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <div className="mx-auto h-4 w-12 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="mx-auto h-4 w-12 animate-pulse rounded bg-slate-800" />
                     </td>
                     <td className="px-4 py-4">
-                      <div className="h-4 w-28 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="h-4 w-28 animate-pulse rounded bg-slate-800" />
                     </td>
                     <td className="px-5 py-4">
-                      <div className="h-4 w-36 animate-pulse rounded bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="h-4 w-36 animate-pulse rounded bg-slate-800" />
                     </td>
                     <td className="px-4 py-4 text-center">
-                      <div className="mx-auto h-6 w-20 animate-pulse rounded-full bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="mx-auto h-6 w-20 animate-pulse rounded-full bg-slate-800" />
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <div className="ml-auto h-7 w-20 animate-pulse rounded-full bg-pink-200/60 motion-reduce:animate-none" />
+                      <div className="ml-auto h-7 w-20 animate-pulse rounded-full bg-slate-800" />
                     </td>
                   </tr>
                 ))}
@@ -403,13 +408,13 @@ export default function AdminNotFoundPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className="py-24 text-center px-4">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-inner">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-inner">
               <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-red-950">No 404 Errors Found</h3>
-            <p className="mt-1.5 text-xs text-red-800/70 max-w-sm mx-auto">
+            <h3 className="text-lg font-bold text-white">No 404 Errors Found</h3>
+            <p className="mt-1.5 text-xs text-slate-400 max-w-sm mx-auto">
               {searchTerm || filter !== "all"
                 ? "No 404 log records match your current filter criteria."
                 : "No users have hit broken URLs yet! Your site navigation and page routes are healthy."}
@@ -417,8 +422,8 @@ export default function AdminNotFoundPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] text-left text-xs">
-              <thead className="border-b border-red-100 bg-red-50/60 text-[11px] font-bold uppercase tracking-wider text-red-900/80">
+            <table className="w-full min-w-[700px] text-left text-xs text-slate-300">
+              <thead className="border-b border-white/10 bg-slate-800/80 text-[11px] font-bold uppercase tracking-wider text-amber-400">
                 <tr>
                   <th className="px-5 py-4">Broken URL / Requested Path</th>
                   <th className="px-4 py-4 text-center">Hits</th>
@@ -428,19 +433,19 @@ export default function AdminNotFoundPage() {
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-red-100/60">
+              <tbody className="divide-y divide-white/5">
                 {logs.map((item) => (
                   <tr
                     key={item._id}
-                    className={`transition-colors hover:bg-red-50/40 ${
-                      item.resolved ? "bg-emerald-50/20" : ""
+                    className={`transition-colors hover:bg-slate-800/40 ${
+                      item.resolved ? "bg-emerald-500/5" : ""
                     }`}
                   >
                     {/* Broken Path */}
                     <td className="px-5 py-4 max-w-xs sm:max-w-md">
                       <div className="flex items-center gap-2">
                         <span
-                          className="font-mono text-xs font-semibold text-red-950 bg-red-50/80 px-2 py-1 rounded-lg border border-red-100 truncate max-w-xs sm:max-w-sm block"
+                          className="font-mono text-xs font-semibold text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-lg border border-amber-500/30 truncate max-w-xs sm:max-w-sm block"
                           title={item.path}
                         >
                           {item.path}
@@ -449,10 +454,10 @@ export default function AdminNotFoundPage() {
                           type="button"
                           onClick={() => handleCopy(item.path, item._id)}
                           title="Copy path to clipboard"
-                          className="flex-shrink-0 p-1 rounded-md text-red-400 hover:text-red-700 hover:bg-red-100 transition"
+                          className="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/10 transition"
                         >
                           {copiedId === item._id ? (
-                            <span className="text-[10px] font-bold text-emerald-600">Copied!</span>
+                            <span className="text-[10px] font-bold text-emerald-400">Copied!</span>
                           ) : (
                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
@@ -469,7 +474,7 @@ export default function AdminNotFoundPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Open URL in new tab to test"
-                          className="flex-shrink-0 p-1 rounded-md text-red-400 hover:text-red-700 hover:bg-red-100 transition"
+                          className="flex-shrink-0 p-1 rounded-md text-slate-400 hover:text-amber-400 hover:bg-white/10 transition"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path
@@ -485,37 +490,37 @@ export default function AdminNotFoundPage() {
 
                     {/* Hits */}
                     <td className="px-4 py-4 text-center whitespace-nowrap">
-                      <span className="inline-flex items-center justify-center rounded-full bg-rose-100/90 px-3 py-1 text-xs font-black text-rose-800 border border-rose-200 shadow-sm">
+                      <span className="inline-flex items-center justify-center rounded-full bg-rose-500/15 px-3 py-1 text-xs font-black text-rose-300 border border-rose-500/30 shadow-sm">
                         {item.hits} {item.hits === 1 ? "hit" : "hits"}
                       </span>
                     </td>
 
                     {/* Last Seen */}
-                    <td className="px-4 py-4 text-red-900/80 whitespace-nowrap font-medium">
+                    <td className="px-4 py-4 text-slate-400 whitespace-nowrap font-medium">
                       {formatDisplayDateTime(item.lastSeen)}
                     </td>
 
                     {/* Referrer */}
-                    <td className="px-5 py-4 text-red-800/70 max-w-xs truncate">
+                    <td className="px-5 py-4 text-slate-400 max-w-xs truncate">
                       {item.referrers && item.referrers.length > 0 ? (
-                        <span className="font-mono text-[11px]" title={item.referrers.join(", ")}>
+                        <span className="font-mono text-[11px] text-slate-300" title={item.referrers.join(", ")}>
                           {item.referrers[item.referrers.length - 1]}
                         </span>
                       ) : (
-                        <span className="italic text-gray-400 text-[11px]">Direct Entry / Bookmark</span>
+                        <span className="italic text-slate-500 text-[11px]">Direct Entry / Bookmark</span>
                       )}
                     </td>
 
                     {/* Status */}
                     <td className="px-4 py-4 text-center whitespace-nowrap">
                       {item.resolved ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-bold text-emerald-800 border border-emerald-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-3 py-1 text-[11px] font-bold text-emerald-300 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                           Resolved
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-[11px] font-bold text-amber-800 border border-amber-200">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-[11px] font-bold text-amber-300 border border-amber-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                           Needs Fix
                         </span>
                       )}
@@ -530,8 +535,8 @@ export default function AdminNotFoundPage() {
                           onClick={() => handleToggleResolved(item)}
                           className={`rounded-xl px-3 py-1.5 text-xs font-bold shadow-sm transition active:scale-95 ${
                             item.resolved
-                              ? "border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
-                              : "border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100"
+                              ? "border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                              : "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20"
                           }`}
                         >
                           {item.resolved ? "Reopen" : "Mark Fixed"}
@@ -540,7 +545,7 @@ export default function AdminNotFoundPage() {
                           type="button"
                           disabled={processingId === item._id}
                           onClick={() => handleDelete(item._id)}
-                          className="rounded-xl border border-red-200 p-1.5 text-red-600 hover:bg-red-50 hover:text-red-800 transition active:scale-95"
+                          className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-1.5 text-rose-300 hover:bg-rose-500/20 hover:text-rose-100 transition active:scale-95"
                           title="Delete log entry"
                         >
                           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

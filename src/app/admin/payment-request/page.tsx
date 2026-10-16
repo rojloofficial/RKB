@@ -92,7 +92,7 @@ export default function PaymentRequestPage() {
   }, []);
 
   useEffect(() => {
-    if (me === null) return; // Auth still resolving, wait
+    if (me === null) return;
     if (!me.authenticated) {
       router.replace("/admin/login");
       return;
@@ -103,7 +103,6 @@ export default function PaymentRequestPage() {
       void loadUPIs();
     });
 
-    // Visibility-aware background polling every 5 seconds (zero flicker)
     const interval = setInterval(() => {
       if (!document.hidden) {
         void loadRequests(true);
@@ -173,7 +172,6 @@ export default function PaymentRequestPage() {
         return;
       }
 
-      // Optimistic update
       setRequests((prev) =>
         prev.map((r) =>
           r._id === reqId
@@ -232,7 +230,6 @@ export default function PaymentRequestPage() {
         return;
       }
 
-      // Optimistic update
       setRequests((prev) =>
         prev.map((r) =>
           r._id === reqId
@@ -347,219 +344,225 @@ export default function PaymentRequestPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-900";
+        return "bg-amber-500/15 border border-amber-500/30 text-amber-400";
       case "confirmed":
-        return "bg-green-100 text-green-900";
+        return "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400";
       case "declined":
-        return "bg-red-100 text-red-900";
+        return "bg-rose-500/15 border border-rose-500/30 text-rose-400";
       default:
-        return "bg-gray-100 text-gray-900";
+        return "bg-slate-800 border border-white/10 text-slate-300";
     }
   };
 
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950">Payment Requests</h1>
-          <button
-            type="button"
-            onClick={() => setIsDeleteModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-800 px-4 py-2 text-sm font-semibold text-white hover:bg-red-900 transition-colors shadow-xs cursor-pointer"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete History
-          </button>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Payment <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Requests</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Verify UPI transaction IDs, approve coin credits, or decline invalid submissions.
+          </p>
         </div>
+        <button
+          type="button"
+          onClick={() => setIsDeleteModalOpen(true)}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 px-4 py-2.5 text-xs sm:text-sm font-bold text-rose-300 transition shadow-xs cursor-pointer"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Delete Records</span>
+        </button>
+      </div>
 
-        {feedback && (
-          <div
-            className={`mt-4 rounded-lg p-4 font-semibold text-sm transition-all shadow-xs ${
-              feedback.type === "success"
-                ? "bg-green-100 text-green-950 border border-green-300"
-                : "bg-red-100 text-red-950 border border-red-300"
+      {feedback && (
+        <div
+          className={`mt-4 rounded-xl p-4 font-semibold text-xs sm:text-sm transition-all shadow-xs border ${
+            feedback.type === "success"
+              ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+              : "bg-rose-500/10 text-rose-300 border-rose-500/30"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-4 rounded-xl bg-rose-500/10 p-4 text-xs sm:text-sm font-semibold text-rose-300 border border-rose-500/30">
+          {error}
+        </div>
+      )}
+
+      {/* Filter Tabs */}
+      <div className="mt-6 flex gap-2 flex-wrap">
+        {(["all", "pending", "confirmed", "declined"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setFilter(tab)}
+            className={`rounded-xl px-4 py-2 text-xs sm:text-sm font-bold capitalize transition-all ${
+              filter === tab
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md"
+                : "bg-slate-800/70 text-slate-300 border border-white/10 hover:bg-slate-800 hover:text-white"
             }`}
           >
-            {feedback.message}
+            {tab}
+            <span className="ml-2 inline-flex min-w-5 items-center justify-center rounded-full bg-black/20 px-1.5 py-0.5 text-xs">
+              {counts[tab]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Cards List */}
+      <div className="mt-6 space-y-4">
+        {loading ? (
+          <AdminPaymentRequestCardsSkeleton />
+        ) : filteredRequests.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center text-slate-400 text-sm">
+            No payment requests found for {filter} status.
           </div>
-        )}
-
-        {error && (
-          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900 border border-red-200">
-            {error}
-          </div>
-        )}
-
-        <div className="mt-6 flex gap-2 flex-wrap">
-          {(["all", "pending", "confirmed", "declined"] as const).map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`rounded-lg px-4 py-2 font-semibold capitalize transition-colors ${
-                filter === tab
-                  ? "bg-red-600 text-white"
-                  : "bg-white text-red-950 border border-red-200 hover:bg-red-50"
-              }`}
-            >
-              {tab}
-              <span className="ml-2 inline-flex min-w-6 items-center justify-center rounded-full bg-black/10 px-1.5 py-0.5 text-xs">
-                {counts[tab]}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-8 space-y-4">
-          {loading ? (
-            <AdminPaymentRequestCardsSkeleton />
-          ) : filteredRequests.length === 0 ? (
-            <p className="text-red-900">
-              No payment requests found for {filter} status.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {filteredRequests.map((request) => (
-                <div
-                  key={request._id}
-                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
-                >
-                  <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-                    <div className="flex-1 min-w-0">
-                      <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                        <h3 className="text-lg font-bold text-red-950 break-all">
-                          {request.userEmail}
-                        </h3>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${getStatusBadge(
-                            request.status
-                          )}`}
-                        >
-                          {request.status}
-                        </span>
-                      </div>
-
-                      <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                        <div>
-                          <span className="font-semibold text-red-700">
-                            Transaction ID:
-                          </span>{" "}
-                          <span className="break-all text-red-900">
-                            {request.transactionId}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-red-700">
-                            Coins:
-                          </span>{" "}
-                          <span className="text-red-900">{request.coins}</span>
-                        </div>
-                        <div>
-                          <span className="font-semibold text-red-700">
-                            Amount:
-                          </span>{" "}
-                          <span className="text-red-900">₹{request.amount}</span>
-                        </div>
-                        {request.discount && (
-                          <div>
-                            <span className="font-semibold text-red-700">
-                              Discount:
-                            </span>{" "}
-                            <span className="text-red-900">₹{request.discount}</span>
-                          </div>
-                        )}
-                        {request.couponCode && (
-                          <div>
-                            <span className="font-semibold text-red-700">
-                              Coupon:
-                            </span>{" "}
-                            <span className="text-red-900">{request.couponCode}</span>
-                          </div>
-                        )}
-                        <div>
-                          <span className="font-semibold text-red-700">
-                            Submitted:
-                          </span>{" "}
-                          <span className="text-red-900">
-                            {formatDisplayDateTime(request.createdAt)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {request.status === "declined" && (
-                        <div className="mt-3 rounded-lg bg-red-50 p-3">
-                          <p className="text-xs font-semibold text-red-700">
-                            Decline Reason:
-                          </p>
-                          <p className="mt-1 text-sm text-red-900">
-                            {request.declinedReason || "Wrong Transaction ID"}
-                          </p>
-                        </div>
-                      )}
-
-                      {request.status === "confirmed" && request.confirmedAt && (
-                        <div className="mt-3 text-xs text-green-700">
-                          Confirmed on {formatDisplayDateTime(request.confirmedAt)}
-                        </div>
-                      )}
+        ) : (
+          <div className="space-y-3">
+            {filteredRequests.map((request) => (
+              <div
+                key={request._id}
+                className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/30"
+              >
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div className="flex-1 min-w-0">
+                    <div className="mb-2 flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h3 className="text-base sm:text-lg font-bold text-white break-all">
+                        {request.userEmail}
+                      </h3>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-bold capitalize ${getStatusBadge(
+                          request.status
+                        )}`}
+                      >
+                        {request.status}
+                      </span>
                     </div>
 
-                    {request.status === "pending" && (
-                      <div className="flex w-full flex-col gap-2 sm:ml-4 sm:w-auto">
-                        <button
-                          type="button"
-                          onClick={() => handleConfirm(request)}
-                          disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          {request._id && processingIds[request._id] === "confirm" && (
-                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                          )}
-                          {request._id && processingIds[request._id] === "confirm" ? "Confirming..." : "Confirm"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDecline(request)}
-                          disabled={Boolean(request._id && processingIds[request._id])}
-                          className="whitespace-nowrap rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 cursor-pointer"
-                        >
-                          {request._id && processingIds[request._id] === "decline" && (
-                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                          )}
-                          {request._id && processingIds[request._id] === "decline" ? "Declining..." : "Decline"}
-                        </button>
+                    <div className="mt-3 grid grid-cols-1 gap-2 text-xs sm:text-sm sm:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Transaction ID:
+                        </span>{" "}
+                        <span className="font-mono font-semibold text-amber-400 break-all">
+                          {request.transactionId}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Coins:
+                        </span>{" "}
+                        <span className="font-bold text-white">🪙 {request.coins}</span>
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Amount:
+                        </span>{" "}
+                        <span className="font-bold text-white">₹{request.amount}</span>
+                      </div>
+                      {request.discount && (
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            Discount:
+                          </span>{" "}
+                          <span className="font-semibold text-emerald-400">₹{request.discount}</span>
+                        </div>
+                      )}
+                      {request.couponCode && (
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                            Coupon:
+                          </span>{" "}
+                          <span className="font-mono text-amber-300">{request.couponCode}</span>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Submitted:
+                        </span>{" "}
+                        <span className="text-slate-300">
+                          {formatDisplayDateTime(request.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {request.status === "declined" && (
+                      <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3">
+                        <p className="text-xs font-bold uppercase tracking-wider text-rose-400">
+                          Decline Reason:
+                        </p>
+                        <p className="mt-1 text-xs sm:text-sm text-rose-200">
+                          {request.declinedReason || "Wrong Transaction ID"}
+                        </p>
+                      </div>
+                    )}
+
+                    {request.status === "confirmed" && request.confirmedAt && (
+                      <div className="mt-3 text-xs text-emerald-400 font-medium">
+                        ✓ Confirmed on {formatDisplayDateTime(request.confirmedAt)}
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
+                  {request.status === "pending" && (
+                    <div className="flex w-full flex-row sm:flex-col gap-2 sm:ml-4 sm:w-auto shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleConfirm(request)}
+                        disabled={Boolean(request._id && processingIds[request._id])}
+                        className="flex-1 sm:flex-none whitespace-nowrap rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 px-4 py-2 text-xs sm:text-sm font-bold text-slate-950 disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shadow-md transition active:scale-[0.98]"
+                      >
+                        {request._id && processingIds[request._id] === "confirm" && (
+                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        )}
+                        <span>{request._id && processingIds[request._id] === "confirm" ? "Confirming..." : "Confirm"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDecline(request)}
+                        disabled={Boolean(request._id && processingIds[request._id])}
+                        className="flex-1 sm:flex-none whitespace-nowrap rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-4 py-2 text-xs sm:text-sm font-semibold text-rose-300 disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer transition"
+                      >
+                        {request._id && processingIds[request._id] === "decline" && (
+                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        )}
+                        <span>{request._id && processingIds[request._id] === "decline" ? "Declining..." : "Decline"}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-          <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-red-200">
-            <div className="flex items-start justify-between border-b border-red-100 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-lg rounded-2xl bg-slate-900 p-6 shadow-2xl border border-white/15 text-white">
+            <div className="flex items-start justify-between border-b border-white/10 pb-4">
               <div>
-                <h2 className="text-xl font-bold text-red-950">Delete Payment Requests</h2>
-                <p className="mt-1 text-xs text-red-700">Permanently remove records from the database.</p>
+                <h2 className="text-xl font-bold text-white">Delete Payment Requests</h2>
+                <p className="mt-1 text-xs text-slate-400">Permanently remove records from the database.</p>
               </div>
               <button
                 type="button"
                 onClick={() => { setIsDeleteModalOpen(false); setDeleteError(""); }}
-                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
+                className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white cursor-pointer transition"
               >
                 <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
@@ -568,35 +571,35 @@ export default function PaymentRequestPage() {
             </div>
 
             {deleteError && (
-              <div className="mt-4 rounded-lg bg-red-100 p-3 text-xs font-semibold text-red-900 border border-red-200">
+              <div className="mt-4 rounded-xl bg-rose-500/10 p-3 text-xs font-semibold text-rose-300 border border-rose-500/30">
                 {deleteError}
               </div>
             )}
 
             {/* Option 1: Date Range Deletion */}
-            <div className="mt-5 rounded-xl border border-red-100 bg-red-50/50 p-4">
-              <h3 className="text-sm font-bold text-red-950">Option 1: Delete by Date Range</h3>
-              <p className="mt-1 text-xs text-red-700">
+            <div className="mt-5 rounded-xl border border-white/10 bg-slate-800/60 p-4">
+              <h3 className="text-sm font-bold text-white">Option 1: Delete by Date Range</h3>
+              <p className="mt-1 text-xs text-slate-400">
                 Select from which date to date to delete payment requests.
               </p>
 
               <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-red-900 mb-1">From Date</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">From Date</label>
                   <input
                     type="date"
                     value={deleteStartDate}
                     onChange={(e) => setDeleteStartDate(e.target.value)}
-                    className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-950 focus:border-red-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-red-900 mb-1">To Date</label>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1">To Date</label>
                   <input
                     type="date"
                     value={deleteEndDate}
                     onChange={(e) => setDeleteEndDate(e.target.value)}
-                    className="w-full rounded-lg border border-red-200 bg-white px-3 py-2 text-sm text-red-950 focus:border-red-500 focus:outline-none"
+                    className="w-full rounded-xl border border-white/15 bg-slate-900 px-3 py-2 text-sm text-white focus:border-amber-500 focus:outline-none"
                   />
                 </div>
               </div>
@@ -605,16 +608,16 @@ export default function PaymentRequestPage() {
                 type="button"
                 disabled={deleting || (!deleteStartDate && !deleteEndDate)}
                 onClick={handleDeleteByRange}
-                className="mt-4 w-full rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-4 w-full rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-4 py-2.5 text-xs sm:text-sm font-semibold text-rose-300 disabled:opacity-50 transition cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete History in Selected Date Range"}
               </button>
             </div>
 
             {/* Option 2: Delete All */}
-            <div className="mt-4 rounded-xl border border-red-200 bg-red-100/60 p-4">
-              <h3 className="text-sm font-bold text-red-950">Option 2: Delete All Payment History</h3>
-              <p className="mt-1 text-xs text-red-800">
+            <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+              <h3 className="text-sm font-bold text-white">Option 2: Delete All Payment History</h3>
+              <p className="mt-1 text-xs text-rose-300">
                 ⚠️ This will permanently delete <strong>all payment requests</strong> from the database.
               </p>
 
@@ -622,7 +625,7 @@ export default function PaymentRequestPage() {
                 type="button"
                 disabled={deleting}
                 onClick={handleDeleteAll}
-                className="mt-3 w-full rounded-lg bg-red-950 px-4 py-2.5 text-sm font-bold text-white hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="mt-3 w-full rounded-xl bg-rose-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-rose-500 disabled:opacity-50 transition cursor-pointer"
               >
                 {deleting ? "Deleting from database..." : "Delete All Payment History"}
               </button>
@@ -633,7 +636,7 @@ export default function PaymentRequestPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => { setIsDeleteModalOpen(false); setDeleteError(""); }}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer"
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-300 hover:bg-white/10 cursor-pointer transition"
               >
                 Cancel
               </button>
@@ -644,4 +647,3 @@ export default function PaymentRequestPage() {
     </main>
   );
 }
-

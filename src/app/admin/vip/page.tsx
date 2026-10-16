@@ -218,252 +218,255 @@ export default function VipPage() {
   if (!me || !me.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 p-4 sm:p-6 lg:p-10 min-w-0">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black text-red-950">VIP Access Control</h1>
-            <p className="mt-2 text-red-900">
-              Assign City or State level VIP access. The VIP&apos;s phone number serves as their password to access their dedicated VIP Panel.
-            </p>
-          </div>
-          <Link
-            href="/api/admin/go-to-vip"
-            prefetch={false}
-            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800 hover:underline transition shrink-0"
-          >
-            <span>Go to VIP Dashboard</span>
-            <span>&rarr;</span>
-          </Link>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            VIP Access <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Control</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Assign City or State level VIP access. The VIP owner&apos;s phone number serves as their password to access their dedicated VIP Panel.
+          </p>
         </div>
+        <Link
+          href="/api/admin/go-to-vip"
+          prefetch={false}
+          className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-4 py-2 text-xs font-bold text-amber-300 transition shrink-0 inline-flex items-center gap-1.5 shadow-sm"
+        >
+          <span>Go to VIP Dashboard</span>
+          <span>&rarr;</span>
+        </Link>
+      </div>
 
-        {error && <div className="mt-4 rounded-xl bg-red-100 p-3 text-sm text-red-800">{error}</div>}
-        {success && (
-          <div className="mt-4 rounded-xl bg-green-100 p-4 text-sm text-green-900 font-semibold">
-            {success}
-          </div>
-        )}
+      {error && (
+        <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs sm:text-sm font-semibold text-rose-300">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs sm:text-sm font-semibold text-emerald-300">
+          {success}
+        </div>
+      )}
 
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
-          <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
-            {/* Access Type Toggle */}
-            <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-semibold text-red-950">
-                Assignment Type
+      <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+        <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
+          {/* Access Type Toggle */}
+          <div className="md:col-span-2">
+            <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Assignment Type
+            </label>
+            <div className="flex gap-6">
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
+                <input
+                  type="radio"
+                  name="accessType"
+                  checked={accessType === "city"}
+                  onChange={() => setAccessType("city")}
+                  className="accent-amber-500 cursor-pointer"
+                />
+                <span>City Access (Specific cities only)</span>
               </label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-red-950">
-                  <input
-                    type="radio"
-                    name="accessType"
-                    checked={accessType === "city"}
-                    onChange={() => setAccessType("city")}
-                    className="accent-red-800"
-                  />
-                  City Access (Specific cities only)
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-sm font-medium text-red-950">
-                  <input
-                    type="radio"
-                    name="accessType"
-                    checked={accessType === "state"}
-                    onChange={() => setAccessType("state")}
-                    className="accent-red-800"
-                  />
-                  State Access (Full state & all cities within it)
-                </label>
-              </div>
+              <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-white">
+                <input
+                  type="radio"
+                  name="accessType"
+                  checked={accessType === "state"}
+                  onChange={() => setAccessType("state")}
+                  className="accent-amber-500 cursor-pointer"
+                />
+                <span>State Access (Full state &amp; all cities within it)</span>
+              </label>
             </div>
+          </div>
 
-            {/* State Selection Dropdown */}
-            {accessType === "state" ? (
-              <div className="md:col-span-2">
-                <label className="mb-1 block text-sm font-semibold text-red-950">
-                  Select State
-                </label>
-                <select
-                  value={stateName}
-                  onChange={(e) => setStateName(e.target.value)}
-                  className="w-full rounded-xl border border-red-200 bg-white px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-                  required
-                >
-                  <option value="">-- Select a State --</option>
-                  {availableStates.map((s) => (
-                    <option key={s.name} value={s.name}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-red-600">
-                  The VIP will see this state and all cities belonging to it.
-                </p>
-              </div>
-            ) : (
-              /* City input for multiple city access */
-              <>
-                <div className="md:col-span-2">
-                  <label className="mb-1 block text-sm font-semibold text-red-950">City Names</label>
-                  <textarea
-                    value={cities}
-                    onChange={(e) => setCities(e.target.value)}
-                    className="min-h-24 w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-                    placeholder="Jaipur, Delhi, Mumbai"
-                    required
-                  />
-                  <p className="mt-1 text-xs text-red-600">Enter city names separated by commas.</p>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-semibold text-red-950">City Slug (Optional)</label>
-                  <input
-                    type="text"
-                    value={citySlug}
-                    onChange={(e) => setCitySlug(e.target.value)}
-                    className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-                    placeholder="jaipur"
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">VIP Owner Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-                placeholder="vipowner@example.com"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-semibold text-red-950">Phone No. (Used as Password)</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-                placeholder="e.g. 9876543210"
-                required
-              />
-            </div>
-
+          {/* State Selection Dropdown */}
+          {accessType === "state" ? (
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-semibold text-red-950">Expires In (Days)</label>
-              <input
-                type="number"
-                min={1}
-                max={365}
-                value={expiresInDays}
-                onKeyDown={(e) => {
-                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                }}
-                onChange={(e) => setExpiresInDays(Number(e.target.value || 7))}
-                className="w-full rounded-xl border border-red-200 px-4 py-2.5 text-red-950 outline-none focus:border-red-400"
-              />
-            </div>
-
-            <div className="flex items-end md:col-span-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full rounded-xl bg-neutral-950 px-5 py-3 font-bold text-white hover:bg-neutral-800 disabled:opacity-60 transition"
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Select State
+              </label>
+              <select
+                value={stateName}
+                onChange={(e) => setStateName(e.target.value)}
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition"
+                required
               >
-                {loading ? "Assigning..." : "assign vip access"}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Assignments List */}
-        <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold text-red-950">Active VIP Assignments</h2>
-          {assignments.length === 0 ? (
-            <div className="rounded-2xl border border-red-200 bg-white p-6 text-red-900">
-              No VIP assignments yet.
+                <option value="">-- Select a State --</option>
+                {availableStates.map((s) => (
+                  <option key={s.name} value={s.name}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-400">
+                The VIP will see this state and all cities belonging to it.
+              </p>
             </div>
           ) : (
-            assignments.map((item) => (
-              <div key={item._id} className="relative rounded-2xl border border-red-200 bg-white p-4 sm:p-5">
-                <div className="absolute right-4 top-4 rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-900">
-                  {getAssignedDays(item)} days left
+            <>
+              <div className="md:col-span-2">
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">City Names</label>
+                <textarea
+                  value={cities}
+                  onChange={(e) => setCities(e.target.value)}
+                  className="min-h-24 w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition placeholder-slate-500"
+                  placeholder="Jaipur, Delhi, Mumbai"
+                  required
+                />
+                <p className="mt-1 text-xs text-slate-400">Enter city names separated by commas.</p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">City Slug (Optional)</label>
+                <input
+                  type="text"
+                  value={citySlug}
+                  onChange={(e) => setCitySlug(e.target.value)}
+                  className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition placeholder-slate-500"
+                  placeholder="jaipur"
+                />
+              </div>
+            </>
+          )}
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">VIP Owner Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition placeholder-slate-500"
+              placeholder="vipowner@example.com"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">Phone No. (Used as Password)</label>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition placeholder-slate-500"
+              placeholder="e.g. 9876543210"
+              required
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">Expires In (Days)</label>
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={expiresInDays}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
+              onChange={(e) => setExpiresInDays(Number(e.target.value || 7))}
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 outline-none transition"
+            />
+          </div>
+
+          <div className="flex items-end md:col-span-2 pt-2">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-3 font-bold text-slate-950 disabled:opacity-50 transition shadow-md active:scale-[0.98]"
+            >
+              {loading ? "Assigning..." : "Assign VIP Access"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Assignments List */}
+      <div className="mt-8 space-y-4">
+        <h2 className="text-lg font-extrabold text-white">Active VIP Assignments</h2>
+        {assignments.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center text-slate-400 text-sm">
+            No VIP assignments configured yet.
+          </div>
+        ) : (
+          assignments.map((item) => (
+            <div key={item._id} className="relative rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/30">
+              <div className="absolute right-4 top-4 rounded-full bg-slate-800 border border-white/10 px-3 py-1 text-xs font-bold text-amber-400">
+                {getAssignedDays(item)} days left
+              </div>
+
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 pr-24">
+                    <span className="rounded-full bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 text-xs font-bold text-purple-400 uppercase">
+                      {item.type === "state" ? "State" : "City"}
+                    </span>
+                    <h3 className="text-base sm:text-lg font-bold text-white">
+                      {item.type === "state" ? item.stateName : item.cityName}
+                    </h3>
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        item.status === "active"
+                          ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                          : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
+                      }`}
+                    >
+                      {item.status === "inactive" ? "Inactive" : "Active"}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs sm:text-sm text-slate-300 break-all font-medium">Email: <span className="text-white">{item.email}</span></p>
+                  <p className="text-xs sm:text-sm font-bold text-amber-400 break-all">Password: {item.phone || "—"}</p>
+                  <p className="text-xs text-slate-400 mt-1">Assigned: {formatDisplayDate(item.assignedAt)}</p>
+                  <p className="text-xs text-slate-400">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
                 </div>
 
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 pr-24">
-                      <span className="rounded-md bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-900 uppercase">
-                        {item.type === "state" ? "State" : "City"}
-                      </span>
-                      <h3 className="text-lg font-bold text-red-950">
-                        {item.type === "state" ? item.stateName : item.cityName}
-                      </h3>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                          item.status === "active"
-                            ? "bg-green-100 text-green-900"
-                            : "bg-red-100 text-red-900"
-                        }`}
-                      >
-                        {item.status === "inactive" ? "Inactive" : "Active"}
-                      </span>
-                    </div>
-
-                    <p className="mt-2 text-sm text-red-900 break-all font-medium">Email: {item.email}</p>
-                    <p className="text-sm font-bold text-red-950 break-all">Password: {item.phone || "—"}</p>
-                    <p className="text-xs text-red-700 mt-1">Assigned: {formatDisplayDate(item.assignedAt)}</p>
-                    <p className="text-xs text-red-700">Expires: {formatDisplayDateTime(item.expiresAt)}</p>
-                  </div>
-
-                  <div className="flex flex-col items-start sm:items-end gap-2.5">
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleExtend(item._id, -7)}
-                        className="rounded-lg bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-900 hover:bg-orange-200"
-                      >
-                        -7 Days
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleExtend(item._id, 7)}
-                        className="rounded-lg bg-blue-100 px-3 py-2 text-xs font-semibold text-blue-900 hover:bg-blue-200"
-                      >
-                        +7 Days
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleToggle(item._id, item.status !== "active")}
-                        className={`rounded-lg px-3 py-2 text-xs font-semibold ${
-                          item.status === "active"
-                            ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-900 hover:bg-green-200"
-                        }`}
-                      >
-                        {item.status === "active" ? "Mark Inactive" : "Mark Active"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(item._id)}
-                        className="rounded-lg bg-red-100 px-3 py-2 text-xs font-semibold text-red-900 hover:bg-red-200"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                    <a
-                      href={`/api/admin/go-to-vip?email=${encodeURIComponent(item.email)}`}
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-800 hover:underline transition"
+                <div className="flex flex-col items-start sm:items-end gap-2.5 shrink-0">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleExtend(item._id, -7)}
+                      className="rounded-xl border border-white/10 bg-slate-800 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-700 hover:text-white transition"
                     >
-                      Go to VIP Dashboard &rarr;
-                    </a>
+                      -7 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExtend(item._id, 7)}
+                      className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-bold text-amber-300 transition"
+                    >
+                      +7 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleToggle(item._id, item.status !== "active")}
+                      className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                        item.status === "active"
+                          ? "border border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
+                          : "border border-emerald-500/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                      }`}
+                    >
+                      {item.status === "active" ? "Mark Inactive" : "Mark Active"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(item._id)}
+                      className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 transition"
+                    >
+                      Delete
+                    </button>
                   </div>
+                  <a
+                    href={`/api/admin/go-to-vip?email=${encodeURIComponent(item.email)}`}
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-amber-400 hover:text-amber-300 hover:underline transition"
+                  >
+                    Go to VIP Dashboard &rarr;
+                  </a>
                 </div>
               </div>
-            ))
-          )}
-        </div>
+            </div>
+          ))
+        )}
       </div>
     </main>
   );

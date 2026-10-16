@@ -126,7 +126,7 @@ export default function SetCoinsPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setError(data.error || "Failed to remove package from server.");
-        setPackages(packages); // rollback
+        setPackages(packages);
         return;
       }
 
@@ -139,7 +139,7 @@ export default function SetCoinsPage() {
     } catch (err) {
       console.error(err);
       setError("Network error while removing package.");
-      setPackages(packages); // rollback
+      setPackages(packages);
     } finally {
       setSaving(false);
     }
@@ -238,295 +238,295 @@ export default function SetCoinsPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
-      <div className="mx-auto max-w-6xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-red-200 pb-4">
-          <div>
-            <h1 className="text-3xl font-black text-red-950">Set Coin Packages</h1>
-            <p className="mt-1 text-sm text-red-900">
-              Manage the coin packages shown on the public Buy Coins page.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={handleResetToDefaults}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-900 hover:bg-red-50 transition shadow-xs cursor-pointer"
-            >
-              Reset to Default 5 Packages
-            </button>
-            <button
-              type="button"
-              onClick={handleAddPackage}
-              className="rounded-xl border border-red-300 bg-white px-4 py-2 text-xs font-bold text-red-950 hover:bg-red-50 transition shadow-xs"
-            >
-              + Add Package
-            </button>
-            <button
-              type="button"
-              onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
-              disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-emerald-700 px-5 py-2 text-xs font-bold text-white hover:bg-emerald-800 disabled:opacity-50 transition shadow-xs"
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </button>
-          </div>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Set Coin <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Packages</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Configure pricing, discounts, and coin amounts shown on the public checkout page.
+          </p>
         </div>
 
-        {/* Standard Packages Reference Table */}
-        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs overflow-x-auto">
-          <div className="flex items-center justify-between gap-2 mb-2.5">
-            <h3 className="text-xs font-black uppercase tracking-wider text-red-950">
-              Standard Package Pricing Reference
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={handleResetToDefaults}
+            className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 text-xs font-semibold text-slate-300 transition cursor-pointer"
+          >
+            Reset Defaults
+          </button>
+          <button
+            type="button"
+            onClick={handleAddPackage}
+            className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-4 py-2 text-xs font-bold text-amber-300 transition cursor-pointer"
+          >
+            + Add Package
+          </button>
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e as unknown as React.FormEvent)}
+            disabled={saving || loading || packages.length === 0}
+            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-2 text-xs font-bold text-slate-950 disabled:opacity-50 transition shadow-md cursor-pointer active:scale-[0.98]"
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+
+      {/* Standard Packages Reference Table */}
+      <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md overflow-x-auto">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <h3 className="text-xs font-black uppercase tracking-wider text-amber-400">
+            Standard Package Pricing Reference
+          </h3>
+          <span className="text-[11px] font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 rounded-full">
+            Base: ₹8.00 / Coin
+          </span>
+        </div>
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className="border-b border-white/10 text-amber-400 font-bold uppercase tracking-wider text-[11px]">
+              <th className="pb-2 pr-3">Package</th>
+              <th className="pb-2 pr-3">Coins</th>
+              <th className="pb-2 pr-3">Original Price</th>
+              <th className="pb-2 pr-3">Discount</th>
+              <th className="pb-2 pr-3">Final Price</th>
+              <th className="pb-2">Discount Tag</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5 font-medium text-slate-300">
+            <tr>
+              <td className="py-2 pr-3 font-black text-amber-400">#1</td>
+              <td className="py-2 pr-3 font-bold text-white">99</td>
+              <td className="py-2 pr-3 text-slate-400">₹792</td>
+              <td className="py-2 pr-3 text-slate-400">0%</td>
+              <td className="py-2 pr-3 font-black text-emerald-400">₹792</td>
+              <td className="py-2 text-slate-500">—</td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3 font-black text-amber-400">#2</td>
+              <td className="py-2 pr-3 font-bold text-white">145</td>
+              <td className="py-2 pr-3 text-slate-400">₹1,160</td>
+              <td className="py-2 pr-3 text-slate-400">3%</td>
+              <td className="py-2 pr-3 font-black text-emerald-400">₹1,125</td>
+              <td className="py-2"><span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-black text-amber-400">3% DISCOUNT</span></td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3 font-black text-amber-400">#3</td>
+              <td className="py-2 pr-3 font-bold text-white">200</td>
+              <td className="py-2 pr-3 text-slate-400">₹1,600</td>
+              <td className="py-2 pr-3 text-slate-400">6%</td>
+              <td className="py-2 pr-3 font-black text-emerald-400">₹1,504</td>
+              <td className="py-2"><span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-black text-amber-400">6% DISCOUNT</span></td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3 font-black text-amber-400">#4</td>
+              <td className="py-2 pr-3 font-bold text-white">350</td>
+              <td className="py-2 pr-3 text-slate-400">₹2,800</td>
+              <td className="py-2 pr-3 text-slate-400">9%</td>
+              <td className="py-2 pr-3 font-black text-emerald-400">₹2,548</td>
+              <td className="py-2"><span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-black text-amber-400">9% DISCOUNT</span></td>
+            </tr>
+            <tr>
+              <td className="py-2 pr-3 font-black text-amber-400">#5</td>
+              <td className="py-2 pr-3 font-bold text-white">870</td>
+              <td className="py-2 pr-3 text-slate-400">₹6,960</td>
+              <td className="py-2 pr-3 text-slate-400">12%</td>
+              <td className="py-2 pr-3 font-black text-emerald-400">₹6,125</td>
+              <td className="py-2"><span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-black text-amber-400">12% DISCOUNT</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* All Packages Combo Configuration Box */}
+      <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xl">👑</span>
+            <h3 className="text-sm font-black text-white">
+              All Packages Combo Coin Price
             </h3>
-            <span className="text-[11px] font-bold text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
-              Base: ₹8.00 / Coin
+            <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase">
+              Ad Promotion Setting
             </span>
           </div>
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-red-100 text-gray-500 font-bold">
-                <th className="pb-1.5 pr-3">Package</th>
-                <th className="pb-1.5 pr-3">Coins</th>
-                <th className="pb-1.5 pr-3">Original Price</th>
-                <th className="pb-1.5 pr-3">Discount</th>
-                <th className="pb-1.5 pr-3">Final Price</th>
-                <th className="pb-1.5">Discount Tag</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-red-50 font-medium text-red-950">
-              <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#1</td>
-                <td className="py-1.5 pr-3 font-bold">99</td>
-                <td className="py-1.5 pr-3">₹792</td>
-                <td className="py-1.5 pr-3">0%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹792</td>
-                <td className="py-1.5 text-gray-400">—</td>
-              </tr>
-              <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#2</td>
-                <td className="py-1.5 pr-3 font-bold">145</td>
-                <td className="py-1.5 pr-3">₹1,160</td>
-                <td className="py-1.5 pr-3">3%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,125</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">3% DISCOUNT</span></td>
-              </tr>
-              <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#3</td>
-                <td className="py-1.5 pr-3 font-bold">200</td>
-                <td className="py-1.5 pr-3">₹1,600</td>
-                <td className="py-1.5 pr-3">6%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹1,504</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">6% DISCOUNT</span></td>
-              </tr>
-              <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#4</td>
-                <td className="py-1.5 pr-3 font-bold">350</td>
-                <td className="py-1.5 pr-3">₹2,800</td>
-                <td className="py-1.5 pr-3">9%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹2,548</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">9% DISCOUNT</span></td>
-              </tr>
-              <tr>
-                <td className="py-1.5 pr-3 font-black text-red-900">#5</td>
-                <td className="py-1.5 pr-3 font-bold">870</td>
-                <td className="py-1.5 pr-3">₹6,960</td>
-                <td className="py-1.5 pr-3">12%</td>
-                <td className="py-1.5 pr-3 font-black text-emerald-800">₹6,125</td>
-                <td className="py-1.5"><span className="rounded bg-amber-100 border border-amber-300 px-1.5 py-0.5 text-[10px] font-black text-amber-900">12% DISCOUNT</span></td>
-              </tr>
-            </tbody>
-          </table>
+          <p className="mt-1 text-xs text-slate-400">
+            When an advertiser toggles <strong>&quot;Select All Packages Once&quot;</strong> on the ad promotion page, charge this amount of coins per shift slot.
+          </p>
         </div>
 
-        {/* All Packages Combo Configuration Box */}
-        <div className="mt-4 rounded-2xl border border-red-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">👑</span>
-              <h3 className="text-sm font-black text-red-950">
-                All Packages Combo Coin Price
-              </h3>
-              <span className="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-900 uppercase">
-                Ad Promotion Setting
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-gray-600">
-              When an advertiser toggles <strong>&quot;Select All Packages Once&quot;</strong> on the ad promotion page, charge this amount of coins per shift slot.
-            </p>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="relative">
+            <input
+              type="number"
+              min="1"
+              max="10000"
+              value={allPackagesCoins}
+              onKeyDown={(e) => {
+                if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+              }}
+              onChange={(e) => setAllPackagesCoins(Math.max(1, parseInt(e.target.value, 10) || 1))}
+              className="w-32 rounded-xl border border-white/15 bg-slate-800 px-3 py-2 text-center text-sm font-black text-amber-400 outline-none focus:border-amber-500"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 pointer-events-none">
+              coins
+            </span>
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="relative">
-              <input
-                type="number"
-                min="1"
-                max="10000"
-                value={allPackagesCoins}
-                onKeyDown={(e) => {
-                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                }}
-                onChange={(e) => setAllPackagesCoins(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                className="w-32 rounded-xl border border-red-300 bg-pink-50/40 px-3 py-2 text-center text-sm font-black text-red-950 outline-none focus:border-red-500"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 pointer-events-none">
-                coins
-              </span>
-            </div>
-            <span className="text-xs text-gray-500 font-semibold">(Default: 55 coins)</span>
-          </div>
+          <span className="text-xs text-slate-400 font-semibold">(Default: 55 coins)</span>
         </div>
+      </div>
 
-        {error && (
-          <div className="mt-4 rounded-xl bg-red-100 border border-red-200 p-3 text-sm text-red-900 font-semibold">
-            {error}
-          </div>
-        )}
-        {success && (
-          <div className="mt-4 rounded-xl bg-green-100 border border-green-200 p-3 text-sm text-green-900 font-semibold">
-            {success}
-          </div>
-        )}
+      {error && (
+        <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-sm text-rose-300 font-semibold">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-300 font-semibold">
+          {success}
+        </div>
+      )}
 
-        <form onSubmit={handleSubmit} className="mt-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            {packages.map((pkg, index) => (
-              <div
-                key={pkg._id || index}
-                className="relative rounded-2xl border border-red-200 bg-white p-4 shadow-xs flex flex-col justify-between"
-              >
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-2 border-b border-red-100 pb-2">
-                    <span className="text-xs font-black text-red-950 uppercase tracking-wider">
-                      Package #{index + 1}
-                    </span>
-                    <button
-                      type="button"
-                      disabled={saving}
-                      onClick={() => void handleDeletePackage(index)}
-                      className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 hover:bg-red-600 hover:text-white transition disabled:opacity-50"
-                      title="Remove package and save changes"
-                    >
-                      &times; Remove
-                    </button>
-                  </div>
-
-                  <div className="space-y-2.5 text-xs">
-                    <div>
-                      <label className="block font-bold text-red-950">Total Coins</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={pkg.coins || ""}
-                        onKeyDown={(e) => {
-                          if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                        }}
-                        onChange={(e) => updatePackage(index, "coins", e.target.value)}
-                        placeholder="e.g. 99"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-bold text-red-950">Final Price (₹)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={pkg.price || ""}
-                        onKeyDown={(e) => {
-                          if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                        }}
-                        onChange={(e) => updatePackage(index, "price", e.target.value)}
-                        placeholder="e.g. 792"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 font-bold outline-none focus:border-red-400"
-                        required
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-red-800">
-                        Original Price (₹) <span className="text-gray-400 font-normal">(strikethrough)</span>
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={pkg.originalPrice || ""}
-                        onKeyDown={(e) => {
-                          if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                        }}
-                        onChange={(e) => updatePackage(index, "originalPrice", e.target.value)}
-                        placeholder="e.g. 792"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-red-800">Discount Tag</label>
-                      <input
-                        type="text"
-                        value={pkg.discount || ""}
-                        onChange={(e) => updatePackage(index, "discount", e.target.value)}
-                        placeholder="e.g. 3% DISCOUNT"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block font-semibold text-red-800">Breakdown / Bonus</label>
-                      <input
-                        type="text"
-                        value={pkg.breakdown || ""}
-                        onChange={(e) => updatePackage(index, "breakdown", e.target.value)}
-                        placeholder="e.g. Optional note"
-                        className="mt-0.5 w-full rounded-lg border border-red-200 px-2.5 py-1.5 text-red-950 outline-none focus:border-red-400"
-                      />
-                    </div>
-
-                    <div className="pt-1">
-                      <label className="flex items-center gap-2 cursor-pointer font-semibold text-red-950">
-                        <input
-                          type="checkbox"
-                          checked={Boolean(pkg.popular)}
-                          onChange={(e) => updatePackage(index, "popular", e.target.checked)}
-                          className="h-4 w-4 rounded accent-red-700"
-                        />
-                        Mark as Popular
-                      </label>
-                    </div>
-                  </div>
+      <form onSubmit={handleSubmit} className="mt-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          {packages.map((pkg, index) => (
+            <div
+              key={pkg._id || index}
+              className="relative rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-5 shadow-xl backdrop-blur-md flex flex-col justify-between transition-all hover:border-amber-500/30"
+            >
+              <div>
+                <div className="mb-3 flex items-center justify-between gap-2 border-b border-white/10 pb-2">
+                  <span className="text-xs font-black text-slate-300 uppercase tracking-wider">
+                    Package #{index + 1}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void handleDeletePackage(index)}
+                    className="rounded-lg border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-2 py-0.5 text-xs font-bold text-rose-300 transition disabled:opacity-50 cursor-pointer"
+                    title="Remove package and save changes"
+                  >
+                    &times; Remove
+                  </button>
                 </div>
 
-                {/* Card Preview Footnote */}
-                <div className="mt-3 border-t border-red-100 pt-2 text-[11px] text-red-700">
-                  Preview: <strong>{pkg.coins || 0} Coins</strong> for{" "}
-                  <strong>₹{Number(pkg.price || 0).toFixed(2)}</strong>
+                <div className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Total Coins</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={pkg.coins || ""}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                      }}
+                      onChange={(e) => updatePackage(index, "coins", e.target.value)}
+                      placeholder="e.g. 99"
+                      className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-1.5 text-white font-bold outline-none focus:border-amber-500 transition"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">Final Price (₹)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={pkg.price || ""}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                      }}
+                      onChange={(e) => updatePackage(index, "price", e.target.value)}
+                      placeholder="e.g. 792"
+                      className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-1.5 text-white font-bold outline-none focus:border-amber-500 transition"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">
+                      Original Price (₹) <span className="text-slate-500 normal-case">(strike)</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={pkg.originalPrice || ""}
+                      onKeyDown={(e) => {
+                        if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                      }}
+                      onChange={(e) => updatePackage(index, "originalPrice", e.target.value)}
+                      placeholder="e.g. 792"
+                      className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-1.5 text-white outline-none focus:border-amber-500 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Discount Tag</label>
+                    <input
+                      type="text"
+                      value={pkg.discount || ""}
+                      onChange={(e) => updatePackage(index, "discount", e.target.value)}
+                      placeholder="e.g. 3% DISCOUNT"
+                      className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-1.5 text-white outline-none focus:border-amber-500 transition"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">Breakdown / Bonus</label>
+                    <input
+                      type="text"
+                      value={pkg.breakdown || ""}
+                      onChange={(e) => updatePackage(index, "breakdown", e.target.value)}
+                      placeholder="e.g. Optional note"
+                      className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-3 py-1.5 text-white outline-none focus:border-amber-500 transition"
+                    />
+                  </div>
+
+                  <div className="pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer font-semibold text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(pkg.popular)}
+                        onChange={(e) => updatePackage(index, "popular", e.target.checked)}
+                        className="h-4 w-4 rounded accent-amber-500 cursor-pointer"
+                      />
+                      <span>Mark as Popular</span>
+                    </label>
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              disabled={saving || loading || packages.length === 0}
-              className="rounded-xl bg-neutral-950 px-6 py-3 text-sm font-bold text-white hover:bg-neutral-800 disabled:opacity-50 transition shadow-sm"
-            >
-              {saving ? "Saving..." : `Save All ${packages.length} Packages`}
-            </button>
-            <button
-              type="button"
-              onClick={handleAddPackage}
-              className="rounded-xl border border-red-200 bg-white px-5 py-3 text-sm font-bold text-red-950 hover:bg-pink-50 transition"
-            >
-              + Add Another Package
-            </button>
-          </div>
-        </form>
-      </div>
+              {/* Card Preview Footnote */}
+              <div className="mt-3 border-t border-white/10 pt-2 text-[11px] text-amber-400">
+                Preview: <strong>{pkg.coins || 0} Coins</strong> for{" "}
+                <strong>₹{Number(pkg.price || 0).toFixed(2)}</strong>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={saving || loading || packages.length === 0}
+            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-6 py-3 text-sm font-bold text-slate-950 disabled:opacity-50 transition shadow-md cursor-pointer active:scale-[0.98]"
+          >
+            {saving ? "Saving..." : `Save All ${packages.length} Packages`}
+          </button>
+          <button
+            type="button"
+            onClick={handleAddPackage}
+            className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-5 py-3 text-sm font-bold text-slate-200 transition cursor-pointer"
+          >
+            + Add Another Package
+          </button>
+        </div>
+      </form>
     </main>
   );
 }

@@ -139,23 +139,27 @@ export default function AdminAds() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-white/10 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Ads</h1>
-          <p className="mt-2 text-red-900">Manage all posted ads.</p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Ads <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Management</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            View, filter, activate, deactivate, or delete classified ads.
+          </p>
         </div>
 
         <div className="relative w-full sm:w-auto">
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
-            className="flex w-full sm:w-60 items-center justify-between gap-2 rounded-full border border-red-200 bg-white px-4 py-2.5 text-sm font-medium text-red-950 outline-none hover:border-red-400"
+            className="flex w-full sm:w-64 items-center justify-between gap-2 rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm font-semibold text-white outline-none hover:border-amber-500/50 hover:bg-slate-800 shadow-md transition"
           >
             <span>{selectedCity ? selectedCity.name : "All Cities"}</span>
             <svg
               viewBox="0 0 24 24"
-              className={`h-4 w-4 text-red-500 transition-transform ${
+              className={`h-4 w-4 text-amber-400 transition-transform ${
                 open ? "rotate-180" : ""
               }`}
               fill="none"
@@ -175,23 +179,25 @@ export default function AdminAds() {
                 className="fixed inset-0 z-10"
                 onClick={() => setOpen(false)}
               />
-              <div className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border border-red-100 bg-white shadow-lg">
+              <div className="absolute right-0 z-20 mt-2 w-64 overflow-hidden rounded-2xl border border-white/15 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl">
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedSlug("");
                     setOpen(false);
                   }}
-                  className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-pink-50 ${
-                    selectedSlug === "" ? "bg-pink-50" : ""
+                  className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                    selectedSlug === ""
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                   }`}
                 >
-                  <span className="font-semibold text-red-950">All Cities</span>
-                  <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                  <span>All Cities</span>
+                  <span className="rounded-full bg-slate-800 border border-white/10 px-2 py-0.5 text-xs font-bold text-amber-400">
                     {ads.length}
                   </span>
                 </button>
-                <div className="max-h-72 overflow-y-auto">
+                <div className="mt-1 max-h-72 overflow-y-auto space-y-0.5">
                   {cities.map((c, idx) => (
                     <button
                       key={`${c.slug}-${idx}`}
@@ -200,12 +206,14 @@ export default function AdminAds() {
                         setSelectedSlug(c.slug);
                         setOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between px-4 py-2.5 text-sm hover:bg-pink-50 ${
-                        c.slug === selectedSlug ? "bg-pink-50" : ""
+                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-semibold transition ${
+                        c.slug === selectedSlug
+                          ? "bg-amber-500/20 text-amber-400"
+                          : "text-slate-300 hover:bg-slate-800/80 hover:text-white"
                       }`}
                     >
-                      <span className="text-red-950">{c.name}</span>
-                      <span className="rounded-full bg-pink-100 px-2 py-0.5 text-xs font-semibold text-red-700">
+                      <span>{c.name}</span>
+                      <span className="rounded-full bg-slate-800 border border-white/10 px-2 py-0.5 text-xs font-bold text-amber-400">
                         {cityCounts[c.slug] ?? 0}
                       </span>
                     </button>
@@ -222,27 +230,29 @@ export default function AdminAds() {
           headers={["Ad", "Category", "City", "Status", "Actions"]}
         />
       ) : filteredAds.length === 0 ? (
-        <p className="mt-6 text-red-900">
-          {selectedSlug && ads.length > 0
-            ? `No ads found in ${selectedCity?.name ?? "this city"}.`
-            : "No ads found."}
-        </p>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center">
+          <p className="text-sm font-semibold text-slate-400">
+            {selectedSlug && ads.length > 0
+              ? `No ads found in ${selectedCity?.name ?? "this city"}.`
+              : "No ads found."}
+          </p>
+        </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/60 shadow-xl backdrop-blur-md">
           <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-slate-800/80 text-amber-400 font-bold uppercase tracking-wider text-xs border-b border-white/10">
               <tr>
-                <th className="px-4 py-3 font-semibold">Ad</th>
-                <th className="px-4 py-3 font-semibold">Category</th>
-                <th className="px-4 py-3 font-semibold">City</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
+                <th className="px-4 py-3.5 font-semibold">Ad</th>
+                <th className="px-4 py-3.5 font-semibold">Category</th>
+                <th className="px-4 py-3.5 font-semibold">City</th>
+                <th className="px-4 py-3.5 font-semibold">Status</th>
+                <th className="px-4 py-3.5 font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {filteredAds.map((ad) => (
-                <tr key={ad._id} className="border-t border-red-50">
-                  <td className="px-4 py-3">
+                <tr key={ad._id} className="hover:bg-slate-800/30 transition-colors">
+                  <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
                       {ad.images?.[0] ? (
                         <Image
@@ -250,45 +260,49 @@ export default function AdminAds() {
                           alt={ad.name}
                           width={48}
                           height={48}
-                          className="h-12 w-12 rounded-lg object-cover"
+                          className="h-12 w-12 rounded-xl object-cover border border-white/10 shadow-sm"
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-lg bg-pink-100" />
+                        <div className="h-12 w-12 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-slate-500 text-xs font-bold">
+                          RKB
+                        </div>
                       )}
-                      <span className="font-medium text-red-950">{ad.name}</span>
-                      {ad.age ? (
-                        <span className="text-sm text-red-500">
-                          Age: {ad.age}
-                        </span>
-                      ) : null}
+                      <div>
+                        <div className="font-semibold text-white">{ad.name}</div>
+                        {ad.age ? (
+                          <div className="text-xs text-amber-400/80 font-medium">
+                            Age: {ad.age}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-red-900">{ad.category}</td>
-                  <td className="px-4 py-3 text-red-900">{ad.city}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3.5 text-slate-300 font-medium">{ad.category}</td>
+                  <td className="px-4 py-3.5 text-slate-300 font-medium">{ad.city}</td>
+                  <td className="px-4 py-3.5">
                     <span
-                      className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                         ad.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                          ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                          : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
                       }`}
                     >
                       {ad.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() => toggleStatus(ad)}
-                        className="rounded-full bg-neutral-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-700"
+                        className="rounded-xl border border-white/15 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/10 hover:border-amber-500/40"
                       >
                         {ad.status === "Active" ? "Deactivate" : "Activate"}
                       </button>
                       <button
                         type="button"
                         onClick={() => remove(ad._id)}
-                        className="rounded-full bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800"
+                        className="rounded-xl border border-rose-500/30 bg-rose-500/15 px-3 py-1.5 text-xs font-semibold text-rose-300 transition hover:bg-rose-500/25"
                       >
                         Delete
                       </button>

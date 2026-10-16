@@ -65,8 +65,8 @@ function Counter({ value, min, max }: { value: number; min: number; max: number 
   const over = value > max;
   return (
     <span
-      className={`text-xs font-medium ${
-        ok ? "text-green-700" : over ? "text-red-700" : "text-amber-600"
+      className={`text-xs font-semibold ${
+        ok ? "text-emerald-400" : over ? "text-rose-400" : "text-amber-400"
       }`}
     >
       {value} / {min}-{max} chars
@@ -105,26 +105,26 @@ function TagInput({
 
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-red-900">{label}</span>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-2 py-2">
+      <span className="mb-1.5 block text-sm font-bold text-slate-200">{label}</span>
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-white/15 bg-slate-800/90 px-3 py-2.5">
         {tags.map((t, i) => (
           <span
             key={t}
-            className="inline-flex items-center gap-1 rounded-full bg-red-600 px-3 py-1 text-xs font-semibold text-white"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-1 text-xs font-bold text-slate-950 shadow-sm"
           >
             {t}
             <button
               type="button"
               aria-label={`Remove ${t}`}
               onClick={() => onChange(tags.filter((_, idx) => idx !== i))}
-              className="text-white/80 hover:text-white"
+              className="text-slate-900 hover:text-black font-extrabold"
             >
               ×
             </button>
           </span>
         ))}
         <input
-          className="min-w-[8rem] flex-1 bg-transparent px-1 py-1 text-red-950 outline-none"
+          className="min-w-[8rem] flex-1 bg-transparent px-1 py-1 text-white placeholder-slate-500 outline-none text-sm"
           value={val}
           placeholder={placeholder}
           onChange={(e) => setVal(e.target.value)}
@@ -137,7 +137,7 @@ function TagInput({
           onBlur={add}
         />
       </div>
-      {hint && <span className="mt-1 block text-xs text-red-700">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-xs text-slate-400">{hint}</span>}
     </label>
   );
 }
@@ -153,15 +153,15 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-sm font-medium text-red-900">{label}</span>
+      <span className="mb-1.5 block text-sm font-bold text-slate-200">{label}</span>
       {children}
-      {hint && <span className="mt-1 block text-xs text-red-700">{hint}</span>}
+      {hint && <span className="mt-1.5 block text-xs text-slate-400">{hint}</span>}
     </label>
   );
 }
 
 const inputClass =
-  "w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500";
+  "w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-amber-500 transition";
 
 function CitySeoContent() {
   const params = useSearchParams();
@@ -1144,37 +1144,44 @@ function CitySeoContent() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-8 min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <main className="p-4 sm:p-6 lg:p-8 min-w-0 max-w-7xl">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
         <div>
-          <h1 className="text-3xl font-black text-red-950">
-            {isAreaEdit
-              ? `Local Area SEO — ${name || editArea}, ${parentCityName || editSlug}`
-              : isEdit
-              ? `SEO Editor — ${name || editSlug}`
-              : "Add New City & SEO"}
+          <h1 className="text-3xl font-black text-white flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </span>
+            <span>
+              {isAreaEdit
+                ? `Local Area SEO — ${name || editArea}, ${parentCityName || editSlug}`
+                : isEdit
+                ? `SEO Editor — ${name || editSlug}`
+                : "Add New City & SEO"}
+            </span>
           </h1>
-          <p className="mt-2 text-red-900">
+          <p className="mt-2 text-sm text-slate-400">
             {isAreaEdit
               ? `Configure and optimize search engine metadata for ${name || editArea} (${parentCityName || editSlug}).`
-              : "Write and optimise SEO content for the city page."}
+              : "Write and optimize SEO metadata, content blocks, and FAQs for the city page."}
           </p>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
+          <div className="flex flex-wrap items-center gap-2 mt-3">
             <span
-              className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+              className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
                 status === "published"
-                  ? "bg-green-100 text-green-700"
-                  : "bg-amber-100 text-amber-700"
+                  ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                  : "bg-amber-500/15 text-amber-300 border border-amber-500/30"
               }`}
             >
               {status === "published" ? "Published" : "Draft"}
             </span>
             {isAreaEdit && (
               <span
-                className={`inline-block rounded-full px-3 py-1 text-xs font-semibold ${
+                className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
                   areaMode === "individual"
-                    ? "bg-purple-100 text-purple-700 border border-purple-200"
-                    : "bg-sky-100 text-sky-700 border border-sky-200"
+                    ? "bg-purple-500/15 text-purple-300 border border-purple-500/30"
+                    : "bg-sky-500/15 text-sky-300 border border-sky-500/30"
                 }`}
               >
                 {areaMode === "individual" ? "Mode: Individual SEO" : "Mode: Inherits City"}
@@ -1183,21 +1190,21 @@ function CitySeoContent() {
           </div>
 
           {isAreaEdit && (
-            <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="mt-4 flex flex-wrap items-center gap-2.5">
               <Link
                 href={`/admin/city-seo?city=${encodeURIComponent(editSlug)}`}
-                className="rounded-lg border border-purple-300 bg-white px-3 py-1 text-xs font-bold text-purple-900 hover:bg-purple-50 transition"
+                className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-3.5 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition"
               >
                 &larr; Back to {parentCityName || "City"} SEO
               </Link>
-              <div className="inline-flex rounded-xl border border-neutral-300 bg-white p-0.5 shadow-2xs">
+              <div className="inline-flex rounded-xl border border-white/10 bg-slate-900/90 p-0.5">
                 <button
                   type="button"
                   onClick={() => setAreaMode("inherit")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
                     areaMode === "inherit"
-                      ? "bg-sky-600 text-white shadow-xs"
-                      : "text-neutral-600 hover:text-neutral-900"
+                      ? "bg-sky-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   Same as City (Inherit)
@@ -1205,10 +1212,10 @@ function CitySeoContent() {
                 <button
                   type="button"
                   onClick={() => setAreaMode("individual")}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition cursor-pointer ${
+                  className={`rounded-lg px-3 py-1 text-xs font-bold transition cursor-pointer ${
                     areaMode === "individual"
-                      ? "bg-purple-600 text-white shadow-xs"
-                      : "text-neutral-600 hover:text-neutral-900"
+                      ? "bg-purple-600 text-white shadow-sm"
+                      : "text-slate-400 hover:text-white"
                   }`}
                 >
                   Individual SEO Content
@@ -1218,7 +1225,7 @@ function CitySeoContent() {
                 <button
                   type="button"
                   onClick={copyFromParentCity}
-                  className="rounded-lg border border-purple-300 bg-purple-50 px-3 py-1 text-xs font-bold text-purple-900 hover:bg-purple-100 transition cursor-pointer shadow-2xs"
+                  className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-3.5 py-1.5 text-xs font-bold text-purple-300 hover:bg-purple-500/20 transition cursor-pointer"
                 >
                   📋 Copy Content from {parentCityName || "City"}
                 </button>
@@ -1226,7 +1233,7 @@ function CitySeoContent() {
             </div>
           )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           <input
             ref={jsonInputRef}
             type="file"
@@ -1237,7 +1244,7 @@ function CitySeoContent() {
           <button
             type="button"
             onClick={() => jsonInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 rounded-full border border-pink-300 bg-pink-50 px-4 py-2 text-sm font-semibold text-red-800 hover:bg-pink-100 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-200 hover:bg-white/10 transition cursor-pointer"
             title="Upload a .json file to automatically fill all SEO fields, content blocks, and FAQs"
           >
             <span>📁</span> Upload JSON
@@ -1245,7 +1252,7 @@ function CitySeoContent() {
           <button
             type="button"
             onClick={downloadSampleJson}
-            className="inline-flex items-center gap-1 rounded-full border border-pink-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+            className="inline-flex items-center gap-1 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-white/10 transition cursor-pointer"
             title="Download an example JSON format template"
           >
             <span>⬇</span> Sample JSON
@@ -1254,7 +1261,7 @@ function CitySeoContent() {
             type="button"
             onClick={() => save(false)}
             disabled={saving}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-60 transition cursor-pointer"
           >
             {saving ? "Saving..." : "Save Draft"}
           </button>
@@ -1262,7 +1269,7 @@ function CitySeoContent() {
             type="button"
             onClick={preview}
             disabled={saving || (!activeSlug && !editSlug && !urlSlug && !name.trim())}
-            className="rounded-full border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10 disabled:opacity-60 transition cursor-pointer"
           >
             Preview
           </button>
@@ -1270,7 +1277,7 @@ function CitySeoContent() {
             type="button"
             onClick={() => save(true)}
             disabled={saving}
-            className="rounded-full bg-red-600 px-5 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60 transition cursor-pointer"
+            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-2 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 disabled:opacity-60 transition cursor-pointer active:scale-[0.98]"
           >
             {saving ? "Publishing..." : "Publish"}
           </button>
@@ -1280,37 +1287,37 @@ function CitySeoContent() {
       {isEdit && (
         <Link
           href="/admin/city"
-          className="mt-3 inline-block text-sm font-semibold text-red-700 underline-offset-2 hover:underline"
+          className="mt-4 inline-block text-sm font-bold text-amber-400 underline-offset-2 hover:underline"
         >
-          ← Back to Cities
+          &larr; Back to Cities
         </Link>
       )}
 
       {error && (
-        <p className="mt-4 rounded-xl bg-red-50 px-4 py-2 text-sm font-medium text-red-700" role="alert">
+        <div className="mt-4 rounded-xl bg-rose-500/10 border border-rose-500/30 p-3.5 text-sm font-semibold text-rose-300" role="alert">
           {error}
-        </p>
+        </div>
       )}
       {success && (
-        <p className="mt-4 rounded-xl bg-green-50 px-4 py-2 text-sm font-medium text-green-700" role="status">
+        <div className="mt-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3.5 text-sm font-semibold text-emerald-300" role="status">
           {success}
-        </p>
+        </div>
       )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         {/* LEFT COLUMN */}
         <div className="space-y-6">
           {/* JSON Paste & Auto-Fill Section */}
-          <section className="rounded-2xl border border-red-200 bg-gradient-to-b from-pink-50/70 via-white to-white p-4 sm:p-6 shadow-xs">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-pink-100 pb-3 mb-3">
+          <section className="rounded-2xl border border-amber-500/30 bg-slate-900/80 p-4 sm:p-6 shadow-xl backdrop-blur-md">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-white/10 pb-3 mb-3">
               <div>
-                <h2 className="text-lg font-bold text-red-950 flex items-center gap-2">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <span>Paste SEO JSON Content</span>
-                  <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">
+                  <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-400">
                     Fast Fill
                   </span>
                 </h2>
-                <p className="text-xs text-red-900 mt-0.5">
+                <p className="text-xs text-slate-400 mt-1">
                   Paste JSON file text here to automatically arrange and fill the full SEO form below.
                 </p>
               </div>
@@ -1318,7 +1325,7 @@ function CitySeoContent() {
                 <button
                   type="button"
                   onClick={handleLoadSampleJson}
-                  className="rounded-lg border border-pink-200 bg-white px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-pink-50 transition cursor-pointer"
+                  className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:bg-white/10 transition cursor-pointer"
                   title="Insert sample JSON format into textarea"
                 >
                   Load Sample
@@ -1327,7 +1334,7 @@ function CitySeoContent() {
                   <button
                     type="button"
                     onClick={handleClearJson}
-                    className="rounded-lg border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50 transition cursor-pointer"
+                    className="rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-400 hover:text-white transition cursor-pointer"
                   >
                     Clear
                   </button>
@@ -1352,8 +1359,8 @@ function CitySeoContent() {
                       }, 50);
                     }
                   }}
-                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Escort & Call Girl Services in Mumbai | RKB",\n  "description": "Find top verified escorts and independent call girls in Mumbai...",\n  "primaryKeyword": "call girls in mumbai",\n  "popularSearches": ["escorts in mumbai", "mumbai call girls", "vip escort service in mumbai"],\n  "content": [\n    { "type": "h1", "text": "Top Escort Services in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
-                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-pink-200 bg-pink-50/60 p-3 text-red-950 placeholder-red-300 focus:border-red-500 focus:bg-white focus:outline-none transition resize-y leading-relaxed"
+                  placeholder={`Paste your JSON file text here...\nExample:\n{\n  "name": "Mumbai",\n  "state": "Maharashtra",\n  "title": "Best Places & Services in Mumbai | RKB",\n  "description": "Find top verified profiles and classifieds in Mumbai...",\n  "primaryKeyword": "services in mumbai",\n  "popularSearches": ["mumbai services", "top verified in mumbai"],\n  "content": [\n    { "type": "h2", "text": "Top Classifieds in Mumbai" },\n    { "type": "p", "text": "Mumbai offers unmatched nightlife..." }\n  ],\n  "faqs": [\n    { "question": "How do I contact providers in Mumbai?", "answer": "Browse verified profiles..." }\n  ]\n}`}
+                  className="w-full font-mono text-xs sm:text-sm rounded-xl border border-white/15 bg-slate-800/90 p-3 text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none transition resize-y leading-relaxed"
                   spellCheck={false}
                 />
               </div>
@@ -1363,12 +1370,12 @@ function CitySeoContent() {
                   type="button"
                   onClick={handleApplyPastedJson}
                   disabled={!jsonPasteText.trim()}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-2 text-sm font-bold text-white shadow-xs hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-2 text-sm font-bold text-slate-950 shadow-md shadow-amber-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer"
                 >
                   <span>Apply JSON to Form</span>
                 </button>
 
-                <p className="text-[11px] text-red-700">
+                <p className="text-[11px] text-slate-400">
                   Tip: Pasting valid JSON will auto-arrange and fill all fields on the page.
                 </p>
               </div>
@@ -1377,8 +1384,8 @@ function CitySeoContent() {
                 <div
                   className={`rounded-xl px-4 py-2.5 text-xs sm:text-sm font-medium animate-in fade-in ${
                     jsonStatusMsg.type === "success"
-                      ? "bg-green-50 text-green-800 border border-green-200"
-                      : "bg-red-50 text-red-800 border border-red-200"
+                      ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                      : "bg-rose-500/10 text-rose-300 border border-rose-500/30"
                   }`}
                 >
                   {jsonStatusMsg.text}
@@ -1387,11 +1394,11 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-red-950">City Information</h2>
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-white">City Information</h2>
               {allCities.some((c) => c.name.toLowerCase() === name.trim().toLowerCase()) && (
-                <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">
+                <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
                   ✓ Existing City Linked
                 </span>
               )}
@@ -1425,12 +1432,12 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-4 text-lg font-bold text-red-950">SEO Settings</h2>
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+            <h2 className="mb-4 text-lg font-bold text-white">SEO Settings</h2>
             <div className="space-y-4">
               <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium text-red-900">SEO Title</span>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-200">SEO Title</span>
                   <Counter value={titleLen} min={50} max={60} />
                 </div>
                 <input
@@ -1442,8 +1449,8 @@ function CitySeoContent() {
               </div>
 
               <div>
-                <div className="mb-1 flex items-center justify-between">
-                  <span className="text-sm font-medium text-red-900">Meta Description</span>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-200">Meta Description</span>
                   <Counter value={descLen} min={140} max={160} />
                 </div>
                 <textarea
@@ -1494,7 +1501,7 @@ function CitySeoContent() {
               </Field>
 
               <div>
-                <span className="mb-1 block text-sm font-medium text-red-900">Featured Image</span>
+                <span className="mb-1.5 block text-sm font-bold text-slate-200">Featured Image</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1503,16 +1510,16 @@ function CitySeoContent() {
                     const file = e.target.files?.[0];
                     if (file) handleImage(file);
                   }}
-                  className="block w-full text-sm text-red-900"
+                  className="block w-full text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-slate-200 hover:file:bg-white/15"
                 />
-                {uploading && <span className="text-xs text-red-700">Uploading...</span>}
+                {uploading && <span className="text-xs text-amber-400 mt-1 block">Uploading...</span>}
                 {featuredImage && (
                   <div className="mt-3">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={featuredImage}
                       alt={imageAlt || "Featured preview"}
-                      className="h-32 w-auto rounded-xl border border-red-100 object-cover"
+                      className="h-32 w-auto rounded-xl border border-white/10 object-cover shadow-md"
                     />
                   </div>
                 )}
@@ -1529,21 +1536,21 @@ function CitySeoContent() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-              <h2 className="text-lg font-bold text-red-950">Content Editor</h2>
+              <h2 className="text-lg font-bold text-white">Content Editor</h2>
               <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => addBlock("h2")}
-                  className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition"
                 >
                   + Add Heading
                 </button>
                 <button
                   type="button"
                   onClick={() => addBlock("p")}
-                  className="rounded-full border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                  className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-200 transition"
                 >
                   + Add Paragraph
                 </button>
@@ -1562,11 +1569,11 @@ function CitySeoContent() {
                     setDragIndex(null);
                   }}
                   onDragEnd={() => setDragIndex(null)}
-                  className={`flex gap-2 rounded-xl border border-pink-200 bg-pink-50 p-2 ${
+                  className={`flex gap-2 rounded-xl border border-white/10 bg-slate-800/60 p-2.5 ${
                     dragIndex === i ? "opacity-50" : ""
                   }`}
                 >
-                  <span className="flex cursor-grab items-center px-1 text-red-400" title="Drag to reorder">
+                  <span className="flex cursor-grab items-center px-1 text-slate-500" title="Drag to reorder">
                     ⠿
                   </span>
                   <select
@@ -1574,18 +1581,18 @@ function CitySeoContent() {
                     onChange={(e) =>
                       updateBlock(block.id, { type: e.target.value as BlockType })
                     }
-                    className="rounded-lg border border-pink-200 bg-white px-2 py-2 text-sm text-red-950 outline-none"
+                    className="rounded-lg border border-white/15 bg-slate-800 px-2 py-2 text-sm text-white outline-none focus:border-amber-500"
                   >
-                    <option value="h2">H2 — Heading 2</option>
-                    <option value="h3">H3 — Heading 3</option>
-                    <option value="p">Paragraph</option>
+                    <option value="h2" className="bg-slate-900">H2 — Heading 2</option>
+                    <option value="h3" className="bg-slate-900">H3 — Heading 3</option>
+                    <option value="p" className="bg-slate-900">Paragraph</option>
                   </select>
                   <textarea
                     value={block.text}
                     onChange={(e) => updateBlock(block.id, { text: e.target.value })}
                     placeholder="Write your content here..."
                     rows={block.type === "p" ? 3 : 1}
-                    className={`flex-1 rounded-lg border border-pink-200 bg-white px-3 py-2 text-red-950 outline-none focus:border-red-500 ${
+                    className={`flex-1 rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-white outline-none focus:border-amber-500 placeholder-slate-500 ${
                       block.type === "h2"
                         ? "text-xl font-bold"
                         : block.type === "h3"
@@ -1597,14 +1604,14 @@ function CitySeoContent() {
                     type="button"
                     onClick={() => removeBlock(block.id)}
                     aria-label="Delete block"
-                    className="rounded-lg bg-neutral-950 px-3 py-2 text-xs font-semibold text-white hover:bg-neutral-800"
+                    className="rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-3 py-2 text-xs font-semibold text-rose-300 transition"
                   >
                     Delete
                   </button>
                 </div>
               ))}
               {content.length === 0 && (
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-slate-500">
                   No content blocks yet. Use “Add Heading” or “Add Paragraph”.
                 </p>
               )}
@@ -1612,20 +1619,20 @@ function CitySeoContent() {
           </section>
 
           {/* FAQ Editor Section */}
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
               <div>
-                <h2 className="text-lg font-bold text-red-950">
+                <h2 className="text-lg font-bold text-white">
                   FAQ Editor (Frequently Asked Questions)
                 </h2>
-                <p className="text-xs text-red-800">
+                <p className="text-xs text-slate-400 mt-0.5">
                   Add questions &amp; solutions for this city page. Users can click questions to expand solutions in an accordion.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={addFaq}
-                className="rounded-full bg-red-600 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition cursor-pointer"
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-3.5 py-1.5 text-xs font-bold text-slate-950 transition cursor-pointer"
               >
                 + Add FAQ
               </button>
@@ -1645,19 +1652,19 @@ function CitySeoContent() {
                     setFaqDragIndex(null);
                   }}
                   onDragEnd={() => setFaqDragIndex(null)}
-                  className={`flex flex-col gap-2.5 rounded-xl border border-pink-200 bg-pink-50/70 p-3 sm:p-4 ${
+                  className={`flex flex-col gap-2.5 rounded-xl border border-white/10 bg-slate-800/60 p-3 sm:p-4 ${
                     faqDragIndex === i ? "opacity-50" : ""
                   }`}
                 >
-                  <div className="flex items-center justify-between gap-2 border-b border-pink-200/70 pb-2">
+                  <div className="flex items-center justify-between gap-2 border-b border-white/10 pb-2">
                     <div className="flex items-center gap-2">
                       <span
-                        className="flex cursor-grab items-center px-1 text-red-400 font-mono text-sm"
+                        className="flex cursor-grab items-center px-1 text-slate-500 font-mono text-sm"
                         title="Drag to reorder"
                       >
                         ⠿
                       </span>
-                      <span className="rounded-md bg-red-100 px-2 py-0.5 text-xs font-black text-red-900 border border-red-200">
+                      <span className="rounded-md bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 text-xs font-bold text-amber-400">
                         Q#{i + 1}
                       </span>
                     </div>
@@ -1665,14 +1672,14 @@ function CitySeoContent() {
                       type="button"
                       onClick={() => removeFaq(faq.id)}
                       aria-label="Delete FAQ"
-                      className="rounded-lg bg-neutral-950 px-2.5 py-1 text-xs font-semibold text-white hover:bg-neutral-800 cursor-pointer"
+                      className="rounded-lg border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-2.5 py-1 text-xs font-semibold text-rose-300 transition cursor-pointer"
                     >
                       Delete
                     </button>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-red-900 mb-1">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
                       Question:
                     </label>
                     <input
@@ -1682,12 +1689,12 @@ function CitySeoContent() {
                         updateFaq(faq.id, { question: e.target.value })
                       }
                       placeholder="e.g. How do I contact service providers in this city?"
-                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm font-semibold text-red-950 outline-none focus:border-red-500"
+                      className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm font-semibold text-white placeholder-slate-500 outline-none focus:border-amber-500 transition"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-red-900 mb-1">
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
                       Solution / Answer:
                     </label>
                     <textarea
@@ -1697,15 +1704,15 @@ function CitySeoContent() {
                       }
                       placeholder="Write the detailed solution or answer here..."
                       rows={3}
-                      className="w-full rounded-lg border border-pink-200 bg-white px-3 py-2 text-sm text-red-950 outline-none focus:border-red-500 leading-relaxed"
+                      className="w-full rounded-lg border border-white/15 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 outline-none focus:border-amber-500 transition leading-relaxed"
                     />
                   </div>
                 </div>
               ))}
 
               {faqs.length === 0 && (
-                <div className="rounded-xl border border-dashed border-pink-300 bg-pink-50/30 p-6 text-center">
-                  <p className="text-sm font-medium text-red-800">
+                <div className="rounded-xl border border-dashed border-white/15 bg-slate-800/30 p-6 text-center">
+                  <p className="text-sm font-medium text-slate-400">
                     No FAQs added yet. Click &ldquo;+ Add FAQ&rdquo; above to add questions and solutions.
                   </p>
                 </div>
@@ -1716,68 +1723,68 @@ function CitySeoContent() {
 
         {/* RIGHT COLUMN */}
         <div className="space-y-6">
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
             <div className="flex items-center gap-4">
               <div className="relative h-20 w-20">
                 <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
-                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#fecdd3" strokeWidth="3.5" />
+                  <circle cx="18" cy="18" r="15.9" fill="none" stroke="#334155" strokeWidth="3.5" />
                   <circle
                     cx="18"
                     cy="18"
                     r="15.9"
                     fill="none"
-                    stroke="#dc2626"
+                    stroke="#f59e0b"
                     strokeWidth="3.5"
                     strokeDasharray={`${(score / 100) * 100} 100`}
                     strokeLinecap="round"
                   />
                 </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-red-950">
+                <span className="absolute inset-0 flex items-center justify-center text-lg font-black text-white">
                   {score}
                 </span>
               </div>
               <div>
-                <p className="text-sm font-medium text-red-900">SEO Score</p>
-                <p className="text-xs text-red-700">
+                <p className="text-sm font-bold text-white">SEO Score</p>
+                <p className="text-xs text-slate-400">
                   {passed} of {checks.length} checks passed
                 </p>
               </div>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-3 text-lg font-bold text-red-950">Google Preview</h2>
-            <div className="rounded-xl border border-red-100 bg-white p-4">
-              <p className="text-xs text-green-700">{`example.com/${urlSlug || "url-slug"}`}</p>
-              <p className="mt-1 text-lg font-medium text-blue-800">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+            <h2 className="mb-3 text-lg font-bold text-white">Google Preview</h2>
+            <div className="rounded-xl border border-white/10 bg-slate-950/80 p-4">
+              <p className="text-xs text-emerald-400 font-mono">{`example.com/${urlSlug || "url-slug"}`}</p>
+              <p className="mt-1 text-base font-semibold text-sky-400 hover:underline cursor-pointer">
                 {title || "Your SEO title will appear here"}
               </p>
-              <p className="mt-1 text-sm text-red-900">
+              <p className="mt-1 text-xs text-slate-300 leading-relaxed">
                 {description || "Your meta description will appear here as a snippet in search results."}
               </p>
             </div>
-            <div className="mt-3 space-y-1 text-xs text-red-700">
-              <p>Title: {titleLen} chars</p>
-              <p>Meta description: {descLen} chars</p>
-              <p>Primary keyword usage: {keywordUsage} times</p>
-              <p>Content word count: {wordCount}</p>
-              <p>H2: {h2Count} · H3: {h3Count}</p>
+            <div className="mt-4 space-y-1 text-xs text-slate-400 font-mono">
+              <p>Title: <span className="text-slate-200">{titleLen} chars</span></p>
+              <p>Meta description: <span className="text-slate-200">{descLen} chars</span></p>
+              <p>Primary keyword usage: <span className="text-amber-400">{keywordUsage} times</span></p>
+              <p>Content word count: <span className="text-slate-200">{wordCount}</span></p>
+              <p>Headings: <span className="text-slate-200">H2: {h2Count} · H3: {h3Count}</span></p>
             </div>
           </section>
 
-          <section className="rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-            <h2 className="mb-3 text-lg font-bold text-red-950">SEO Checklist</h2>
-            <ul className="space-y-2">
+          <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+            <h2 className="mb-3 text-lg font-bold text-white">SEO Checklist</h2>
+            <ul className="space-y-2.5">
               {checks.map((c) => (
-                <li key={c.label} className="flex items-start gap-2 text-sm">
+                <li key={c.label} className="flex items-start gap-2.5 text-sm">
                   <span
                     className={`mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-full text-xs font-bold ${
-                      c.ok ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                      c.ok ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30" : "bg-rose-500/15 text-rose-300 border border-rose-500/30"
                     }`}
                   >
                     {c.ok ? "✓" : "!"}
                   </span>
-                  <span className={c.ok ? "text-red-900" : "text-red-700"}>{c.label}</span>
+                  <span className={c.ok ? "text-slate-200" : "text-slate-400"}>{c.label}</span>
                 </li>
               ))}
             </ul>
@@ -1787,31 +1794,31 @@ function CitySeoContent() {
 
       {/* LOCAL AREAS OF THIS CITY LIST WITH EDIT SEO BUTTONS */}
       {!isAreaEdit && editSlug && (
-        <section className="mt-10 rounded-2xl border border-red-100 bg-white p-5 sm:p-7 shadow-xs">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-pink-100 pb-4">
+        <section className="mt-10 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7 shadow-xl backdrop-blur-md">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-red-950">
+                <h2 className="text-xl font-bold text-white">
                   Local Areas in {name || editSlug}
                 </h2>
-                <span className="rounded-full bg-pink-100 px-2.5 py-0.5 text-xs font-bold text-red-900">
+                <span className="rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-bold text-amber-400">
                   {cityLocalAreas.length} Areas
                 </span>
               </div>
-              <p className="mt-1 text-xs text-neutral-600">
+              <p className="mt-1 text-xs text-slate-400">
                 Click <strong>Edit SEO</strong> on any local area to customize its individual SEO content or configure parent-child inheritance.
               </p>
             </div>
             <Link
               href="/admin/dynamic-seo"
-              className="rounded-xl bg-red-950 px-4 py-2 text-xs font-bold text-white hover:bg-neutral-800 transition flex items-center gap-1.5 shadow-xs"
+              className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 text-xs font-bold text-slate-200 transition flex items-center gap-1.5"
             >
               <span>⚡</span> Manage in Dynamic SEO
             </Link>
           </div>
 
           {cityLocalAreas.length === 0 ? (
-            <p className="mt-4 text-xs text-neutral-500 italic">
+            <p className="mt-4 text-xs text-slate-500 italic">
               No local areas recorded under {name || editSlug}. You can add local areas in State/City management.
             </p>
           ) : (
@@ -1821,30 +1828,30 @@ function CitySeoContent() {
                 return (
                   <div
                     key={area.slug}
-                    className={`flex items-center justify-between gap-2 rounded-xl border p-3.5 transition-shadow hover:shadow-xs ${
+                    className={`flex items-center justify-between gap-2 rounded-xl border p-3.5 transition ${
                       isCustom
-                        ? "border-purple-200 bg-purple-50/30"
-                        : "border-pink-100 bg-pink-50/20"
+                        ? "border-purple-500/30 bg-purple-500/10"
+                        : "border-white/10 bg-slate-800/40 hover:bg-slate-800/70"
                     }`}
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
                         {isCustom ? (
                           <span
-                            className="h-2.5 w-2.5 rounded-full bg-emerald-500 shrink-0"
+                            className="h-2 w-2 rounded-full bg-emerald-400 shrink-0"
                             title="Individual Custom SEO active"
                           />
                         ) : (
                           <span
-                            className="h-2.5 w-2.5 rounded-full bg-sky-400 shrink-0"
+                            className="h-2 w-2 rounded-full bg-sky-400 shrink-0"
                             title="Inherits Parent City SEO"
                           />
                         )}
-                        <p className="font-bold text-sm text-red-950 truncate">
+                        <p className="font-bold text-sm text-white truncate">
                           {area.name}, {name || editSlug}
                         </p>
                       </div>
-                      <span className="block text-xs text-neutral-500 mt-0.5">
+                      <span className="block text-xs text-slate-400 mt-0.5">
                         {isCustom ? "Individual SEO" : "Inherits City SEO"}
                       </span>
                     </div>
@@ -1852,7 +1859,7 @@ function CitySeoContent() {
                       href={`/admin/city-seo?city=${encodeURIComponent(
                         editSlug
                       )}&area=${encodeURIComponent(area.slug)}`}
-                      className="rounded-full bg-purple-600 px-3.5 py-1.5 text-xs font-semibold !text-white hover:bg-purple-700 transition shadow-2xs shrink-0"
+                      className="rounded-lg border border-purple-500/40 bg-purple-500/20 px-3 py-1.5 text-xs font-semibold text-purple-200 hover:bg-purple-500/30 transition shrink-0"
                     >
                       Edit SEO
                     </Link>

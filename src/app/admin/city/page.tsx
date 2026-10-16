@@ -405,26 +405,28 @@ export default function AdminCities() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-white/10 pb-6">
         <div>
-          <h1 className="text-3xl font-black text-red-950">Locations</h1>
-          <p className="mt-2 text-red-900">
-            Manage cities and local areas available on the platform.
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Locations <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Directory</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Manage cities, micro-localities, and area-specific targeting across India.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/admin/dynamic-seo"
-            className="rounded-full bg-red-950 px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-neutral-800 transition flex items-center gap-1.5 shadow-xs"
+            className="rounded-xl border border-amber-500/30 bg-amber-500/15 px-3.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/25 transition flex items-center gap-1.5 shadow-xs"
           >
             <span>⚡</span> Dynamic SEO
           </Link>
-          <span className="rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white">
-            Total Locations: {allLocations.length}
+          <span className="rounded-xl border border-white/10 bg-slate-800/90 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs">
+            Total: {allLocations.length}
           </span>
-          <span className="rounded-full bg-pink-100 px-3 py-1.5 text-xs font-semibold text-red-950">
-            {citiesCount} Cities &bull; {localAreasCount} Local Areas
+          <span className="rounded-xl border border-white/10 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-300">
+            {citiesCount} Cities &bull; {localAreasCount} Areas
           </span>
         </div>
       </div>
@@ -437,8 +439,8 @@ export default function AdminCities() {
             onClick={() => setFilterType("all")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filterType === "all"
-                ? "bg-red-600 text-white shadow-sm"
-                : "bg-pink-50 text-red-950 hover:bg-pink-100 border border-pink-200"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md"
+                : "bg-slate-800/70 border border-white/10 text-slate-300 hover:bg-slate-800 hover:text-white"
             }`}
           >
             All ({allLocations.length})
@@ -448,8 +450,8 @@ export default function AdminCities() {
             onClick={() => setFilterType("city")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filterType === "city"
-                ? "bg-red-600 text-white shadow-sm"
-                : "bg-pink-50 text-red-950 hover:bg-pink-100 border border-pink-200"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md"
+                : "bg-slate-800/70 border border-white/10 text-slate-300 hover:bg-slate-800 hover:text-white"
             }`}
           >
             Cities ({citiesCount})
@@ -459,8 +461,8 @@ export default function AdminCities() {
             onClick={() => setFilterType("local_area")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
               filterType === "local_area"
-                ? "bg-red-600 text-white shadow-sm"
-                : "bg-pink-50 text-red-950 hover:bg-pink-100 border border-pink-200"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md"
+                : "bg-slate-800/70 border border-white/10 text-slate-300 hover:bg-slate-800 hover:text-white"
             }`}
           >
             Local Areas ({localAreasCount})
@@ -473,16 +475,16 @@ export default function AdminCities() {
             <button
               type="button"
               onClick={removeSelected}
-              className="rounded-full bg-neutral-950 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-neutral-800 transition"
+              className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-4 py-2 text-xs font-semibold text-rose-300 transition"
             >
-              Delete selected ({selectedIds.size})
+              Delete Selected ({selectedIds.size})
             </button>
           )}
           {allLocations.length > 0 && (
             <button
               type="button"
               onClick={deleteAll}
-              className="rounded-full bg-neutral-800 px-4 py-2 text-xs sm:text-sm font-semibold text-white hover:bg-neutral-900 transition"
+              className="rounded-xl border border-rose-500/40 bg-rose-500/20 hover:bg-rose-500/30 px-4 py-2 text-xs font-bold text-rose-300 transition"
             >
               Delete All ({allLocations.length})
             </button>
@@ -492,7 +494,7 @@ export default function AdminCities() {
 
       <div className="mt-4">
         <input
-          className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-red-950 outline-none focus:border-red-500 sm:w-80"
+          className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-400 outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500/40 sm:w-80 transition"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name, city, state, or slug..."
@@ -513,57 +515,61 @@ export default function AdminCities() {
           minWidth="min-w-[720px]"
         />
       ) : filteredLocations.length === 0 ? (
-        <p className="mt-6 text-red-900">No locations found.</p>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center">
+          <p className="text-sm font-semibold text-slate-400">No locations found.</p>
+        </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-red-100 bg-white">
+        <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/60 shadow-xl backdrop-blur-md">
           <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="bg-pink-50 text-red-950">
+            <thead className="bg-slate-800/80 text-amber-400 font-bold uppercase tracking-wider text-xs border-b border-white/10">
               <tr>
-                <th className="w-12 px-4 py-3 font-semibold">
+                <th className="w-12 px-4 py-3.5 font-semibold">
                   <input
                     type="checkbox"
                     checked={allFilteredSelected}
                     onChange={toggleAllFiltered}
+                    className="accent-amber-500 rounded cursor-pointer"
                     aria-label="Select all visible locations"
                   />
                 </th>
-                <th className="px-4 py-3 font-semibold">Name</th>
-                <th className="px-4 py-3 font-semibold">Type</th>
-                <th className="px-4 py-3 font-semibold">Parent City</th>
-                <th className="px-4 py-3 font-semibold">State</th>
-                <th className="px-4 py-3 font-semibold">Status / Date</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
+                <th className="px-4 py-3.5 font-semibold">Name</th>
+                <th className="px-4 py-3.5 font-semibold">Type</th>
+                <th className="px-4 py-3.5 font-semibold">Parent City</th>
+                <th className="px-4 py-3.5 font-semibold">State</th>
+                <th className="px-4 py-3.5 font-semibold">Status / Date</th>
+                <th className="px-4 py-3.5 font-semibold">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {filteredLocations.map((item) => {
                 return (
                   <tr
                     key={`${item.type}-${item.id}`}
-                    className="border-t border-red-50 hover:bg-pink-50/40 transition-colors"
+                    className="hover:bg-slate-800/30 transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       <input
                         type="checkbox"
                         checked={selectedIds.has(item.id)}
                         onChange={() => toggleLocation(item.id)}
+                        className="accent-amber-500 rounded cursor-pointer"
                         aria-label={`Select ${item.name}`}
                       />
                     </td>
-                    <td className="px-4 py-3 font-medium">
+                    <td className="px-4 py-3.5 font-semibold">
                       {item.type === "city" ? (
                         <div className="flex items-center gap-1.5">
                           {citiesWithCustomSeo.has(item.slug.toLowerCase().trim()) && (
                             <span
                               title="City contains local areas with individual custom SEO"
-                              className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-xs shrink-0"
+                              className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-xs shrink-0"
                             />
                           )}
                           <Link
                             href={`/admin/city-seo?city=${encodeURIComponent(
                               item.slug
                             )}`}
-                            className="text-red-950 underline-offset-2 hover:underline font-semibold"
+                            className="text-white hover:text-amber-400 transition"
                           >
                             {item.name}
                           </Link>
@@ -573,60 +579,60 @@ export default function AdminCities() {
                           href={`/places/${item.citySlug}/${item.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-red-950 underline-offset-2 hover:underline font-semibold"
+                          className="text-white hover:text-amber-400 transition"
                         >
                           {item.name}{item.cityName ? `, ${item.cityName}` : ""}
                         </Link>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3.5">
                       {item.type === "city" ? (
-                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 border border-blue-200">
+                        <span className="inline-flex items-center rounded-full bg-blue-500/15 border border-blue-500/30 px-2.5 py-0.5 text-xs font-bold text-blue-400">
                           City
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-purple-50 px-2.5 py-0.5 text-xs font-semibold text-purple-700 border border-purple-200">
+                        <span className="inline-flex items-center rounded-full bg-purple-500/15 border border-purple-500/30 px-2.5 py-0.5 text-xs font-bold text-purple-400">
                           Local Area
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3.5 text-slate-300">
                       {item.type === "local_area" && item.cityName ? (
                         <Link
                           href={`/places/${item.citySlug}`}
-                          className="font-medium text-neutral-800 hover:underline"
+                          className="font-medium text-slate-300 hover:text-amber-400 transition"
                         >
                           {item.cityName}
                         </Link>
                       ) : (
-                        <span className="text-neutral-400">—</span>
+                        <span className="text-slate-600">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3.5 text-slate-300">
                       {item.state || "—"}
                     </td>
-                    <td className="px-4 py-3 text-red-900">
+                    <td className="px-4 py-3.5 text-slate-400">
                       {item.type === "city" ? (
                         item.seo?.hasSeo ? (
-                          <span className="text-xs text-emerald-700 font-medium">
+                          <span className="text-xs text-emerald-400 font-medium">
                             SEO Set{" "}
                             {item.seo.updatedAt
                               ? `(${formatDisplayDate(item.seo.updatedAt)})`
                               : ""}
                           </span>
                         ) : (
-                          <span className="text-xs text-neutral-400">Not set</span>
+                          <span className="text-xs text-slate-500">Not set</span>
                         )
                       ) : item.createdAt ? (
-                        <span className="text-xs text-neutral-500">
+                        <span className="text-xs text-slate-400">
                           {formatDisplayDate(item.createdAt)}
                         </span>
                       ) : (
-                        <span className="text-xs text-neutral-400">Standard</span>
+                        <span className="text-xs text-slate-500">Standard</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
+                    <td className="px-4 py-3.5">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() =>
@@ -636,7 +642,7 @@ export default function AdminCities() {
                                 : `/places/${item.citySlug}/${item.slug}`
                             )
                           }
-                          className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-emerald-700 transition"
+                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/15 hover:bg-emerald-500/25 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition"
                         >
                           View
                         </button>
@@ -645,7 +651,7 @@ export default function AdminCities() {
                             href={`/admin/city-seo?city=${encodeURIComponent(
                               item.slug
                             )}`}
-                            className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-red-700 transition"
+                            className="rounded-xl border border-amber-500/30 bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1.5 text-xs font-semibold text-amber-300 transition"
                           >
                             Edit SEO
                           </Link>
@@ -654,7 +660,7 @@ export default function AdminCities() {
                             href={`/admin/city-seo?city=${encodeURIComponent(
                               item.citySlug || ""
                             )}&area=${encodeURIComponent(item.slug)}`}
-                            className="rounded-full bg-purple-600 px-3 py-1.5 text-xs font-semibold !text-white hover:bg-purple-700 transition"
+                            className="rounded-xl border border-purple-500/30 bg-purple-500/15 hover:bg-purple-500/25 px-3 py-1.5 text-xs font-semibold text-purple-300 transition"
                           >
                             Edit SEO
                           </Link>
@@ -662,7 +668,7 @@ export default function AdminCities() {
                         <button
                           type="button"
                           onClick={() => remove(item)}
-                          className="rounded-full bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-white hover:bg-neutral-800 transition"
+                          className="rounded-xl border border-rose-500/30 bg-rose-500/15 hover:bg-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 transition"
                         >
                           {item.type === "city" ? "Delete City" : "Delete Area"}
                         </button>

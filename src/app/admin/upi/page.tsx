@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
 import { useAdminContext } from "@/components/admin/use-admin-context";
 import { EditDeleteButtons } from "@/components/ui/action-buttons";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { AdminUpiCardsSkeleton } from "@/components/skeletons/admin-skeletons";
 
 type UPI = {
@@ -204,148 +203,156 @@ export default function AdminUPI() {
   if (!me || !me.authenticated) return null;
 
   return (
-    <main className="flex-1 overflow-auto min-w-0">
-      <div className="p-4 sm:p-6 lg:p-8">
-        <Eyebrow>Management</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-red-950">UPI Management</h1>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            UPI <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Gateways</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Configure payment UPI IDs and QR code images shown to users on coin top-ups.
+          </p>
+        </div>
+      </div>
 
-        {error && (
-          <div className="mt-6 rounded-lg bg-red-100 p-4 text-red-900">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs sm:text-sm font-semibold text-rose-300">
+          {error}
+        </div>
+      )}
 
-        <div className="mt-8 space-y-8">
-          {/* Add New UPI Form */}
-          <div className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
-            <h2 className="text-xl font-bold text-red-950">
-              {editingId ? "Edit UPI" : "Add New UPI"}
-            </h2>
+      <div className="mt-8 space-y-8">
+        {/* Add / Edit UPI Form */}
+        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+          <h2 className="text-base sm:text-lg font-bold text-white">
+            {editingId ? "Edit UPI Gateway" : "Add New UPI Gateway"}
+          </h2>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  UPI ID
-                </label>
-                <input
-                  type="text"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="e.g., yourname@upi"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                  required
-                />
-              </div>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                UPI ID
+              </label>
+              <input
+                type="text"
+                value={upiId}
+                onChange={(e) => setUpiId(e.target.value)}
+                placeholder="e.g., yourname@upi"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  UPI Name/Label
-                </label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Main Account"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                  required
-                />
-              </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                UPI Name / Label
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Main Business Account"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+                required
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  QR Code Image {editingId ? "(Leave empty to keep existing)" : ""}
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleQrCodeChange}
-                  className="mt-2 block w-full text-sm text-red-950 file:mr-4 file:rounded-lg file:border-0 file:bg-red-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-red-950"
-                  required={!editingId}
-                />
-                {qrCodePreview && (
-                  <div className="mt-4">
-                    <Image
-                      src={qrCodePreview}
-                      alt="QR Code Preview"
-                      width={160}
-                      height={160}
-                      className="h-40 w-40 rounded-lg border border-red-200 object-contain"
-                    />
-                  </div>
-                )}
-              </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                QR Code Image {editingId ? "(Leave empty to keep existing)" : ""}
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleQrCodeChange}
+                className="mt-2 block w-full text-xs sm:text-sm text-slate-400 file:mr-4 file:rounded-xl file:border-0 file:bg-white/10 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-white hover:file:bg-white/20 transition cursor-pointer"
+                required={!editingId}
+              />
+              {qrCodePreview && (
+                <div className="mt-4">
+                  <Image
+                    src={qrCodePreview}
+                    alt="QR Code Preview"
+                    width={160}
+                    height={160}
+                    className="h-40 w-40 rounded-xl border border-white/15 bg-white p-2 object-contain shadow-md"
+                  />
+                </div>
+              )}
+            </div>
 
-              <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={submitting}
+                className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50 shadow-md transition cursor-pointer active:scale-[0.98]"
+              >
+                {submitting ? "Saving..." : editingId ? "Update Gateway" : "Add Gateway"}
+              </button>
+              {editingId && (
                 <button
-                  type="submit"
-                  disabled={submitting}
-                  className="mt-6 rounded-lg bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+                  type="button"
+                  onClick={handleCancel}
+                  className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-6 py-2.5 text-sm font-semibold text-slate-300 transition cursor-pointer"
                 >
-                  {submitting ? "Saving..." : editingId ? "Update UPI" : "Add UPI"}
+                  Cancel
                 </button>
-                {editingId && (
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="mt-6 rounded-lg bg-red-100 px-6 py-2.5 font-semibold text-red-950 hover:bg-red-200"
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
+              )}
+            </div>
+          </form>
+        </div>
 
-          {/* Existing UPIs */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-red-950">Existing UPIs</h2>
+        {/* Existing UPIs */}
+        <div className="space-y-4">
+          <h2 className="text-lg font-extrabold text-white">Active Gateways</h2>
 
-            {loading ? (
-              <AdminUpiCardsSkeleton />
-            ) : upis.length === 0 ? (
-              <p className="text-red-900">No UPIs added yet.</p>
-            ) : (
-              <div className="grid gap-4">
-                {upis.map((upi) => (
-                  <div
-                    key={upi._id}
-                    className="flex flex-col gap-4 rounded-2xl border border-red-200 bg-white p-4 sm:p-6 sm:flex-row sm:items-start sm:justify-between"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-red-950">{upi.name}</h3>
-                      <p className="mt-1 text-sm text-red-900 break-all">{upi.upiId}</p>
-                      {upi.qrCode && (
-                        <Image
-                          src={upi.qrCode}
-                          alt={`QR Code for ${upi.upiId}`}
-                          width={128}
-                          height={128}
-                          className="mt-3 h-32 w-32 rounded-lg border border-red-200 object-contain"
-                        />
-                      )}
-                    </div>
-                    <div className="flex gap-2 sm:flex-col">
-                      <EditDeleteButtons
-                        onEdit={() => handleEdit(upi)}
-                        onDelete={() => handleDelete(upi._id)}
-                        direction="column"
+          {loading ? (
+            <AdminUpiCardsSkeleton />
+          ) : upis.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center text-slate-400 text-sm">
+              No UPI gateways configured yet.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {upis.map((upi) => (
+                <div
+                  key={upi._id}
+                  className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md sm:flex-row sm:items-start sm:justify-between transition-all hover:border-amber-500/30"
+                >
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-white">{upi.name}</h3>
+                    <p className="mt-1 font-mono text-sm text-amber-400 break-all">{upi.upiId}</p>
+                    {upi.qrCode && (
+                      <Image
+                        src={upi.qrCode}
+                        alt={`QR Code for ${upi.upiId}`}
+                        width={128}
+                        height={128}
+                        className="mt-3 h-32 w-32 rounded-xl border border-white/15 bg-white p-1.5 object-contain shadow-md"
                       />
-                      <button
-                        onClick={() => handleToggleActive(upi)}
-                        className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-                          upi.active !== false
-                            ? "bg-green-100 text-green-900 hover:bg-green-200"
-                            : "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                        }`}
-                      >
-                        {upi.active !== false ? "Active" : "Inactive"}
-                      </button>
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                  <div className="flex gap-2 sm:flex-col shrink-0">
+                    <EditDeleteButtons
+                      onEdit={() => handleEdit(upi)}
+                      onDelete={() => handleDelete(upi._id)}
+                      direction="column"
+                    />
+                    <button
+                      onClick={() => handleToggleActive(upi)}
+                      className={`rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                        upi.active !== false
+                          ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
+                          : "bg-amber-500/15 border border-amber-500/30 text-amber-400 hover:bg-amber-500/25"
+                      }`}
+                    >
+                      {upi.active !== false ? "Active" : "Inactive"}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </main>

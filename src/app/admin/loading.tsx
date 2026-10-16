@@ -1,4 +1,3 @@
-import { Skeleton } from "@/components/ui/skeleton";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 
 export default function AdminLoading() {
@@ -8,18 +7,18 @@ export default function AdminLoading() {
       aria-busy="true"
       aria-label="Loading admin content"
     >
-      <Skeleton className="h-9 w-48 rounded-xl" />
-      <Skeleton className="mt-2 h-4 w-72 rounded-md" />
+      <div className="h-9 w-48 rounded-xl bg-slate-800/80 animate-pulse" />
+      <div className="mt-2 h-4 w-72 rounded-md bg-slate-800/60 animate-pulse" />
 
       {/* Stat Cards Skeleton */}
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm"
+            className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md"
           >
-            <Skeleton className="h-4 w-28 rounded-md" />
-            <Skeleton className="mt-3 h-8 w-20 rounded-md" />
+            <div className="h-4 w-28 rounded-md bg-slate-800/60 animate-pulse" />
+            <div className="mt-3 h-8 w-20 rounded-md bg-slate-800/80 animate-pulse" />
           </div>
         ))}
       </div>

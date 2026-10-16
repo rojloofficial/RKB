@@ -259,72 +259,79 @@ export default function DynamicSeoPage() {
   }, [cities, cityHasIndividualSeo]);
 
   return (
-    <main className="p-4 sm:p-6 lg:p-10 min-w-0 pb-28">
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl pb-28">
       {/* Top Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4 pb-6 border-b border-white/10">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-black text-red-950">Dynamic SEO</h1>
-            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-900 border border-red-200">
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-black text-white flex items-center gap-3">
+              <span className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 shadow-inner">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </span>
+              <span>Dynamic SEO</span>
+            </h1>
+            <span className="rounded-full bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-400 border border-amber-500/30">
               Parent-Child Architecture
             </span>
           </div>
-          <p className="mt-2 text-sm text-red-900 max-w-3xl leading-relaxed">
+          <p className="mt-2 text-sm text-slate-400 max-w-3xl leading-relaxed">
             Manage whether Local Areas inherit their parent city&apos;s SEO content or have
             custom individual SEO. Cities with local areas having individual SEO are
-            marked with a <span className="inline-flex items-center font-bold text-emerald-700">🟢 green dot</span>.
+            marked with a <span className="inline-flex items-center font-bold text-emerald-400">🟢 green dot</span>.
           </p>
         </div>
 
         {/* Status Metrics */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-red-600 px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-xs">
-            {cities.length} Cities &bull; {totalAreasCount} Local Areas
+        <div className="flex flex-wrap items-center gap-2.5">
+          <span className="rounded-xl bg-slate-900 border border-white/15 px-4 py-2 text-xs sm:text-sm font-semibold text-slate-200 shadow-md">
+            <span className="text-amber-400 font-bold">{cities.length}</span> Cities &bull; <span className="text-white font-bold">{totalAreasCount}</span> Local Areas
           </span>
-          <span className="rounded-full bg-emerald-50 px-3.5 py-1.5 text-xs font-semibold text-emerald-800 border border-emerald-200 flex items-center gap-1.5 shadow-xs">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="rounded-xl bg-emerald-500/10 px-3.5 py-2 text-xs font-semibold text-emerald-300 border border-emerald-500/30 flex items-center gap-2 shadow-md">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse" />
             {customCitiesCount} Cities with Custom SEO
           </span>
-          <span className="rounded-full bg-purple-50 px-3.5 py-1.5 text-xs font-semibold text-purple-800 border border-purple-200 shadow-xs">
+          <span className="rounded-xl bg-purple-500/10 px-3.5 py-2 text-xs font-semibold text-purple-300 border border-purple-500/30 shadow-md">
             {individualAreasCount} Individual Local Areas
           </span>
         </div>
       </div>
 
       {/* Concept Explanation Card */}
-      <div className="mt-6 rounded-2xl border border-red-100 bg-linear-to-r from-pink-50/80 via-white to-pink-50/50 p-4 sm:p-5">
+      <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5 backdrop-blur-md shadow-xl">
         <div className="grid gap-4 sm:grid-cols-3 text-xs sm:text-sm">
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-bold text-xs">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-white/5 bg-slate-800/40">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-sky-500/20 border border-sky-500/30 text-sky-400 font-bold text-xs">
               1
             </span>
             <div>
-              <strong className="block text-sky-950 font-bold">Same Content as City (Inherit)</strong>
-              <p className="mt-0.5 text-neutral-600">
+              <strong className="block text-sky-300 font-bold">Same Content as City (Inherit)</strong>
+              <p className="mt-1 text-slate-400 leading-relaxed text-xs">
                 The local area automatically inherits the parent city&apos;s SEO title, description, content blocks, and FAQs contextualized with its name.
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-purple-100 text-purple-700 font-bold text-xs">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-white/5 bg-slate-800/40">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 font-bold text-xs">
               2
             </span>
             <div>
-              <strong className="block text-purple-950 font-bold">Individual SEO Content</strong>
-              <p className="mt-0.5 text-neutral-600">
+              <strong className="block text-purple-300 font-bold">Individual SEO Content</strong>
+              <p className="mt-1 text-slate-400 leading-relaxed text-xs">
                 The local area has its own custom-crafted meta tags, custom content blocks, and FAQs written by the admin.
               </p>
             </div>
           </div>
 
-          <div className="flex items-start gap-2.5">
-            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 font-bold text-xs">
+          <div className="flex items-start gap-3 p-3.5 rounded-xl border border-white/5 bg-slate-800/40">
+            <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-xs">
               3
             </span>
             <div>
-              <strong className="block text-emerald-950 font-bold">🟢 Green Dot Indicator</strong>
-              <p className="mt-0.5 text-neutral-600">
+              <strong className="block text-emerald-300 font-bold">🟢 Green Dot Indicator</strong>
+              <p className="mt-1 text-slate-400 leading-relaxed text-xs">
                 Instantly shows which cities have local areas configured with custom/individual SEO content.
               </p>
             </div>
@@ -334,26 +341,26 @@ export default function DynamicSeoPage() {
 
       {/* Messages */}
       {error && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-800">
+        <div className="mt-4 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-sm font-semibold text-rose-300">
           {error}
         </div>
       )}
       {success && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+        <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-sm font-semibold text-emerald-300">
           {success}
         </div>
       )}
 
       {/* Filters & Controls */}
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-2">
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2.5">
           <button
             type="button"
             onClick={() => setFilterType("all")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
               filterType === "all"
-                ? "bg-red-600 text-white shadow-xs"
-                : "bg-pink-50 text-red-950 hover:bg-pink-100 border border-pink-200"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-slate-950 shadow-md shadow-amber-500/20"
+                : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/15"
             }`}
           >
             All Cities ({cities.length})
@@ -363,8 +370,8 @@ export default function DynamicSeoPage() {
             onClick={() => setFilterType("custom_only")}
             className={`inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
               filterType === "custom_only"
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "bg-emerald-50 text-emerald-900 hover:bg-emerald-100 border border-emerald-200"
+                ? "bg-emerald-600 text-white shadow-md shadow-emerald-500/20"
+                : "bg-white/5 text-emerald-300 hover:bg-white/10 border border-white/15"
             }`}
           >
             <span className="inline-block h-2 w-2 rounded-full bg-emerald-400" />
@@ -375,8 +382,8 @@ export default function DynamicSeoPage() {
             onClick={() => setFilterType("inherit_only")}
             className={`rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
               filterType === "inherit_only"
-                ? "bg-neutral-800 text-white shadow-xs"
-                : "bg-pink-50 text-red-950 hover:bg-pink-100 border border-pink-200"
+                ? "bg-slate-800 text-white border border-white/30 shadow-md"
+                : "bg-white/5 text-slate-300 hover:bg-white/10 border border-white/15"
             }`}
           >
             Pure Inherited Cities ({cities.length - customCitiesCount})
@@ -385,7 +392,7 @@ export default function DynamicSeoPage() {
 
         <div className="w-full sm:w-80">
           <input
-            className="w-full rounded-xl border border-pink-200 bg-pink-50 px-3.5 py-2.5 text-sm text-red-950 outline-none focus:border-red-500 shadow-2xs"
+            className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-amber-500 transition"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by city or local area name..."
@@ -395,12 +402,14 @@ export default function DynamicSeoPage() {
 
       {/* Main List */}
       {loading ? (
-        <AdminTableSkeleton
-          headers={["City", "Local Areas", "SEO Status", "Quick Actions"]}
-          minWidth="min-w-[640px]"
-        />
+        <div className="mt-6">
+          <AdminTableSkeleton
+            headers={["City", "Local Areas", "SEO Status", "Quick Actions"]}
+            minWidth="min-w-[640px]"
+          />
+        </div>
       ) : filteredCities.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-red-100 bg-white p-8 text-center text-red-900">
+        <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center text-slate-400">
           No cities found matching your search or filter.
         </div>
       ) : (
@@ -418,12 +427,12 @@ export default function DynamicSeoPage() {
             return (
               <div
                 key={city.slug}
-                className="overflow-hidden rounded-2xl border border-red-100 bg-white shadow-xs transition-shadow hover:shadow-sm"
+                className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 shadow-xl backdrop-blur-md transition hover:border-white/20"
               >
                 {/* City Card Header */}
                 <div
                   onClick={() => toggleCityExpand(city.slug)}
-                  className="flex flex-wrap items-center justify-between gap-3 bg-pink-50/70 px-4 py-3.5 sm:px-6 cursor-pointer hover:bg-pink-100/60 transition"
+                  className="flex flex-wrap items-center justify-between gap-3 bg-slate-800/80 px-4 py-3.5 sm:px-6 cursor-pointer hover:bg-slate-800 transition"
                 >
                   <div className="flex items-center gap-3">
                     {/* Green Dot Indicator for City */}
@@ -438,30 +447,30 @@ export default function DynamicSeoPage() {
                       {hasCustom ? (
                         <span className="relative flex h-3.5 w-3.5">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 shadow-xs" />
+                          <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 shadow-sm" />
                         </span>
                       ) : (
-                        <span className="inline-block h-3 w-3 rounded-full bg-neutral-300" />
+                        <span className="inline-block h-3 w-3 rounded-full bg-slate-600" />
                       )}
                     </div>
 
                     <div>
                       <div className="flex items-center gap-2">
-                        <h2 className="text-lg font-bold text-red-950">
+                        <h2 className="text-lg font-bold text-white">
                           {city.name}
                         </h2>
                         {city.state && (
-                          <span className="text-xs font-semibold text-red-800">
+                          <span className="text-xs font-semibold text-slate-400">
                             ({city.state})
                           </span>
                         )}
                         {hasCustom && (
-                          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 border border-emerald-200">
+                          <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-[11px] font-bold text-emerald-300">
                             🟢 Custom Local SEO Active
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-neutral-500">
+                      <p className="mt-0.5 text-xs text-slate-400">
                         {cityAreas.length} Local Areas ({customAreaCount} Individual &bull; {cityAreas.length - customAreaCount} Inherited)
                       </p>
                     </div>
@@ -475,7 +484,7 @@ export default function DynamicSeoPage() {
                     <button
                       type="button"
                       onClick={() => setAllCityAreasMode(city.slug, "inherit")}
-                      className="rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-800 hover:bg-sky-100 transition cursor-pointer"
+                      className="rounded-lg border border-sky-500/30 bg-sky-500/15 px-2.5 py-1 text-xs font-semibold text-sky-300 hover:bg-sky-500/25 transition cursor-pointer"
                       title="Set all local areas in this city to inherit parent SEO"
                     >
                       Set All Inherit
@@ -483,22 +492,21 @@ export default function DynamicSeoPage() {
                     <button
                       type="button"
                       onClick={() => setAllCityAreasMode(city.slug, "individual")}
-                      className="rounded-lg border border-purple-300 bg-purple-50 px-2.5 py-1 text-xs font-semibold text-purple-800 hover:bg-purple-100 transition cursor-pointer"
+                      className="rounded-lg border border-purple-500/30 bg-purple-500/15 px-2.5 py-1 text-xs font-semibold text-purple-300 hover:bg-purple-500/25 transition cursor-pointer"
                       title="Set all local areas in this city to individual SEO mode"
                     >
                       Set All Individual
                     </button>
                     <Link
                       href={`/admin/city-seo?city=${encodeURIComponent(city.slug)}`}
-                      className="rounded-lg bg-red-600 px-3 py-1 text-xs font-bold !text-white hover:bg-red-700 hover:!text-white transition"
-                      style={{ color: "#ffffff" }}
+                      className="rounded-lg bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-3 py-1 text-xs font-bold text-slate-950 transition active:scale-[0.98]"
                     >
                       City SEO
                     </Link>
                     <button
                       type="button"
                       onClick={() => toggleCityExpand(city.slug)}
-                      className="rounded-lg bg-white px-2 py-1 text-xs font-bold text-red-900 border border-pink-200"
+                      className="rounded-lg bg-white/5 border border-white/10 px-2 py-1 text-xs font-bold text-slate-300 hover:bg-white/10"
                     >
                       {isExpanded ? "▲" : "▼"}
                     </button>
@@ -509,13 +517,13 @@ export default function DynamicSeoPage() {
                 {isExpanded && (
                   <div className="p-4 sm:p-5">
                     {cityAreas.length === 0 ? (
-                      <p className="text-xs text-neutral-500 italic">
+                      <p className="text-xs text-slate-500 italic">
                         No local areas recorded under {city.name} yet.
                       </p>
                     ) : (
-                      <div className="overflow-x-auto rounded-xl border border-neutral-100 bg-white">
-                        <table className="w-full text-left text-sm min-w-[620px]">
-                          <thead className="bg-pink-50/40 text-xs font-semibold text-red-950 uppercase tracking-wider">
+                      <div className="overflow-x-auto rounded-xl border border-white/10 bg-slate-900/80">
+                        <table className="w-full text-left text-sm min-w-[620px] text-slate-300">
+                          <thead className="bg-slate-800/80 text-xs font-bold text-amber-400 uppercase tracking-wider border-b border-white/10">
                             <tr>
                               <th className="px-4 py-2.5">Local Area & City</th>
                               <th className="px-4 py-2.5">Inheritance Mode</th>
@@ -523,7 +531,7 @@ export default function DynamicSeoPage() {
                               <th className="px-4 py-2.5 text-right">Actions</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-neutral-100">
+                          <tbody className="divide-y divide-white/5">
                             {cityAreas.map((area) => {
                               const areaMode = getAreaMode(city.slug, area.slug);
                               const seoKey = `${cSlug}::${area.slug.toLowerCase()}`;
@@ -533,17 +541,17 @@ export default function DynamicSeoPage() {
                               return (
                                 <tr
                                   key={area.slug}
-                                  className={`transition hover:bg-pink-50/30 ${
-                                    isIndividual ? "bg-purple-50/20" : ""
+                                  className={`transition hover:bg-slate-800/40 ${
+                                    isIndividual ? "bg-purple-500/5" : ""
                                   }`}
                                 >
                                   {/* Formatted Area & City Name */}
-                                  <td className="px-4 py-3 font-medium text-neutral-900">
-                                    <div className="flex items-center gap-2">
+                                  <td className="px-4 py-3 font-medium">
+                                    <div className="flex items-center gap-2.5">
                                       {isIndividual ? (
                                         <span
                                           title="Individual Custom SEO active"
-                                          className="h-2 w-2 rounded-full bg-purple-600 shrink-0"
+                                          className="h-2 w-2 rounded-full bg-purple-400 shrink-0"
                                         />
                                       ) : (
                                         <span
@@ -552,10 +560,10 @@ export default function DynamicSeoPage() {
                                         />
                                       )}
                                       <div>
-                                        <span className="font-bold text-red-950">
+                                        <span className="font-bold text-white">
                                           {area.name}, {city.name}
                                         </span>
-                                        <span className="block text-xs text-neutral-400">
+                                        <span className="block text-xs text-slate-500 font-mono">
                                           /places/{city.slug}/{area.slug}
                                         </span>
                                       </div>
@@ -564,7 +572,7 @@ export default function DynamicSeoPage() {
 
                                   {/* Mode Selector */}
                                   <td className="px-4 py-3">
-                                    <div className="inline-flex rounded-xl border border-neutral-200 bg-neutral-50 p-0.5">
+                                    <div className="inline-flex rounded-xl border border-white/10 bg-slate-900/90 p-0.5">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -572,8 +580,8 @@ export default function DynamicSeoPage() {
                                         }
                                         className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
                                           !isIndividual
-                                            ? "bg-sky-600 text-white shadow-2xs"
-                                            : "text-neutral-600 hover:text-neutral-900"
+                                            ? "bg-sky-600 text-white shadow-sm"
+                                            : "text-slate-400 hover:text-white"
                                         }`}
                                       >
                                         Same as City (Inherit)
@@ -585,8 +593,8 @@ export default function DynamicSeoPage() {
                                         }
                                         className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition cursor-pointer ${
                                           isIndividual
-                                            ? "bg-purple-600 !text-white shadow-2xs"
-                                            : "text-neutral-600 hover:text-neutral-900"
+                                            ? "bg-purple-600 text-white shadow-sm"
+                                            : "text-slate-400 hover:text-white"
                                         }`}
                                       >
                                         Individual SEO
@@ -598,16 +606,16 @@ export default function DynamicSeoPage() {
                                   <td className="px-4 py-3 text-xs">
                                     {isIndividual ? (
                                       record?.title ? (
-                                        <span className="font-medium text-purple-900">
+                                        <span className="font-medium text-purple-300">
                                           &ldquo;{record.title.slice(0, 35)}...&rdquo;
                                         </span>
                                       ) : (
-                                        <span className="text-amber-700 font-medium">
+                                        <span className="text-amber-400 font-medium">
                                           Set to Individual (Ready to edit)
                                         </span>
                                       )
                                     ) : (
-                                      <span className="text-neutral-500">
+                                      <span className="text-slate-500">
                                         Dynamically inherits {city.name} SEO content
                                       </span>
                                     )}
@@ -615,7 +623,7 @@ export default function DynamicSeoPage() {
 
                                   {/* Action Buttons */}
                                   <td className="px-4 py-3 text-right">
-                                    <div className="flex items-center justify-end gap-1.5">
+                                    <div className="flex items-center justify-end gap-2">
                                       <button
                                         type="button"
                                         onClick={() =>
@@ -623,7 +631,7 @@ export default function DynamicSeoPage() {
                                             `/places/${city.slug}/${area.slug}`
                                           )
                                         }
-                                        className="rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold !text-white hover:bg-emerald-700 transition"
+                                        className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 px-2.5 py-1 text-xs font-semibold text-emerald-300 transition"
                                       >
                                         View
                                       </button>
@@ -631,7 +639,7 @@ export default function DynamicSeoPage() {
                                         href={`/admin/city-seo?city=${encodeURIComponent(
                                           city.slug
                                         )}&area=${encodeURIComponent(area.slug)}`}
-                                        className="rounded-full bg-red-600 px-3 py-1 text-xs font-semibold !text-white hover:bg-red-700 transition shadow-2xs"
+                                        className="rounded-lg border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-300 transition"
                                       >
                                         Edit SEO
                                       </Link>
@@ -654,22 +662,22 @@ export default function DynamicSeoPage() {
 
       {/* Floating Save Bar when pending changes exist */}
       {hasPendingChanges && (
-        <div className="fixed bottom-4 left-4 right-4 sm:left-72 sm:right-8 z-40 rounded-2xl border border-red-200 bg-white/95 backdrop-blur-md p-4 shadow-xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+        <div className="fixed bottom-4 left-4 right-4 sm:left-72 sm:right-8 z-40 rounded-2xl border border-amber-500/40 bg-slate-900/95 backdrop-blur-md p-4 shadow-2xl flex flex-wrap items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
           <div>
-            <p className="text-sm font-bold text-red-950">
+            <p className="text-sm font-bold text-white">
               Unsaved SEO Inheritance Changes
             </p>
-            <p className="text-xs text-neutral-600">
+            <p className="text-xs text-slate-400 mt-0.5">
               You have modified inheritance modes for {Object.keys(pendingModes).length} local areas.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => setPendingModes({})}
               disabled={saving}
-              className="rounded-xl border border-neutral-300 bg-white px-4 py-2 text-xs font-bold text-neutral-700 hover:bg-neutral-50 transition cursor-pointer"
+              className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2 text-xs font-bold text-slate-300 transition cursor-pointer"
             >
               Discard
             </button>
@@ -677,7 +685,7 @@ export default function DynamicSeoPage() {
               type="button"
               onClick={handleSaveChanges}
               disabled={saving}
-              className="rounded-xl bg-red-600 px-5 py-2 text-xs sm:text-sm font-bold text-white hover:bg-red-700 transition shadow-sm disabled:opacity-60 cursor-pointer"
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-5 py-2 text-xs sm:text-sm font-bold text-slate-950 transition shadow-lg shadow-amber-500/20 disabled:opacity-60 cursor-pointer active:scale-[0.98]"
             >
               {saving ? "Saving Changes..." : "Save Configuration"}
             </button>

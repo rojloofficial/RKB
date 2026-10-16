@@ -150,44 +150,51 @@ function AdminControlInner() {
   }
 
   return (
-    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-black text-red-950">
-          {isEditing ? "Edit Sub Admin" : "Admin Control"}
-        </h1>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-5xl">
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-white/10">
+        <div>
+          <h1 className="text-3xl font-black text-white flex items-center gap-3">
+            <span className="p-2.5 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 border border-amber-500/30 text-amber-400 shadow-inner">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            </span>
+            <span>{isEditing ? "Edit Sub Admin" : "Admin Control"}</span>
+          </h1>
+          <p className="mt-2 text-sm text-slate-400">
+            {isEditing
+              ? "Update permissions or reset password for this sub-admin account."
+              : "Create a sub-admin and assign granular access to specific administration sections."}
+          </p>
+        </div>
         <Link
           href="/admin/sub-admins"
-          className="rounded-full bg-neutral-950 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800"
+          className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-4 py-2.5 text-sm font-semibold text-slate-200 transition"
         >
-          Sub Admin List &rarr;
+          &larr; Sub Admin List
         </Link>
       </div>
-      <p className="mt-2 text-red-900">
-        {isEditing
-          ? "Update permissions or reset password for this sub-admin."
-          : "Create a sub-admin and assign access to specific sections."}
-      </p>
 
-      <div className="mt-6 max-w-xl rounded-2xl border border-red-100 bg-white p-4 sm:p-6">
-        <form onSubmit={handleSubmit} className="grid gap-4">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-6 sm:p-8 backdrop-blur-md shadow-xl">
+        <form onSubmit={handleSubmit} className="grid gap-6">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-red-950">
-              Email
+            <label className="mb-2 block text-sm font-bold text-slate-200">
+              Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              placeholder="admin@example.com"
-              className="w-full rounded-[20px] border border-red-200 px-4 py-2.5 text-sm text-red-950 outline-none focus:border-red-400"
+              placeholder="subadmin@example.com"
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 outline-none focus:border-amber-500 transition"
             />
           </div>
 
           <div>
-            <Eyebrow className="mb-1 block">
+            <label className="mb-2 block text-sm font-bold text-slate-200">
               {isEditing ? "New Password (optional)" : "Password"}
-            </Eyebrow>
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -197,14 +204,14 @@ function AdminControlInner() {
                 required={!isEditing}
                 placeholder={isEditing ? "Leave blank to keep current password" : "Min. 6 characters"}
                 aria-label="Password"
-                className="w-full rounded-[20px] border border-red-200 px-4 py-2.5 pr-12 text-sm text-red-950 outline-none focus:border-red-400"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 outline-none focus:border-amber-500 transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex items-center px-4 text-red-500 transition hover:text-red-700"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-amber-400"
               >
                 {showPassword ? (
                   <svg
@@ -243,55 +250,70 @@ function AdminControlInner() {
           </div>
 
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-semibold text-red-950">
-                Assign access ({permissions.length}/{ALL_SIDEBAR_SECTIONS.length})
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-bold text-white">
+                Assign Access Permissions ({permissions.length}/{ALL_SIDEBAR_SECTIONS.length})
               </p>
-              <div className="flex items-center gap-2 text-xs">
+              <div className="flex items-center gap-3 text-xs">
                 <button
                   type="button"
                   onClick={handleSelectAll}
-                  className="font-semibold text-red-950 underline hover:text-red-700"
+                  className="font-bold text-amber-400 hover:text-amber-300 transition"
                 >
                   Select All
                 </button>
-                <span className="text-gray-300">|</span>
+                <span className="text-white/20">|</span>
                 <button
                   type="button"
                   onClick={handleDeselectAll}
-                  className="font-semibold text-red-950 underline hover:text-red-700"
+                  className="font-semibold text-slate-400 hover:text-slate-200 transition"
                 >
                   Deselect All
                 </button>
               </div>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
-              {ALL_SIDEBAR_SECTIONS.map((option) => (
-                <label
-                  key={option.key}
-                  className="flex items-center gap-2 text-sm text-red-900 cursor-pointer select-none"
-                >
-                  <input
-                    type="checkbox"
-                    checked={permissions.includes(option.key)}
-                    onChange={() => togglePermission(option.key)}
-                    className="h-4 w-4 accent-neutral-900"
-                  />
-                  {option.label}
-                </label>
-              ))}
+            <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+              {ALL_SIDEBAR_SECTIONS.map((option) => {
+                const isChecked = permissions.includes(option.key);
+                return (
+                  <label
+                    key={option.key}
+                    className={`flex items-center gap-2.5 text-xs font-semibold p-3 rounded-xl border cursor-pointer select-none transition ${
+                      isChecked
+                        ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                        : "border-white/10 bg-slate-800/40 text-slate-300 hover:bg-slate-800/70"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => togglePermission(option.key)}
+                      className="h-4 w-4 rounded border-white/20 bg-slate-900 text-amber-500 accent-amber-500 focus:ring-0"
+                    />
+                    {option.label}
+                  </label>
+                );
+              })}
             </div>
           </div>
 
-          {error && <p className="text-sm text-red-700">{error}</p>}
-          {success && <p className="text-sm text-green-700">{success}</p>}
+          {error && (
+            <div className="rounded-xl bg-rose-500/10 border border-rose-500/30 p-3.5 text-sm text-rose-300 font-semibold">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-3.5 text-sm text-emerald-300 font-semibold">
+              {success}
+            </div>
+          )}
 
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-4 pt-2">
             <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-neutral-950 px-5 py-2.5 text-sm font-semibold text-white hover:bg-neutral-800 disabled:opacity-60"
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 disabled:opacity-60 transition active:scale-[0.98]"
             >
               {loading
                 ? isEditing
@@ -305,7 +327,7 @@ function AdminControlInner() {
             {isEditing && (
               <Link
                 href="/admin/admin-control"
-                className="rounded-full border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 hover:bg-neutral-100"
+                className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/10 transition"
               >
                 + Create New Instead
               </Link>
@@ -319,7 +341,7 @@ function AdminControlInner() {
 
 export default function AdminControl() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-red-900">Loading...</div>}>
+    <Suspense fallback={<div className="p-8 text-sm text-slate-400">Loading admin controls...</div>}>
       <AdminControlInner />
     </Suspense>
   );

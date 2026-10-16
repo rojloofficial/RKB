@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@/components/ui/button";
-import { TextInput } from "@/components/ui/field";
-import { SectionPanel } from "@/components/ui/card";
-import { Eyebrow } from "@/components/ui/eyebrow";
 import { useAdminRefresh } from "@/components/admin/admin-context";
 
 export default function AdminLogin() {
@@ -43,43 +39,54 @@ export default function AdminLogin() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-10">
-      <SectionPanel className="w-full max-w-md">
-        <Eyebrow>Admin</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-neutral-900">Admin Login</h1>
-        <p className="mt-2 text-neutral-600">Sign in with your admin credentials.</p>
+    <main className="flex min-h-screen items-center justify-center px-4 py-10 bg-slate-950">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-slate-900/80 p-6 sm:p-10 shadow-2xl backdrop-blur-xl">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 border border-amber-500/30 text-amber-400 uppercase tracking-widest">
+            Control Portal
+          </span>
+        </div>
+        <h1 className="mt-4 text-2xl sm:text-3xl font-black text-white tracking-tight">
+          Admin <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Login</span>
+        </h1>
+        <p className="mt-2 text-sm text-slate-400">
+          Sign in with your master or sub-admin credentials.
+        </p>
 
-        <form onSubmit={handleSubmit} className="mt-6 grid gap-4">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-semibold text-neutral-800">
-              Email
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Email Address
             </label>
-            <TextInput
+            <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@rkb.com"
               required
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
             />
           </div>
+
           <div>
-            <label className="mb-1 block text-sm font-semibold text-neutral-800">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               Password
             </label>
             <div className="relative">
-              <TextInput
+              <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className="pr-12"
                 required
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 pr-12 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 aria-pressed={showPassword}
-                className="absolute inset-y-0 right-0 flex items-center px-4 text-neutral-500 transition hover:text-neutral-700"
+                className="absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 transition hover:text-white"
               >
                 {showPassword ? (
                   <svg
@@ -117,18 +124,21 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          {error && <p className="text-sm text-neutral-800">{error}</p>}
+          {error && (
+            <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2.5 text-xs font-semibold text-rose-300">
+              {error}
+            </div>
+          )}
 
-          <Button
+          <button
             type="submit"
-            variant="solid"
             disabled={loading}
-            className="!text-white"
+            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold shadow-lg shadow-amber-500/20 transition active:scale-[0.98] disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
-          </Button>
+            {loading ? "Authenticating..." : "Sign In to Admin"}
+          </button>
         </form>
-      </SectionPanel>
+      </div>
     </main>
   );
 }

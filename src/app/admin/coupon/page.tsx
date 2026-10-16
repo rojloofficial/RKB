@@ -190,227 +190,238 @@ export default function CouponPage() {
   if (!me?.authenticated) return null;
 
   return (
-    <main className="min-h-screen bg-red-50 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 min-w-0">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-3xl font-black text-red-950">Coupon Management</h1>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Coupon <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Management</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Create discount promotional codes, percentages, and purchase caps.
+          </p>
+        </div>
+      </div>
 
-        {error && (
-          <div className="mt-4 rounded-lg bg-red-100 p-4 text-red-900">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs sm:text-sm font-semibold text-rose-300">
+          {error}
+        </div>
+      )}
 
-        {/* Add/Edit Coupon Form */}
-        <div className="mt-8 rounded-2xl border border-red-200 bg-white p-4 sm:p-6">
-          <h2 className="text-xl font-bold text-red-950">
-            {editingId ? "Edit Coupon" : "Add New Coupon"}
-          </h2>
+      {/* Add/Edit Coupon Form */}
+      <div className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md">
+        <h2 className="text-base sm:text-lg font-bold text-white">
+          {editingId ? "Edit Coupon" : "Add New Coupon"}
+        </h2>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  Coupon Code
-                </label>
-                <input
-                  type="text"
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  placeholder="e.g., SUMMER50"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  Discount Type
-                </label>
-                <select
-                  value={discountType}
-                  onChange={(e) => setDiscountType(e.target.value as "percentage" | "fixed")}
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 focus:border-red-500 focus:outline-none"
-                >
-                  <option value="percentage">Percentage (%)</option>
-                  <option value="fixed">Fixed Amount (₹)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  Discount Value
-                </label>
-                <input
-                  type="number"
-                  value={discountValue}
-                  onKeyDown={(e) => {
-                    if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                  }}
-                  onChange={(e) => setDiscountValue(e.target.value ? Number(e.target.value) : "")}
-                  placeholder={discountType === "percentage" ? "e.g., 10" : "e.g., 100"}
-                  min="0"
-                  step={discountType === "percentage" ? "0.5" : "1"}
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  Minimum Purchase (₹)
-                </label>
-                <input
-                  type="number"
-                  value={minPurchase}
-                  onKeyDown={(e) => {
-                    if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                  }}
-                  onChange={(e) => setMinPurchase(e.target.value ? Number(e.target.value) : "")}
-                  placeholder="Optional"
-                  min="0"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {discountType === "percentage" && (
-              <div>
-                <label className="block text-sm font-semibold text-red-950">
-                  Maximum Discount (₹)
-                </label>
-                <input
-                  type="number"
-                  value={maxDiscount}
-                  onKeyDown={(e) => {
-                    if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
-                  }}
-                  onChange={(e) => setMaxDiscount(e.target.value ? Number(e.target.value) : "")}
-                  placeholder="Optional"
-                  min="0"
-                  className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 placeholder-red-300 focus:border-red-500 focus:outline-none"
-                />
-              </div>
-            )}
-
+        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-semibold text-red-950">
-                Valid Till (Date)
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Coupon Code
               </label>
               <input
-                type="date"
-                value={validTill}
-                onChange={(e) => setValidTill(e.target.value)}
-                className="mt-2 w-full rounded-lg border border-red-200 px-4 py-2 text-red-950 focus:border-red-500 focus:outline-none"
+                type="text"
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="e.g., SUMMER50"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+                required
               />
             </div>
 
-            <div className="flex gap-2">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex-1 rounded-lg bg-red-600 px-6 py-2.5 font-semibold text-white hover:bg-red-700 disabled:opacity-50"
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Discount Type
+              </label>
+              <select
+                value={discountType}
+                onChange={(e) => setDiscountType(e.target.value as "percentage" | "fixed")}
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
               >
-                {submitting ? "Saving..." : editingId ? "Update Coupon" : "Add Coupon"}
-              </button>
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-lg bg-gray-200 px-6 py-2.5 font-semibold text-gray-900 hover:bg-gray-300"
-                >
-                  Cancel
-                </button>
-              )}
+                <option value="percentage">Percentage (%)</option>
+                <option value="fixed">Fixed Amount (₹)</option>
+              </select>
             </div>
-          </form>
-        </div>
+          </div>
 
-        {/* Coupons List */}
-        <div className="mt-8 space-y-4">
-          <h2 className="text-xl font-bold text-red-950">Existing Coupons</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Discount Value
+              </label>
+              <input
+                type="number"
+                value={discountValue}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                onChange={(e) => setDiscountValue(e.target.value ? Number(e.target.value) : "")}
+                placeholder={discountType === "percentage" ? "e.g., 10" : "e.g., 100"}
+                min="0"
+                step={discountType === "percentage" ? "0.5" : "1"}
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+                required
+              />
+            </div>
 
-          {loading ? (
-            <AdminCouponCardsSkeleton />
-          ) : coupons.length === 0 ? (
-            <p className="text-red-900">No coupons added yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {coupons.map((coupon) => (
-                <div
-                  key={coupon._id}
-                  className="rounded-2xl border border-red-200 bg-white p-4 sm:p-6"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                        <h3 className="text-lg font-bold text-red-950 break-all">
-                          {coupon.code}
-                        </h3>
-                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          coupon.active
-                            ? "bg-green-100 text-green-900"
-                            : "bg-red-100 text-red-900"
-                        }`}>
-                          {coupon.active ? "Active" : "Inactive"}
-                        </span>
-                      </div>
-                      <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-sm text-red-900">
-                        <div>
-                          <span className="font-semibold">Discount:</span>{" "}
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Minimum Purchase (₹)
+              </label>
+              <input
+                type="number"
+                value={minPurchase}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                onChange={(e) => setMinPurchase(e.target.value ? Number(e.target.value) : "")}
+                placeholder="Optional"
+                min="0"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+              />
+            </div>
+          </div>
+
+          {discountType === "percentage" && (
+            <div>
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Maximum Discount (₹)
+              </label>
+              <input
+                type="number"
+                value={maxDiscount}
+                onKeyDown={(e) => {
+                  if (["e", "E", "+", "-"].includes(e.key)) e.preventDefault();
+                }}
+                onChange={(e) => setMaxDiscount(e.target.value ? Number(e.target.value) : "")}
+                placeholder="Optional"
+                min="0"
+                className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+              />
+            </div>
+          )}
+
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Valid Till (Date)
+            </label>
+            <input
+              type="date"
+              value={validTill}
+              onChange={(e) => setValidTill(e.target.value)}
+              className="w-full rounded-xl border border-white/15 bg-slate-800/90 px-4 py-2.5 text-sm text-white focus:border-amber-500 focus:outline-hidden focus:ring-1 focus:ring-amber-500/40 transition"
+            />
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 px-6 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50 shadow-md transition cursor-pointer active:scale-[0.98]"
+            >
+              {submitting ? "Saving..." : editingId ? "Update Coupon" : "Add Coupon"}
+            </button>
+            {editingId && (
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 px-6 py-2.5 text-sm font-semibold text-slate-300 transition cursor-pointer"
+              >
+                Cancel
+              </button>
+            )}
+          </div>
+        </form>
+      </div>
+
+      {/* Coupons List */}
+      <div className="mt-8 space-y-4">
+        <h2 className="text-lg font-extrabold text-white">Active Coupons</h2>
+
+        {loading ? (
+          <AdminCouponCardsSkeleton />
+        ) : coupons.length === 0 ? (
+          <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-12 text-center text-slate-400 text-sm">
+            No coupons configured yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {coupons.map((coupon) => (
+              <div
+                key={coupon._id}
+                className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/30"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h3 className="font-mono text-lg font-black text-amber-400 tracking-wider break-all">
+                        {coupon.code}
+                      </h3>
+                      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                        coupon.active
+                          ? "bg-emerald-500/15 border border-emerald-500/30 text-emerald-400"
+                          : "bg-rose-500/15 border border-rose-500/30 text-rose-400"
+                      }`}>
+                        {coupon.active ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                    <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm text-slate-300">
+                      <div>
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Discount:</span>{" "}
+                        <span className="font-bold text-white">
                           {coupon.discountType === "percentage"
                             ? `${coupon.discountValue}%`
                             : `₹${coupon.discountValue}`}
-                        </div>
-                        {coupon.minPurchase && (
-                          <div>
-                            <span className="font-semibold">Min Purchase:</span> ₹
-                            {coupon.minPurchase}
-                          </div>
-                        )}
-                        {coupon.maxDiscount && (
-                          <div>
-                            <span className="font-semibold">Max Discount:</span> ₹
-                            {coupon.maxDiscount}
-                          </div>
-                        )}
-                        {coupon.validTill && (
-                          <div>
-                            <span className="font-semibold">Valid Till:</span>{" "}
-                            {formatDisplayDate(coupon.validTill)}
-                          </div>
-                        )}
+                        </span>
                       </div>
-                    </div>
-                    <div className="ml-0 sm:ml-4 flex flex-wrap gap-2 shrink-0">
-                      <EditDeleteButtons
-                        onEdit={() => handleEdit(coupon)}
-                        onDelete={() => handleDelete(coupon._id)}
-                        direction="row"
-                      />
-                      <button
-                        onClick={() => handleToggleActive(coupon)}
-                        disabled={togglingId === coupon._id}
-                        className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-                          coupon.active
-                            ? "bg-yellow-100 text-yellow-900 hover:bg-yellow-200"
-                            : "bg-green-100 text-green-900 hover:bg-green-200"
-                        } disabled:opacity-60`}
-                      >
-                        {togglingId === coupon._id
-                          ? "Updating..."
-                          : coupon.active
-                            ? "Deactivate"
-                            : "Activate"}
-                      </button>
+                      {coupon.minPurchase && (
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Min Purchase:</span> ₹
+                          {coupon.minPurchase}
+                        </div>
+                      )}
+                      {coupon.maxDiscount && (
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Max Discount:</span> ₹
+                          {coupon.maxDiscount}
+                        </div>
+                      )}
+                      {coupon.validTill && (
+                        <div>
+                          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Valid Till:</span>{" "}
+                          {formatDisplayDate(coupon.validTill)}
+                        </div>
+                      )}
                     </div>
                   </div>
+                  <div className="ml-0 sm:ml-4 flex flex-wrap gap-2 shrink-0 items-center">
+                    <EditDeleteButtons
+                      onEdit={() => handleEdit(coupon)}
+                      onDelete={() => handleDelete(coupon._id)}
+                      direction="row"
+                    />
+                    <button
+                      onClick={() => handleToggleActive(coupon)}
+                      disabled={togglingId === coupon._id}
+                      className={`rounded-xl px-4 py-2 text-xs font-bold transition cursor-pointer ${
+                        coupon.active
+                          ? "bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25"
+                          : "bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/25"
+                      } disabled:opacity-60`}
+                    >
+                      {togglingId === coupon._id
+                        ? "Updating..."
+                        : coupon.active
+                          ? "Deactivate"
+                          : "Activate"}
+                    </button>
+                  </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
