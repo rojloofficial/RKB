@@ -58,23 +58,23 @@ const sections = [
 
 export default function Terms() {
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
-      <SectionPanel>
-        <Eyebrow>Terms</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-neutral-900 sm:text-4xl">
-          Terms and Conditions
+    <main className="px-4 py-12 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+      <SectionPanel className="p-6 sm:p-10">
+        <Eyebrow>User Agreement</Eyebrow>
+        <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl tracking-tight">
+          Terms and <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Conditions</span>
         </h1>
-        <p className="mt-4 max-w-3xl text-lg leading-8 text-neutral-600">
+        <p className="mt-4 max-w-3xl text-base sm:text-lg leading-relaxed text-slate-300">
           Please read these terms carefully before using RKB.
         </p>
 
-        <div className="mt-8 space-y-6">
+        <div className="mt-10 space-y-8 divide-y divide-white/10">
           {sections.map((section) => (
-            <section key={section.title}>
-              <h2 className="text-xl font-black text-neutral-900">
+            <section key={section.title} className="pt-6 first:pt-0">
+              <h2 className="text-lg sm:text-xl font-bold text-amber-400">
                 {section.title}
               </h2>
-              <p className="mt-2 max-w-3xl text-base leading-7 text-neutral-600">
+              <p className="mt-2.5 max-w-3xl text-sm sm:text-base leading-relaxed text-slate-300">
                 {section.body}
               </p>
             </section>

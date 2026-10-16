@@ -8,8 +8,7 @@ import PlacesExplorer from "@/components/places/places-explorer";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Explore Places & Local Cities | RKB",

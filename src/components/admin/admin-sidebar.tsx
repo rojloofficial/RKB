@@ -154,24 +154,33 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
       {/* Mobile Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black bg-opacity-50 md:hidden"
+          className="fixed inset-0 z-30 bg-black/70 backdrop-blur-xs md:hidden"
           onClick={onClose}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 z-40 flex h-screen w-60 flex-none flex-col border-r border-neutral-800 bg-neutral-950 text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
+        className={`fixed left-0 top-0 z-40 flex h-screen w-64 flex-none flex-col border-r border-white/10 bg-slate-900/95 backdrop-blur-xl text-white transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header with Close Button */}
-        <div className="flex items-center justify-between px-5 py-5">
-          <div className="text-xl font-black text-white">Admin</div>
+        <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 text-slate-950 font-black shadow-md">
+              R
+            </div>
+            <div>
+              <div className="text-base font-extrabold text-white leading-tight">RKB Admin</div>
+              <div className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Management Console</div>
+            </div>
+          </div>
           <button
             type="button"
             onClick={onClose}
-            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-white hover:bg-neutral-800 transition-colors"
+            className="md:hidden flex items-center justify-center w-8 h-8 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            aria-label="Close menu"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -190,7 +199,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex flex-1 flex-col gap-1 px-3 overflow-y-auto scrollbar-hide">
+        <nav className="flex flex-1 flex-col gap-1 px-3 py-4 overflow-y-auto scrollbar-hide">
           {visibleItems.map((item) => {
             const active =
               item.href === "/admin"
@@ -201,10 +210,10 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                 key={item.href}
                 href={item.href}
                 onClick={onClose}
-                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold transition-all ${
                   active
-                    ? "bg-neutral-800 text-white font-semibold"
-                    : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                    ? "bg-gradient-to-r from-amber-500/20 to-orange-500/10 text-amber-300 font-extrabold border border-amber-500/30 shadow-md"
+                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
                 }`}
               >
                 <svg
@@ -217,21 +226,22 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
                   strokeWidth="2"
                   strokeLinecap="round"
                   strokeLinejoin="round"
+                  className={active ? "text-amber-400" : "text-slate-400"}
                 >
                   <path d={item.icon} />
                 </svg>
-                {item.name}
+                <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
         {/* Logout Button */}
-        <div className="border-t border-neutral-800 p-3">
+        <div className="border-t border-white/10 p-3">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-neutral-300 transition-colors hover:bg-neutral-800 hover:text-white"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -246,7 +256,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
             >
               <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
             </svg>
-            Logout
+            <span>Logout Session</span>
           </button>
         </div>
       </aside>

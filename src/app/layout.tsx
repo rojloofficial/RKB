@@ -1,15 +1,16 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Lora } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
 
-const classicFont = Lora({
+const sansFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-classic",
-  fallback: ["Georgia", "Cambria", "Times New Roman", "Times", "serif"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
+  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
 });
 
 export const viewport: Viewport = {
@@ -107,11 +108,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <html lang="en" className={`h-full antialiased ${classicFont.variable}`}>
+    <html lang="en" className={`h-full antialiased ${sansFont.variable}`}>
       <head>
         <JsonLd data={globalSchema} />
       </head>
-      <body className={`${classicFont.className} min-h-full bg-neutral-50 text-neutral-900`}>
+      <body className={`${sansFont.className} min-h-full bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900`}>
         {children}
       </body>
     </html>

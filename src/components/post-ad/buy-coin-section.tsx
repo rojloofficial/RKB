@@ -201,36 +201,36 @@ export default function BuyCoinSection() {
   };
 
   return (
-    <section className="rounded-2xl bg-white p-4 sm:p-6 w-full max-w-full overflow-hidden box-border">
+    <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-7 shadow-xl w-full max-w-full overflow-hidden box-border">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-neutral-200 pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/10 pb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black text-neutral-900">Buy Coins</h2>
-          <p className="mt-0.5 text-xs sm:text-sm text-neutral-600">
-            Coins let you promote your ads and unlock premium features. Choose a pack to get started.
+          <h2 className="text-xl sm:text-2xl font-black text-white">Recharge Coin Wallet</h2>
+          <p className="mt-0.5 text-xs sm:text-sm text-slate-400">
+            Coins empower you to boost your listings to the top VIP ranks across major Indian cities.
           </p>
         </div>
 
         <div className="flex items-center gap-3 text-xs shrink-0 pt-1 sm:pt-0">
-          <span className="font-medium text-neutral-600">
-            Available: <strong className="font-black text-neutral-900">{user?.coins ?? 0} coins</strong>
+          <span className="flex items-center gap-1.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-1 font-bold text-amber-300">
+            🪙 Balance: <strong>{user?.coins ?? 0} coins</strong>
           </span>
-          <span className="text-neutral-300">•</span>
+          <span className="text-white/20">•</span>
           <Link
             href="/post-ad/payment-history"
-            className="font-bold text-neutral-900 hover:text-neutral-700 hover:underline transition"
+            className="font-bold text-slate-300 hover:text-amber-400 transition"
           >
-            Transactions &rarr;
+            History &rarr;
           </Link>
         </div>
       </div>
 
       {/* 24h Cooldown Alert Banner */}
       {eligibility && !eligibility.allowed && (
-        <div className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 shadow-xs">
+        <div className="mt-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-200 shadow-sm">
           <div className="flex items-start gap-3">
-            <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="shrink-0 rounded-full bg-amber-500/20 p-2 text-amber-300">
+              <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -241,17 +241,17 @@ export default function BuyCoinSection() {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-                <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                  24-Hour Coin Purchase Limit Active
+                <h3 className="text-sm sm:text-base font-bold text-white">
+                  24-Hour Purchase Cooldown Active
                 </h3>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
-                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/20 px-2.5 py-0.5 text-xs font-black text-amber-300 w-fit">
+                  <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
                   Next purchase in: {liveCountdown || eligibility.remainingFormatted}
                 </span>
               </div>
-              <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
-                You can only buy coins once in 24 hours per email address. Your last purchase was recorded on{" "}
-                <strong className="font-semibold text-amber-950">
+              <p className="mt-1 text-xs text-amber-200/80 leading-relaxed">
+                To prevent duplicate orders, accounts may purchase coins once every 24 hours. Your last transaction was recorded on{" "}
+                <strong className="text-white">
                   {eligibility.lastPurchaseAt
                     ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
                         dateStyle: "medium",
@@ -259,7 +259,7 @@ export default function BuyCoinSection() {
                       })
                     : "recently"}
                 </strong>
-                . You will be able to buy coins again automatically once the countdown finishes.
+                . Packages will unlock automatically when the cooldown finishes.
               </p>
             </div>
           </div>
@@ -267,7 +267,7 @@ export default function BuyCoinSection() {
       )}
 
       {/* Grid of Coin Packages: 1 col on phone, 2-3 cols on tab, 5 cols on desktop */}
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
+      <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {packages.map((pkg) => {
           const hasDiscount =
             pkg.originalPrice && Number(pkg.originalPrice) > Number(pkg.price);
@@ -275,59 +275,59 @@ export default function BuyCoinSection() {
           return (
             <div
               key={pkg._id || `${pkg.coins}-${pkg.price}`}
-              className={`flex flex-col justify-between gap-3 rounded-2xl border p-4 sm:p-3.5 transition-all overflow-hidden w-full max-w-full box-border ${
+              className={`flex flex-col justify-between gap-4 rounded-2xl border p-4 sm:p-5 transition-all duration-300 overflow-hidden w-full max-w-full box-border ${
                 pkg.popular
-                  ? "border-neutral-900 bg-neutral-50 shadow-xs"
-                  : "border-neutral-200 bg-white hover:bg-neutral-50"
+                  ? "border-amber-500/50 bg-gradient-to-b from-amber-500/15 via-slate-950/80 to-slate-950 shadow-xl shadow-amber-500/5 ring-1 ring-amber-500/30"
+                  : "border-white/10 bg-slate-950/70 hover:border-amber-500/30 hover:bg-slate-950"
               }`}
             >
               <div className="min-w-0 w-full">
                 {/* Badges row: Popular / Label / Discount */}
-                <div className="flex items-center justify-between gap-1.5 mb-1.5 min-h-[22px] flex-wrap">
+                <div className="flex items-center justify-between gap-1.5 mb-2.5 min-h-[22px] flex-wrap">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     {pkg.popular && (
-                      <span className="inline-block rounded-full bg-neutral-950 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shrink-0">
+                      <span className="inline-block rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-xs">
                         Popular
                       </span>
                     )}
                     {pkg.label && (
-                      <span className="inline-block rounded-full bg-neutral-100 border border-neutral-200 px-2 py-0.5 text-[9px] font-semibold text-neutral-800 shrink-0">
+                      <span className="inline-block rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[9px] font-semibold text-slate-300">
                         {pkg.label}
                       </span>
                     )}
                   </div>
 
                   {pkg.discount && pkg.discount.trim() !== "—" && pkg.discount.trim() !== "-" && (
-                    <span className="inline-block rounded bg-neutral-100 border border-neutral-300 px-1.5 py-0.5 text-[9px] font-bold text-neutral-800 shrink-0">
+                    <span className="inline-block rounded border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-bold text-emerald-400">
                       {pkg.discount}
                     </span>
                   )}
                 </div>
 
                 {/* Coins Number */}
-                <p className="text-xl sm:text-lg lg:text-xl font-black text-neutral-900 leading-tight">
+                <p className="text-2xl sm:text-xl lg:text-2xl font-black text-white leading-tight">
                   {pkg.coins}
-                  <span className="ml-1.5 text-xs sm:text-[11px] font-semibold text-neutral-500">
+                  <span className="ml-1.5 text-xs font-semibold text-amber-400">
                     coins
                   </span>
                 </p>
 
                 {/* Breakdown / Bonus text (e.g. 28 + 2 Free) */}
                 {pkg.breakdown && (
-                  <p className="mt-1 text-xs sm:text-[10px] font-bold text-neutral-800 break-words">
+                  <p className="mt-1 text-xs font-bold text-amber-300 break-words">
                     {pkg.breakdown}
                   </p>
                 )}
 
                 {/* Price Display */}
-                <div className="mt-1.5 leading-snug">
+                <div className="mt-2 leading-snug">
                   {hasDiscount && (
-                    <span className="block text-xs sm:text-[10px] text-gray-400 line-through">
+                    <span className="block text-xs text-slate-500 line-through">
                       ₹{Number(pkg.originalPrice).toFixed(2)}
                     </span>
                   )}
-                  <span className="text-sm sm:text-xs lg:text-[13px] font-bold text-neutral-900 break-words">
-                    for ₹{Number(pkg.price).toFixed(2)}
+                  <span className="text-base sm:text-sm lg:text-base font-bold text-white break-words">
+                    ₹{Number(pkg.price).toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -335,11 +335,11 @@ export default function BuyCoinSection() {
               {/* Buy Button */}
               <Button
                 type="button"
-                variant={eligibility && !eligibility.allowed ? "outline" : "solid"}
+                variant={pkg.popular ? "solid" : "outline"}
                 size="sm"
-                className={`w-full py-1.5 text-xs font-bold mt-auto shrink-0 shadow-xs ${
+                className={`w-full py-2 text-xs font-bold mt-auto shrink-0 shadow-md ${
                   eligibility && !eligibility.allowed
-                    ? "!border-amber-400 !text-amber-900 bg-amber-50/80 hover:bg-amber-100"
+                    ? "!border-amber-500/30 !text-amber-300 bg-amber-500/10 opacity-70 cursor-not-allowed"
                     : "!text-white"
                 }`}
                 loading={navigatingPkgId === (pkg._id || String(pkg.coins))}
@@ -347,8 +347,8 @@ export default function BuyCoinSection() {
                 onClick={() => handleBuyClick(pkg)}
               >
                 {eligibility && !eligibility.allowed
-                  ? `Cooldown: ${liveCountdown || eligibility.remainingFormatted}`
-                  : "Buy"}
+                  ? `Wait: ${liveCountdown || eligibility.remainingFormatted}`
+                  : "Purchase Pack"}
               </Button>
             </div>
           );

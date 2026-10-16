@@ -3,24 +3,24 @@ import { NotFoundLogger, GoBackButton } from "@/components/not-found-logger";
 
 export default function NotFound() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-pink-50 via-rose-50/40 to-pink-50 text-red-950 px-6 py-16 sm:px-8 sm:py-20 lg:py-24">
+    <div className="flex flex-1 flex-col items-center justify-center bg-slate-950 text-slate-100 px-6 py-16 sm:px-8 sm:py-20 lg:py-24">
       <NotFoundLogger />
       <main className="flex w-full flex-col items-center justify-center">
         <div className="relative w-full max-w-xl">
           {/* Background Decorative Ambient Glow */}
-          <div className="absolute -top-10 -left-10 w-48 h-48 bg-rose-300/30 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-red-300/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -top-10 -left-10 w-48 h-48 bg-amber-500/15 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
 
           {/* Main Card */}
-          <div className="relative rounded-3xl border border-red-100 bg-white/95 p-8 sm:p-12 lg:p-14 text-center shadow-2xl backdrop-blur-md">
+          <div className="relative rounded-3xl border border-white/10 bg-slate-900/80 p-8 sm:p-12 lg:p-14 text-center shadow-2xl backdrop-blur-xl">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-full bg-rose-50 px-3.5 py-1.5 text-xs font-bold text-rose-700 border border-rose-200/80 mb-6">
-              <span className="h-2 w-2 rounded-full bg-rose-600 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/15 px-3.5 py-1.5 text-xs font-bold text-amber-300 border border-amber-500/30 mb-6">
+              <span className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
               ERROR 404 • PAGE NOT FOUND
             </div>
 
             {/* Icon Illustration */}
-            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-tr from-red-600 via-rose-600 to-pink-600 text-white shadow-xl shadow-red-600/25 ring-8 ring-rose-50">
+            <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-slate-950 shadow-xl shadow-amber-500/20 ring-8 ring-amber-500/10">
               <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
@@ -32,10 +32,10 @@ export default function NotFound() {
             </div>
 
             {/* Title & Description */}
-            <h1 className="text-3xl font-black tracking-tight text-red-950 sm:text-4xl">
-              Page Not Found
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">
+              Page Not <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Found</span>
             </h1>
-            <p className="mt-4 text-sm sm:text-base leading-relaxed text-red-900/75 max-w-md mx-auto">
+            <p className="mt-4 text-sm sm:text-base leading-relaxed text-slate-300 max-w-md mx-auto">
               The address you navigated to does not exist, has been removed, or was typed incorrectly. We have automatically logged this URL so our team can investigate and fix it.
             </p>
 
@@ -43,7 +43,7 @@ export default function NotFound() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-center">
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-600 to-rose-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-red-600/20 transition hover:from-red-700 hover:to-rose-700 active:scale-95"
+                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-sm font-bold text-slate-950 shadow-lg shadow-amber-500/20 transition hover:from-amber-400 hover:to-orange-500 active:scale-95"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -57,22 +57,6 @@ export default function NotFound() {
               </Link>
 
               <GoBackButton />
-            </div>
-
-            {/* Quick Helpful Links */}
-            <div className="mt-8 pt-6 border-t border-red-100 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-red-800/80">
-              <span className="text-red-900/50">Looking for something else?</span>
-              <Link href="/places" className="hover:text-red-600 hover:underline transition">
-                Browse Places
-              </Link>
-              <span className="text-red-200">•</span>
-              <Link href="/services" className="hover:text-red-600 hover:underline transition">
-                Services
-              </Link>
-              <span className="text-red-200">•</span>
-              <Link href="/contact" className="hover:text-red-600 hover:underline transition">
-                Contact Us
-              </Link>
             </div>
           </div>
         </div>

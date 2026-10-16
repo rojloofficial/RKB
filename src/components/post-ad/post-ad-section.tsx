@@ -206,10 +206,10 @@ export default function PostAdSection({
       {/* Free Ad Policy Banner */}
       {!editingId && (
         <div
-          className={`rounded-2xl border p-4 sm:p-5 shadow-xs ${
+          className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${
             hasExistingFreeAd
-              ? "border-amber-300 bg-amber-50 text-amber-950"
-              : "border-emerald-300 bg-emerald-50 text-emerald-950"
+              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
           }`}
         >
           <div className="flex items-start gap-3">
@@ -217,39 +217,40 @@ export default function PostAdSection({
               {hasExistingFreeAd ? "⚠️" : "🎁"}
             </span>
             <div className="space-y-1">
-              <h4 className="font-bold text-sm sm:text-base text-neutral-900">
+              <h4 className="font-bold text-sm sm:text-base text-white">
                 {hasExistingFreeAd
-                  ? "Free Ad Limit (1/1) Used"
-                  : "1 Free Ad Included"}
+                  ? "Free Ad Slot (1/1) Already In Use"
+                  : "1 Free Ad Included With Account"}
               </h4>
-              <p className="text-xs sm:text-sm leading-relaxed text-neutral-600">
+              <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
                 {hasExistingFreeAd
-                  ? `You already have an active free ad ${existingFreeAdTitle ? `("${existingFreeAdTitle}")` : ""} visible on the city page. You can post this additional ad, but you will need to promote it with a VIP package for it to be visible on the city page.`
-                  : "Every account can post 1 free ad! This ad will be published and immediately visible in city listings without requiring payment."}
+                  ? `You already have an active free listing ${existingFreeAdTitle ? `("${existingFreeAdTitle}")` : ""} visible on the city page. You can post this new listing, but you will need to activate a promotion package to display it on the city directory.`
+                  : "Every account can post 1 completely free ad! It will be published and immediately visible in city listings without any payment."}
               </p>
             </div>
           </div>
         </div>
       )}
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
-        <h3 className="text-lg font-bold text-neutral-900">Personal Information</h3>
+      {/* Personal Information */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white">Profile Basics</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
-              Name <span className="text-red-600">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Display Name <span className="text-amber-400">*</span>
             </label>
             <TextInput
               onlyLetters
               value={form.name}
               onChange={(e) => update("name", e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
-              placeholder="Your name"
+              placeholder="e.g. Priya Sharma"
               required
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               Age
             </label>
             <TextInput
@@ -257,43 +258,44 @@ export default function PostAdSection({
               maxLength={3}
               value={form.age ?? ""}
               onChange={(e) => update("age", e.target.value.replace(/\D/g, "").slice(0, 3))}
-              placeholder="Your age"
+              placeholder="e.g. 24"
             />
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            Title <span className="text-red-600">*</span>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            Advertisement Title <span className="text-amber-400">*</span>
           </label>
           <TextInput
             value={form.title ?? ""}
             onChange={(e) => update("title", e.target.value)}
-            placeholder="Give title"
+            placeholder="e.g. Premium Friendly Companion in South Delhi"
             required
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            About <span className="text-red-600">*</span>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            About Yourself <span className="text-amber-400">*</span>
           </label>
           <TextArea
             value={form.about}
             onChange={(e) => update("about", e.target.value)}
-            placeholder="write about your self"
+            placeholder="Describe your services, languages, experience, and what makes your listing special..."
             rows={4}
             required
           />
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
-        <h3 className="text-lg font-bold text-neutral-900">Location</h3>
+      {/* Location */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white">Location Details</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
-              State <span className="text-red-600">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              State <span className="text-amber-400">*</span>
             </label>
             {stateOptions.length > 0 ? (
               <Select
@@ -302,7 +304,7 @@ export default function PostAdSection({
                 onChange={(e) => handleStateChange(e.target.value)}
                 className={
                   isStateHighlighted
-                    ? "ring-2 ring-red-500 border-red-500 bg-pink-100/90 transition-all"
+                    ? "ring-2 ring-amber-500 border-amber-500 bg-amber-500/20 transition-all"
                     : undefined
                 }
                 required
@@ -325,8 +327,8 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
-              City <span className="text-red-600">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              City <span className="text-amber-400">*</span>
             </label>
             <div className="relative">
               {!form.state?.trim() && (
@@ -354,13 +356,13 @@ export default function PostAdSection({
                 }}
                 className={
                   !form.state?.trim()
-                    ? "cursor-not-allowed opacity-60 bg-pink-100/60"
+                    ? "cursor-not-allowed opacity-60"
                     : undefined
                 }
                 required
               >
                 {!form.state?.trim() ? (
-                  <option value="">Select a state first</option>
+                  <option value="">Select state first</option>
                 ) : (
                   <>
                     <option value="">Select a city</option>
@@ -381,7 +383,7 @@ export default function PostAdSection({
               </Select>
             </div>
             {showStatePrompt && !form.state?.trim() && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-red-600 animate-pulse">
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-amber-400 animate-pulse">
                 <span>⚠️</span>
                 <span>Please select a state first to view cities.</span>
               </p>
@@ -389,7 +391,7 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               Local Area (Optional)
             </label>
             {localAreaOptions.length > 0 ? (
@@ -397,7 +399,7 @@ export default function PostAdSection({
                 value={form.localArea ?? ""}
                 onChange={(e) => update("localArea", e.target.value)}
               >
-                <option value="">-- Optional: Select Local Area --</option>
+                <option value="">-- Select Local Area --</option>
                 {localAreaOptions.map((a) => (
                   <option key={a.slug} value={a.name}>
                     {a.name}
@@ -408,13 +410,13 @@ export default function PostAdSection({
               <TextInput
                 value={form.localArea ?? ""}
                 onChange={(e) => update("localArea", e.target.value)}
-                placeholder="Local area (optional)"
+                placeholder="Neighborhood / Area"
               />
             )}
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               Pin Code
             </label>
             <TextInput
@@ -422,49 +424,48 @@ export default function PostAdSection({
               maxLength={6}
               value={form.pincode ?? ""}
               onChange={(e) => update("pincode", e.target.value.replace(/\D/g, "").slice(0, 6))}
-              placeholder="Pin code"
+              placeholder="e.g. 110001"
             />
           </div>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
-        <h3 className="text-lg font-bold text-neutral-900">Services</h3>
+      {/* Services */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white">Category & Service Offering</h3>
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            Service <span className="text-red-600">*</span>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            Primary Category <span className="text-amber-400">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {SERVICES.map((svc) => (
-              <Button
+              <button
                 key={svc}
                 type="button"
-                variant="soft"
-                size="sm"
-                active={form.category === svc}
                 onClick={() => update("category", svc)}
-                className={form.category === svc ? "!text-white" : "!text-black"}
+                className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
+                  form.category === svc
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20"
+                    : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                }`}
               >
                 {svc}
-              </Button>
+              </button>
             ))}
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
             To Serve
           </label>
           <div className="flex flex-wrap gap-2">
             {TO_SERVE.map((svc) => {
               const selected = form.toServe?.includes(svc) ?? false;
               return (
-                <Button
+                <button
                   key={svc}
                   type="button"
-                  variant="soft"
-                  size="sm"
-                  active={selected}
                   onClick={() =>
                     update(
                       "toServe",
@@ -473,29 +474,30 @@ export default function PostAdSection({
                         : [...(form.toServe ?? []), svc]
                     )
                   }
-                  className={selected ? "!text-white" : "!text-black"}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    selected
+                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"
+                      : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                  }`}
                 >
-                  {svc}
-                </Button>
+                  {selected ? "✓ " : ""}{svc}
+                </button>
               );
             })}
           </div>
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
             Place Of Service
           </label>
           <div className="flex flex-wrap gap-2">
             {PLACE_OF_SERVICE.map((svc) => {
               const selected = form.placeOfService?.includes(svc) ?? false;
               return (
-                <Button
+                <button
                   key={svc}
                   type="button"
-                  variant="soft"
-                  size="sm"
-                  active={selected}
                   onClick={() =>
                     update(
                       "placeOfService",
@@ -504,35 +506,45 @@ export default function PostAdSection({
                         : [...(form.placeOfService ?? []), svc]
                     )
                   }
-                  className={selected ? "!text-white" : "!text-black"}
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    selected
+                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"
+                      : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                  }`}
                 >
-                  {svc}
-                </Button>
+                  {selected ? "📍 " : ""}{svc}
+                </button>
               );
             })}
           </div>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
-        <h3 className="text-lg font-bold text-neutral-900">Service Rates</h3>
-        <p className="text-sm text-neutral-600">
-          Enter rates in INR. These values are saved with the profile and shown
-          on the public profile page.
-        </p>
-        <div className="mt-3 overflow-x-auto rounded-2xl border border-neutral-200">
-          <table className="w-full min-w-[320px] text-left text-sm">
-            <thead className="bg-neutral-100 text-neutral-900">
+      {/* Service Rates */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-white">Service Rates</h3>
+            <p className="text-xs text-slate-400">
+              Enter transparent session prices in INR (₹) displayed on your public profile.
+            </p>
+          </div>
+          <span className="text-xs font-semibold text-amber-400">INR (₹)</span>
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
+          <table className="w-full min-w-[320px] text-left text-xs sm:text-sm">
+            <thead className="border-b border-white/10 bg-white/5 text-slate-300">
               <tr>
                 <th className="px-4 py-3 font-semibold">Duration</th>
-                <th className="px-4 py-3 font-semibold">Incall Rate</th>
-                <th className="px-4 py-3 font-semibold">Outcall Rate</th>
+                <th className="px-4 py-3 font-semibold">Incall Rate (₹)</th>
+                <th className="px-4 py-3 font-semibold">Outcall Rate (₹)</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-white/5">
               {(form.serviceRates ?? DEFAULT_SERVICE_RATES).map((rate, i) => (
-                <tr key={rate.duration} className="border-t border-neutral-200">
-                  <td className="px-4 py-3 font-medium text-neutral-900">
+                <tr key={rate.duration} className="transition hover:bg-white/[0.02]">
+                  <td className="px-4 py-3 font-medium text-white">
                     {rate.duration}
                   </td>
                   <td className="px-4 py-3">
@@ -540,7 +552,7 @@ export default function PostAdSection({
                       onlyNumbers
                       value={rate.incall}
                       onChange={(e) => updateRate(i, "incall", e.target.value.replace(/\D/g, ""))}
-                      className="!w-28"
+                      className="!w-28 text-center"
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -548,7 +560,7 @@ export default function PostAdSection({
                       onlyNumbers
                       value={rate.outcall}
                       onChange={(e) => updateRate(i, "outcall", e.target.value.replace(/\D/g, ""))}
-                      className="!w-28"
+                      className="!w-28 text-center"
                     />
                   </td>
                 </tr>
@@ -558,52 +570,59 @@ export default function PostAdSection({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
-        <h3 className="text-lg font-bold text-neutral-900">Contact</h3>
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            Phone <span className="text-red-600">*</span>
-          </label>
-          <TextInput
-            onlyNumbers
-            maxLength={15}
-            value={form.phone}
-            onChange={(e) => update("phone", e.target.value.replace(/\D/g, ""))}
-            placeholder="Contact number"
-            required
-          />
-        </div>
+      {/* Contact */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+        <h3 className="text-lg font-bold text-white">Direct Contact Channels</h3>
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Phone Number <span className="text-amber-400">*</span>
+            </label>
+            <TextInput
+              onlyNumbers
+              maxLength={15}
+              value={form.phone}
+              onChange={(e) => update("phone", e.target.value.replace(/\D/g, ""))}
+              placeholder="e.g. 9876543210"
+              required
+            />
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            WhatsApp <span className="text-red-600">*</span>
-          </label>
-          <TextInput
-            onlyNumbers
-            maxLength={15}
-            value={form.whatsapp}
-            onChange={(e) => update("whatsapp", e.target.value.replace(/\D/g, ""))}
-            placeholder="WhatsApp number"
-            required
-          />
-        </div>
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              WhatsApp Number <span className="text-amber-400">*</span>
+            </label>
+            <TextInput
+              onlyNumbers
+              maxLength={15}
+              value={form.whatsapp}
+              onChange={(e) => update("whatsapp", e.target.value.replace(/\D/g, ""))}
+              placeholder="e.g. 9876543210"
+              required
+            />
+          </div>
 
-        <div>
-          <label className="mb-1 block text-sm font-medium text-neutral-800">
-            Telegram
-          </label>
-          <TextInput
-            value={form.telegram}
-            onChange={(e) => update("telegram", e.target.value)}
-            placeholder="Telegram username (optional)"
-          />
+          <div>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Telegram Username (Optional)
+            </label>
+            <TextInput
+              value={form.telegram}
+              onChange={(e) => update("telegram", e.target.value)}
+              placeholder="e.g. @your_username"
+            />
+          </div>
         </div>
       </section>
 
-      <section className="space-y-4 rounded-2xl border border-neutral-300 bg-white p-4 sm:p-6 shadow-xs">
+      {/* Images */}
+      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-neutral-900">Images</h3>
-          <span className="text-xs font-semibold text-red-800">
+          <div>
+            <h3 className="text-lg font-bold text-white">Photos & Media</h3>
+            <p className="text-xs text-slate-400">High quality photos generate up to 5x more inquiries.</p>
+          </div>
+          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-bold text-amber-400">
             {form.images.length}/{MAX_IMAGES} uploaded
           </span>
         </div>
@@ -619,11 +638,11 @@ export default function PostAdSection({
 
         {/* Upload Loading Progress Bar */}
         {imageUploading && (
-          <div className="mt-3 space-y-2 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 shadow-sm">
-            <div className="flex items-center justify-between text-xs font-semibold text-neutral-900">
+          <div className="mt-3 space-y-2 rounded-2xl border border-amber-500/30 bg-slate-950/80 p-4 shadow-lg">
+            <div className="flex items-center justify-between text-xs font-semibold text-white">
               <span className="flex items-center gap-2">
                 <svg
-                  className="h-4 w-4 animate-spin text-neutral-800"
+                  className="h-4 w-4 animate-spin text-amber-400"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -647,47 +666,48 @@ export default function PostAdSection({
                   Uploading {uploadingCount > 1 ? `${uploadingCount} images` : "image"}...
                 </span>
               </span>
-              <span className="font-mono font-bold text-neutral-800">
+              <span className="font-mono font-bold text-amber-400">
                 {Math.round(uploadProgress)}%
               </span>
             </div>
 
             {/* Visual Progress Bar Track & Indicator */}
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
               <div
-                className="h-full rounded-full bg-neutral-900 transition-all duration-300 ease-out"
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-300 ease-out"
                 style={{ width: `${Math.max(6, Math.min(100, uploadProgress))}%` }}
               />
             </div>
 
-            <p className="text-[11px] text-neutral-600">
+            <p className="text-[11px] text-slate-400">
               {uploadProgress < 30
                 ? "Compressing image..."
                 : uploadProgress < 95
-                ? "Uploading to server..."
-                : "Finalizing upload..."}
+                ? "Uploading to storage..."
+                : "Finalizing..."}
             </p>
           </div>
         )}
+
         {form.images.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {form.images.map((src, i) => (
               <div
                 key={i}
-                className="relative h-40 overflow-hidden rounded-[1rem] bg-neutral-100 sm:h-48"
+                className="group relative h-40 overflow-hidden rounded-xl border border-white/10 bg-slate-950 sm:h-48"
               >
                 <Image
                   src={src}
                   alt={`Preview ${i + 1}`}
                   fill
-                  className="object-contain"
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
                   sizes="(min-width: 640px) 33vw, 50vw"
                 />
                 <button
                   type="button"
                   onClick={() => onRemoveImage(i)}
                   aria-label="Remove image"
-                  className="absolute right-1 top-1 rounded-full bg-neutral-900/80 px-2 py-1 text-xs font-semibold !text-white"
+                  className="absolute right-2 top-2 rounded-full bg-black/80 p-1.5 text-xs font-bold text-white transition hover:bg-red-600 cursor-pointer"
                 >
                   ✕
                 </button>
@@ -698,12 +718,12 @@ export default function PostAdSection({
       </section>
 
       {formError && (
-        <p className="text-sm font-medium text-neutral-800" role="alert">
-          {formError}
-        </p>
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs sm:text-sm font-semibold text-red-400" role="alert">
+          ⚠️ {formError}
+        </div>
       )}
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-900/40 p-4">
         <input
           type="checkbox"
           id="terms-accepted"
@@ -711,27 +731,34 @@ export default function PostAdSection({
           checked={form.termsAccepted ?? false}
           onChange={(e) => update("termsAccepted", e.target.checked)}
           required
-          className="mt-1 h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
+          className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500"
         />
-        <label htmlFor="terms-accepted" className="text-sm text-neutral-700">
-          I agree to the{" "}
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-neutral-900">
+        <label htmlFor="terms-accepted" className="text-xs sm:text-sm text-slate-300">
+          I confirm that all information provided is accurate and agree to the{" "}
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline hover:text-amber-300">
             Terms and Conditions
           </a>{" "}
-          <span className="text-neutral-900 font-bold">*</span>
+          <span className="text-amber-400 font-bold">*</span>
         </label>
       </div>
 
-      <Button type="submit" variant="solid" fullWidth disabled={formLoading || imageUploading} className="!text-white">
+      <Button
+        type="submit"
+        variant="solid"
+        fullWidth
+        size="lg"
+        disabled={formLoading || imageUploading}
+        className="!text-white font-black shadow-lg shadow-orange-500/20"
+      >
         {formLoading
           ? "Saving..."
           : imageUploading
           ? "Uploading Images..."
           : editingId
-          ? "Update Ad"
+          ? "Update Advertisement"
           : hasExistingFreeAd
           ? "Create Ad & Choose Promotion →"
-          : "Post Free Ad"}
+          : "Publish Free Advertisement"}
       </Button>
     </form>
   );

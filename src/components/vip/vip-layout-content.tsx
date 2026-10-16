@@ -19,7 +19,7 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
   const isAuthenticated = me?.authenticated;
 
   if (isAuthPage) {
-    return <div className="min-h-screen bg-pink-50 text-red-950">{children}</div>;
+    return <div className="min-h-screen bg-slate-950 text-slate-100">{children}</div>;
   }
 
   if (!isAuthenticated) {
@@ -27,7 +27,7 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-neutral-50 text-neutral-900">
+    <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
       {/* Desktop Sidebar - visible on md+ screens when authenticated */}
       {isAuthenticated && (
         <div className="hidden md:flex">
@@ -43,20 +43,25 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-slate-950">
         {/* Mobile Header with Hamburger */}
         {isAuthenticated && (
-          <header className="md:hidden flex items-center justify-between h-16 bg-neutral-950 text-white px-4 border-b border-neutral-800 z-20">
-            <div className="text-lg font-bold">VIP Panel</div>
+          <header className="md:hidden flex items-center justify-between h-16 bg-slate-900/90 backdrop-blur-md text-white px-4 border-b border-white/10 z-20">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black tracking-tight text-white">RKB</span>
+              <span className="text-xs font-bold text-amber-400 bg-amber-500/15 border border-amber-500/30 rounded-md px-2 py-0.5">
+                VIP Portal
+              </span>
+            </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg hover:bg-neutral-800 transition-colors"
+              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition"
               aria-label="Toggle menu"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
+                width="22"
+                height="22"
                 viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
@@ -71,7 +76,7 @@ export default function VipLayoutContent({ children }: VipLayoutContentProps) {
         )}
 
         {/* Page Content */}
-        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
           {children}
         </div>
       </div>

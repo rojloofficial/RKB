@@ -3,7 +3,6 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Button from "@/components/ui/button";
 import { PrefixTrie } from "@/lib/trie";
 
 const POPULAR_SEARCH_TARGETS = [
@@ -102,6 +101,8 @@ const POPULAR_SEARCH_TARGETS = [
   "Massage & Spa",
 ];
 
+const QUICK_TAGS = ["Mumbai", "Delhi", "Bengaluru", "Escort Services", "Massage & Spa", "Pune"];
+
 export default function SearchBar() {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -109,12 +110,11 @@ export default function SearchBar() {
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Initialize and memoize PrefixTrie in O(N * L) once
+  // Initialize and memoize PrefixTrie
   const searchTrie = useMemo(() => {
     const trie = new PrefixTrie<string>();
     for (const target of POPULAR_SEARCH_TARGETS) {
       trie.insert(target, target);
-      // Also index individual words for multi-word queries
       const parts = target.split(/\s+/);
       if (parts.length > 1) {
         for (const part of parts) {
@@ -125,16 +125,13 @@ export default function SearchBar() {
     return trie;
   }, []);
 
-  // O(L + K) Trie prefix search
   const suggestions = useMemo(() => {
     const q = query.trim();
     if (q.length < 1) return [];
-    const results = searchTrie.searchPrefix(q, 6);
-    // Deduplicate suggestions
+    const results = searchTrie.searchPrefix(q, 7);
     return Array.from(new Set(results));
   }, [query, searchTrie]);
 
-  // Handle outside click to close dropdown
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -168,51 +165,104 @@ export default function SearchBar() {
   }
 
   return (
-    <div ref={containerRef} className="relative mx-auto mt-7 w-full max-w-xl">
+    <div ref={containerRef} className="relative mx-auto mt-8 w-full max-w-2xl">
       <form
         action="/places"
         method="get"
-        className="flex w-full flex-col gap-3 sm:flex-row sm:items-center"
+        className="relative flex items-center rounded-2xl bg-white p-2 shadow-xl shadow-slate-900/10 border border-slate-200/90 transition-all focus-within:border-amber-500 focus-within:ring-4 focus-within:ring-amber-500/15"
       >
-        <div className="relative flex-1">
-          <input
-            name="q"
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setIsOpen(true);
-              setSelectedIndex(-1);
-            }}
-            onFocus={() => {
-              if (query.trim().length >= 1) setIsOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            autoComplete="off"
-            placeholder="Search services or places..."
-            className="w-full min-w-0 rounded-full border border-neutral-300 bg-white px-5 py-3 text-center text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 sm:text-left transition"
-          />
+        <div className="pl-3.5 pr-2 text-slate-400">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-amber-500"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
         </div>
-        <Button type="submit" variant="solid" className="w-full sm:w-auto shrink-0 !text-white">
+
+        <input
+          name="q"
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setIsOpen(true);
+            setSelectedIndex(-1);
+          }}
+          onFocus={() => {
+            if (query.trim().length >= 1) setIsOpen(true);
+          }}
+          onKeyDown={handleKeyDown}
+          autoComplete="off"
+          placeholder="Search city, area, or service (e.g. Mumbai, Andheri, Spa)..."
+          className="w-full min-w-0 bg-transparent px-2 py-2 text-sm sm:text-base text-slate-900 outline-none placeholder:text-slate-400 font-medium"
+        />
+
+        {query && (
+          <button
+            type="button"
+            onClick={() => {
+              setQuery("");
+              setIsOpen(false);
+            }}
+            className="mr-2 text-slate-400 hover:text-slate-600 p-1 text-xs"
+          >
+            ✕
+          </button>
+        )}
+
+        <button
+          type="submit"
+          className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 sm:px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-orange-600/20 hover:from-amber-600 hover:to-orange-700 active:scale-95 transition-all shrink-0 cursor-pointer"
+        >
           Search
-        </Button>
+        </button>
       </form>
 
-      {/* Instant Prefix-Trie Auto-complete dropdown */}
+      {/* Suggested Quick Tags */}
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-1.5 text-xs">
+        <span className="text-slate-400 font-semibold mr-1">Trending:</span>
+        {QUICK_TAGS.map((tag) => (
+          <Link
+            key={tag}
+            href={`/places?q=${encodeURIComponent(tag)}`}
+            className="rounded-full bg-slate-100/90 border border-slate-200/80 px-2.5 py-1 text-slate-700 font-medium hover:bg-amber-50 hover:text-amber-800 hover:border-amber-200 transition"
+          >
+            {tag}
+          </Link>
+        ))}
+      </div>
+
+      {/* Instant Prefix-Trie Dropdown */}
       {isOpen && suggestions.length > 0 && (
-        <ul className="absolute left-0 right-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-neutral-200 bg-white py-1.5 text-left shadow-lg">
+        <ul className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white/95 py-2 text-left shadow-2xl backdrop-blur-md">
+          <div className="px-4 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            Suggested Destinations & Services
+          </div>
           {suggestions.map((suggestion, idx) => (
             <li key={suggestion}>
               <Link
                 href={`/places?q=${encodeURIComponent(suggestion)}`}
                 onClick={() => setIsOpen(false)}
-                className={`flex items-center gap-2.5 px-5 py-2.5 text-sm transition-colors ${
+                className={`flex items-center justify-between px-4 py-2.5 text-sm transition-colors ${
                   idx === selectedIndex
-                    ? "bg-neutral-100 text-neutral-950 font-semibold"
-                    : "text-neutral-700 hover:bg-neutral-50 hover:text-neutral-950"
+                    ? "bg-amber-50 text-amber-900 font-semibold"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <span className="text-neutral-400 text-xs">📍</span>
-                <span>{suggestion}</span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-amber-500 text-xs">📍</span>
+                  <span>{suggestion}</span>
+                </div>
+                <span className="text-slate-400 text-xs font-normal">Explore →</span>
               </Link>
             </li>
           ))}

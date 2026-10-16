@@ -11,21 +11,31 @@ import { getAdminContext, canAccess } from "@/lib/admin-access";
 import { uploadImageToCloudinary } from "@/lib/cloudinary";
 
 export async function GET(request: NextRequest) {
-  const ctx = await getAdminContext(request);
-  if (!ctx || !canAccess(ctx, "upi")) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
-  try {
-    if (request.nextUrl.searchParams.get("mode") === "payment") {
+  // Public payment checkout mode
+  if (request.nextUrl.searchParams.get("mode") === "payment") {
+    try {
       const upi = await getNextUPIForPayment();
       return NextResponse.json({
         upi,
         upis: upi ? [upi] : [],
         success: true,
       });
+    } catch (err) {
+      console.error("Failed to get payment UPI:", err);
+      return NextResponse.json(
+        { error: "Failed to retrieve payment method." },
+        { status: 500 }
+      );
     }
+  }
 
+  // Admin access mode
+  const ctx = await getAdminContext(request);
+  if (!ctx || !canAccess(ctx, "upi")) {
+    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
+  }
+
+  try {
     const upis = await listUPIs();
 
     return NextResponse.json({

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Button from "@/components/ui/button";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { Card, SectionPanel } from "@/components/ui/card";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { serviceCards } from "@/lib/services";
@@ -30,6 +31,11 @@ export const metadata: Metadata = {
 };
 
 export default function Services() {
+  const breadcrumbItems = [
+    { label: "Home", href: "/" },
+    { label: "Services" },
+  ];
+
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -50,64 +56,84 @@ export default function Services() {
   };
 
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
+    <main className="px-4 py-8 sm:py-12 sm:px-6 lg:px-8">
       <JsonLd data={breadcrumbSchema} />
       <SectionPanel>
-        <Eyebrow>Services</Eyebrow>
-        <h1 className="mt-3 text-3xl font-black text-neutral-900 sm:text-4xl">
-          Our Services
-        </h1>
-        <p className="mt-4 max-w-2xl text-lg leading-8 text-neutral-600">
-          Explore the three main service categories on RKB. Each section below
-          shows what the service is about, with the image and text arranged to
-          keep the page easy to scan.
-        </p>
+        <Breadcrumbs items={breadcrumbItems} />
 
-        <div className="mt-10 space-y-8">
+        <div className="max-w-3xl">
+          <Eyebrow>Classified Categories</Eyebrow>
+          <h1 className="mt-3 text-3xl font-extrabold text-slate-900 tracking-tight sm:text-4xl lg:text-5xl">
+            Our Services & Categories
+          </h1>
+          <p className="mt-4 text-base sm:text-lg leading-relaxed text-slate-600">
+            Explore the main service categories available across India on RKB. Find verified local companions, wellness professionals, and relaxation experts in your city.
+          </p>
+        </div>
+
+        <div className="mt-12 space-y-10">
           {serviceCards.map((item, index) => {
-            const reverseLayout = index === 1;
+            const isReversed = index % 2 === 1;
 
             return (
               <Card
                 key={item.title}
-                className="overflow-hidden p-0 shadow-sm"
+                className="overflow-hidden p-0 border border-slate-200/90 shadow-sm card-hover-lift"
               >
-                <div
-                  className={`grid items-center gap-0 lg:grid-cols-2 ${
-                    reverseLayout ? "lg:[direction:rtl]" : ""
-                  }`}
-                >
+                <div className={`grid items-stretch lg:grid-cols-12`}>
+                  {/* Text Information Column */}
                   <div
-                    className={`order-2 p-6 sm:p-8 lg:p-10 ${
-                      reverseLayout ? "lg:order-2 lg:[direction:ltr]" : "lg:order-1"
+                    className={`p-6 sm:p-10 lg:col-span-7 flex flex-col justify-between ${
+                      isReversed ? "lg:order-2" : "lg:order-1"
                     }`}
                   >
-                    <Eyebrow className="tracking-[0.25em]">{item.title}</Eyebrow>
-                    <h2 className="mt-3 text-2xl font-black text-neutral-900 sm:text-3xl">
-                      {item.title}
-                    </h2>
-                    <p className="mt-4 text-base leading-7 text-neutral-600">
-                      {item.description}
-                    </p>
-                    <p className="mt-4 text-sm leading-7 text-neutral-500">
-                      {index === 0 &&
-                        "Call girls offer companionship and personalized meetups in your city."}
-                      {index === 1 &&
-                        "Male escort services are available for companionship and private meetups."}
-                      {index === 2 &&
-                        "Massage services are designed for relaxation, stress relief, and overall wellness through professional body care."}
-                    </p>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-bold text-amber-800">
+                          Category 0{index + 1}
+                        </span>
+                        <span className="text-xs text-slate-400">• Verified Listings</span>
+                      </div>
 
-                    <div className="mt-6">
-                      <Button href="/post-ad/new" variant="soft">
-                        Post a Service
+                      <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+                        {item.title}
+                      </h2>
+
+                      <p className="mt-4 text-base leading-relaxed text-slate-700">
+                        {item.description}
+                      </p>
+
+                      <p className="mt-3 text-sm leading-relaxed text-slate-500">
+                        {index === 0 &&
+                          "Call girls offer companionship and personalized meetups in your city with transparent incall and outcall arrangements."}
+                        {index === 1 &&
+                          "Male escort services are available for companionship, events, and private meetups tailored to your preferences."}
+                        {index === 2 &&
+                          "Massage services are designed for relaxation, stress relief, and overall wellness through professional body care."}
+                      </p>
+
+                      <div className="mt-6 flex flex-wrap gap-2 text-xs">
+                        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700 font-medium">✓ Phone Call</span>
+                        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700 font-medium">✓ WhatsApp Chat</span>
+                        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700 font-medium">✓ Telegram</span>
+                        <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-slate-700 font-medium">✓ City-wide Coverage</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap items-center gap-3">
+                      <Button href="/post-ad/new" variant="gradient">
+                        Post a {item.title} Ad
+                      </Button>
+                      <Button href="/places" variant="outline">
+                        Browse Listings in Cities
                       </Button>
                     </div>
                   </div>
 
+                  {/* Image Column */}
                   <div
-                    className={`relative order-1 min-h-[20rem] lg:min-h-[28rem] ${
-                      reverseLayout ? "lg:order-1" : "lg:order-2"
+                    className={`relative min-h-[22rem] lg:min-h-[auto] lg:col-span-5 bg-slate-100 overflow-hidden ${
+                      isReversed ? "lg:order-1" : "lg:order-2"
                     }`}
                   >
                     <Image
@@ -115,8 +141,9 @@ export default function Services() {
                       alt={item.title}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
+                      sizes="(max-width: 1024px) 100vw, 40vw"
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent lg:hidden" />
                   </div>
                 </div>
               </Card>

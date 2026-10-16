@@ -4,7 +4,7 @@ type ActionButtonProps = {
   children: ReactNode;
   type?: "button" | "submit";
   onClick?: () => void;
-  variant?: "edit" | "delete" | "default";
+  variant?: "edit" | "delete" | "default" | "success";
   disabled?: boolean;
   className?: string;
 };
@@ -17,12 +17,14 @@ export function ActionButton({
   disabled = false,
   className = "",
 }: ActionButtonProps) {
-  const baseClasses = "rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60";
+  const baseClasses =
+    "inline-flex items-center justify-center gap-1.5 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-2xs";
 
   const variantClasses = {
-    edit: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 border border-neutral-300",
-    delete: "bg-neutral-900 text-white hover:bg-neutral-800",
-    default: "bg-neutral-100 text-neutral-900 hover:bg-neutral-200 border border-neutral-300",
+    edit: "bg-slate-100 text-slate-800 hover:bg-slate-200 border border-slate-300 hover:border-slate-400",
+    delete: "bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 hover:border-rose-300",
+    default: "bg-white text-slate-800 hover:bg-slate-50 border border-slate-200 hover:border-slate-300",
+    success: "bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200",
   };
 
   return (
@@ -57,7 +59,7 @@ export function EditDeleteButtons({
   direction = "row",
 }: EditDeleteButtonsProps) {
   return (
-    <div className={`flex ${direction === "column" ? "flex-col" : "gap-2"}`}>
+    <div className={`flex items-center ${direction === "column" ? "flex-col gap-2" : "gap-2"}`}>
       {onEdit && (
         <ActionButton variant="edit" onClick={onEdit} disabled={editDisabled}>
           {editLabel}

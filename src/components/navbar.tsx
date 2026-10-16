@@ -10,7 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 function ProfileIcon({ name }: { name?: string }) {
   const initial = name?.trim()?.charAt(0)?.toUpperCase();
   return (
-    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-black text-white">
+    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-tr from-amber-500 to-amber-600 text-xs font-black text-white shadow-xs">
       {initial || <PersonIcon />}
     </span>
   );
@@ -20,12 +20,12 @@ function PersonIcon() {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
+      width="14"
+      height="14"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2"
+      strokeWidth="2.5"
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -81,34 +81,36 @@ export default function NavBar() {
   }, [isLoading, isLoggedIn, refreshAuth]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-neutral-800 bg-neutral-950 text-white shadow-sm">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-2 sm:gap-4 md:gap-6 px-3 sm:px-4 py-2.5 sm:py-3">
+    <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/90 text-white backdrop-blur-md shadow-lg shadow-black/10">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        {/* Brand Logo & Name */}
         <Link
           href="/"
-          className="flex items-center gap-2.5 text-xl font-black text-white shrink-0 hover:opacity-90 transition"
+          className="flex items-center gap-2.5 text-xl font-extrabold text-white shrink-0 hover:opacity-95 transition-opacity group"
         >
-          <Image
-            src="/rojlo.png"
-            alt="RKB Logo"
-            width={36}
-            height={36}
-            className="h-9 w-9 rounded-full object-cover shadow-sm ring-1 ring-white/20"
-            priority
-          />
-          <span className="tracking-tight">RKB</span>
+          <div className="relative">
+            <Image
+              src="/rojlo.png"
+              alt="RKB Logo"
+              width={38}
+              height={38}
+              className="h-9 w-9 rounded-full object-cover shadow-md ring-2 ring-amber-500/30 group-hover:ring-amber-500/70 transition-all"
+              priority
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
+          </div>
+          <div className="flex flex-col">
+            <span className="tracking-tight font-black text-lg bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
+              RKB
+            </span>
+            <span className="text-[10px] tracking-widest uppercase font-bold text-amber-400 -mt-1 hidden sm:block">
+              City Classifieds
+            </span>
+          </div>
         </Link>
 
-        <nav className="ml-auto hidden items-center gap-1.5 md:gap-3 sm:flex">
-          {isLoggedIn && (
-            <Link
-              href="/post-ad/buy-coin"
-              className="flex items-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900 px-2.5 py-1 md:px-3 md:py-1.5 text-xs md:text-sm font-bold text-white shadow-sm transition-colors hover:bg-neutral-800 shrink-0"
-            >
-              <span aria-hidden="true">🪙</span>
-              <span>{Number(user?.coins ?? 0)}</span>
-            </Link>
-          )}
-
+        {/* Desktop Navigation Links */}
+        <nav className="ml-auto hidden items-center gap-2 lg:gap-3 sm:flex">
           {navLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -116,10 +118,10 @@ export default function NavBar() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`rounded-full px-2.5 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors shrink-0 ${
+                className={`rounded-lg px-3 py-1.5 text-xs md:text-sm font-medium transition-all ${
                   active
-                    ? "bg-neutral-800 text-white font-semibold"
-                    : "text-neutral-300 hover:bg-neutral-850 hover:text-white hover:bg-neutral-800"
+                    ? "bg-slate-800/90 text-amber-400 font-semibold shadow-xs"
+                    : "text-slate-300 hover:bg-slate-800/60 hover:text-white"
                 }`}
               >
                 {link.name}
@@ -127,32 +129,54 @@ export default function NavBar() {
             );
           })}
 
+          {/* User Coin Balance Pill */}
+          {isLoggedIn && (
+            <Link
+              href="/post-ad/buy-coin"
+              className="flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-950/30 px-3 py-1.5 text-xs font-bold text-amber-300 shadow-xs transition-all hover:bg-amber-900/40 hover:border-amber-400"
+            >
+              <span className="text-sm">🪙</span>
+              <span>{Number(user?.coins ?? 0)}</span>
+              <span className="text-[10px] uppercase font-semibold text-amber-400/80 ml-0.5">+Add</span>
+            </Link>
+          )}
+
+          {/* User Profile or Login CTA */}
           {isLoggedIn ? (
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex items-center gap-2 rounded-full bg-neutral-800 px-2 py-1 md:px-2.5 md:py-1.5 text-xs md:text-sm font-bold text-white transition-colors hover:bg-neutral-700 shrink-0"
+              className="flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900 px-3 py-1 text-xs md:text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:border-slate-600"
             >
               <ProfileIcon name={user?.name} />
-              <span className="hidden lg:inline">{user?.name}</span>
+              <span className="hidden md:inline max-w-[120px] truncate">{user?.name || "Dashboard"}</span>
             </Link>
           ) : (
             <Link
               href="/login"
-              className="rounded-full bg-white px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-extrabold !text-black shadow-sm transition-colors hover:bg-neutral-200 shrink-0"
+              className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-2 text-xs md:text-sm font-bold text-white shadow-md shadow-orange-600/20 transition-all hover:from-amber-600 hover:to-orange-700 active:scale-95"
             >
               Login
             </Link>
           )}
+
+          {/* Post Ad Button */}
+          <Link
+            href="/post-ad/new"
+            className="rounded-xl bg-white text-slate-900 px-4 py-2 text-xs md:text-sm font-extrabold shadow-sm transition-all hover:bg-slate-100 active:scale-95 border border-white"
+          >
+            + Post Ad
+          </Link>
         </nav>
 
+        {/* Mobile Viewport Header Controls */}
         <div className="ml-auto flex items-center gap-2 sm:hidden">
           {isLoggedIn && (
             <Link
               href="/post-ad/buy-coin"
-              className="flex items-center gap-1 rounded-full border border-neutral-700 bg-neutral-900 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition-colors hover:bg-neutral-800"
+              className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-950/40 px-2.5 py-1 text-xs font-bold text-amber-300"
             >
-              <span aria-hidden="true">🪙</span>
+              <span>🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
             </Link>
           )}
@@ -161,7 +185,7 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-800 text-white transition-colors hover:bg-neutral-700"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-white"
             >
               <ProfileIcon name={user?.name} />
             </Link>
@@ -169,7 +193,7 @@ export default function NavBar() {
             <Link
               href="/login"
               aria-label="Login"
-              className="rounded-full bg-white px-3 py-1.5 text-xs font-extrabold !text-black transition-colors hover:bg-neutral-200"
+              className="rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white shadow-xs"
             >
               Login
             </Link>
@@ -178,30 +202,28 @@ export default function NavBar() {
           <button
             type="button"
             aria-label="Toggle menu"
-            className="rounded-full p-2 text-white hover:bg-neutral-800 transition-colors"
+            className="rounded-lg p-2 text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
             onClick={() => setMenuOpen((v) => !v)}
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <line x1="3" y1="12" x2="21" y2="12" />
-              <line x1="3" y1="18" x2="21" y2="18" />
-            </svg>
+            {menuOpen ? (
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="3" y1="6" x2="21" y2="6" />
+                <line x1="3" y1="12" x2="21" y2="12" />
+                <line x1="3" y1="18" x2="21" y2="18" />
+              </svg>
+            )}
           </button>
         </div>
       </div>
 
+      {/* Mobile Drawer Menu */}
       {menuOpen && (
-        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1 border-b border-neutral-800 bg-neutral-950 px-4 py-3 shadow-xl sm:hidden">
+        <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1.5 border-b border-slate-800 bg-slate-950/98 px-4 py-4 shadow-2xl backdrop-blur-xl sm:hidden animate-in fade-in slide-in-from-top-2 duration-150">
           {navLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
@@ -210,16 +232,27 @@ export default function NavBar() {
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className={`rounded-xl px-4 py-2.5 text-sm font-medium transition-colors ${
+                className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                   active
-                    ? "bg-neutral-800 text-white font-semibold"
-                    : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                    ? "bg-slate-800 text-amber-400"
+                    : "text-slate-300 hover:bg-slate-900 hover:text-white"
                 }`}
               >
-                {link.name}
+                <span>{link.name}</span>
+                <span className="text-slate-500">→</span>
               </Link>
             );
           })}
+
+          <div className="mt-2 pt-2 border-t border-slate-800/80 flex flex-col gap-2">
+            <Link
+              href="/post-ad/new"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-orange-600/20"
+            >
+              <span>+ Post a New Ad</span>
+            </Link>
+          </div>
         </nav>
       )}
     </header>

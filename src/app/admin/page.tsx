@@ -110,21 +110,37 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <main className="p-4 sm:p-6 lg:p-10 min-w-0">
-      <h1 className="text-3xl font-black text-red-950">Dashboard</h1>
-      <p className="mt-2 text-red-900">Overview of your platform and payment activity.</p>
+    <main className="p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-white/10 pb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+            Admin <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400">Dashboard</span>
+          </h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            Real-time overview of your platform listings, jurisdiction, and payment activity.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-3 py-1 text-xs font-bold text-emerald-400">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            System Live
+          </span>
+        </div>
+      </div>
 
       <div className="mt-8">
-        <h2 className="mb-4 text-xl font-bold text-red-950">Platform Summary</h2>
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <span>Platform Directory</span>
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {baseCards.map((card) => (
             <Link
               key={card.label}
               href={card.href}
-              className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
+              className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/40 hover:bg-slate-900/90 hover:scale-[1.02]"
             >
-              <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <div className="mt-2 text-3xl sm:text-4xl font-black text-red-950 break-words">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{card.label}</p>
+              <div className="mt-2 text-3xl sm:text-4xl font-black text-white break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
               </div>
             </Link>
@@ -133,15 +149,17 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mt-10">
-        <h2 className="mb-4 text-xl font-bold text-red-950">Payment Summary</h2>
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <span>Financials &amp; Payments</span>
+        </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {paymentCards.map((card) => (
             <div
               key={card.label}
-              className="rounded-2xl border border-red-100 bg-white p-5 sm:p-6 shadow-sm transition hover:border-red-200"
+              className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 sm:p-6 shadow-xl backdrop-blur-md transition-all hover:border-amber-500/30"
             >
-              <p className="text-sm font-medium text-red-900">{card.label}</p>
-              <div className="mt-3 text-2xl sm:text-3xl font-black text-red-950 break-words">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-400">{card.label}</p>
+              <div className="mt-3 text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-400 break-words">
                 {loading ? <AdminStatSkeleton /> : card.value}
               </div>
             </div>

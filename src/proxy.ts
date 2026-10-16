@@ -60,7 +60,11 @@ export function proxy(request: NextRequest) {
     pathname === "/admin/login" || pathname.startsWith("/admin/login/");
   const isLoginApi =
     pathname === "/api/admin/login" || pathname.startsWith("/api/admin/login/");
-  if (isLoginPage || isLoginApi) {
+  const isPaymentUpiApi =
+    pathname === "/api/admin/upi" &&
+    request.nextUrl.searchParams.get("mode") === "payment";
+
+  if (isLoginPage || isLoginApi || isPaymentUpiApi) {
     return NextResponse.next();
   }
 

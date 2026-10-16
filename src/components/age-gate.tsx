@@ -1,21 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 const STORAGE_KEY = "rojlo_age_verified";
 const DECLINED_KEY = "rojlo_age_declined";
 
 export default function AgeGate() {
   const pathname = usePathname();
-  const router = useRouter();
-  // Default to hidden so the server render is identical to a fresh client
-  // render (avoids a hydration mismatch that would disable the buttons).
   const [show, setShow] = useState(false);
+  const [isDeclined, setIsDeclined] = useState(false);
 
   useEffect(() => {
-    // Defer the storage read until after hydration (same pattern as
-    // auth-context.tsx) so the modal decision never happens during SSR.
     queueMicrotask(() => {
       let verified = false;
       let declined = false;
@@ -29,13 +25,13 @@ export default function AgeGate() {
 
       if (verified) {
         setShow(false);
+        setIsDeclined(false);
         return;
       }
 
-      // If the user already indicated they are under 18 and is on the home page,
-      // allow them to browse the home page without re-showing the modal.
-      if (declined && pathname === "/") {
-        setShow(false);
+      if (declined) {
+        setIsDeclined(true);
+        setShow(true);
         return;
       }
 
@@ -47,22 +43,16 @@ export default function AgeGate() {
     try {
       localStorage.setItem(STORAGE_KEY, "true");
       sessionStorage.removeItem(DECLINED_KEY);
-    } catch {
-      // ignore storage failures
-    }
+    } catch {}
     setShow(false);
+    setIsDeclined(false);
   }
 
   function declineAge() {
     try {
       sessionStorage.setItem(DECLINED_KEY, "true");
-    } catch {
-      // ignore storage failures
-    }
-    setShow(false);
-    if (pathname !== "/") {
-      router.push("/");
-    }
+    } catch {}
+    setIsDeclined(true);
   }
 
   if (!show) return null;
@@ -72,37 +62,80 @@ export default function AgeGate() {
       role="dialog"
       aria-modal="true"
       aria-labelledby="agegate-title"
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/85 backdrop-blur-md px-4 py-6"
     >
-      <div className="w-full max-w-md rounded-3xl border border-neutral-200 bg-white p-6 sm:p-8 text-center shadow-2xl max-h-[90vh] overflow-y-auto">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-neutral-100 text-3xl">
-          <span aria-hidden="true">🔞</span>
-        </div>
+      <div className="relative w-full max-w-lg rounded-3xl border border-slate-700/80 bg-slate-900 p-6 sm:p-10 text-center shadow-2xl text-white max-h-[92vh] overflow-y-auto">
+        {/* Glow ambient background */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <h2 id="agegate-title" className="mt-5 text-2xl font-black text-neutral-900">
-          Are you 18+?
-        </h2>
-        <p className="mt-3 text-sm leading-6 text-neutral-600">
-          This website contains adult content and is intended for individuals
-          who are 18 years of age or older. Please confirm your age to continue.
-        </p>
+        {isDeclined ? (
+          <div className="relative z-10 space-y-5">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 text-3xl">
+              ⛔
+            </div>
+            <h2 id="agegate-title" className="text-2xl font-black text-white">
+              Access Restricted
+            </h2>
+            <p className="text-sm leading-relaxed text-slate-300">
+              You must be at least 18 years of age to access this website. If you are under 18 or entered by mistake, please close this browser tab.
+            </p>
+            <div className="pt-2 flex flex-col gap-3">
+              <a
+                href="https://www.google.com"
+                className="w-full rounded-xl bg-slate-800 border border-slate-700 py-3 text-sm font-bold text-slate-200 hover:bg-slate-700 transition"
+              >
+                Exit Website
+              </a>
+              <button
+                type="button"
+                onClick={acceptAge}
+                className="text-xs text-slate-500 hover:text-slate-400 underline underline-offset-4"
+              >
+                I am actually 18+ (Retry verification)
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="relative z-10 space-y-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-amber-500/20 to-orange-500/20 border border-amber-500/40 text-amber-400 shadow-inner text-3xl">
+              🔞
+            </div>
 
-        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-          <button
-            type="button"
-            onClick={acceptAge}
-            className="flex-1 rounded-full bg-black px-6 py-3 text-sm font-bold text-white transition-colors hover:bg-neutral-800 shadow-sm"
-          >
-            Yes, I am 18+
-          </button>
-          <button
-            type="button"
-            onClick={declineAge}
-            className="flex-1 rounded-full border border-neutral-300 bg-neutral-100 px-6 py-3 text-sm font-bold text-neutral-800 transition-colors hover:bg-neutral-200"
-          >
-            No, I&apos;m under 18
-          </button>
-        </div>
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-3 py-1 text-xs font-bold uppercase tracking-wider text-amber-300 mb-3">
+                Age Verification Required
+              </span>
+              <h2 id="agegate-title" className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                Are you 18 or older?
+              </h2>
+            </div>
+
+            <p className="text-sm leading-relaxed text-slate-300">
+              This platform contains classified advertisements and adult content intended strictly for mature audiences aged <strong className="text-white">18 and above</strong>. Please confirm your age to continue.
+            </p>
+
+            <div className="pt-2 flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={acceptAge}
+                className="flex-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-600/30 hover:from-amber-600 hover:to-orange-700 active:scale-95 transition-all cursor-pointer"
+              >
+                Yes, I am 18+
+              </button>
+              <button
+                type="button"
+                onClick={declineAge}
+                className="flex-1 rounded-xl border border-slate-700 bg-slate-800/80 px-6 py-3.5 text-sm font-bold text-slate-300 hover:bg-slate-700 hover:text-white active:scale-95 transition-all cursor-pointer"
+              >
+                No, I&apos;m under 18
+              </button>
+            </div>
+
+            <p className="text-[11px] text-slate-500">
+              By entering, you agree to our Terms of Service and Privacy Policy.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

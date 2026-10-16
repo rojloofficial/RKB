@@ -108,79 +108,103 @@ export default function Page() {
   if (!ready) return null;
 
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
-      <SectionPanel>
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-neutral-900 sm:text-4xl">
-            Payment History
-          </h1>
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <SectionPanel className="p-6 sm:p-8 lg:p-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <h1 className="text-2xl font-black text-white sm:text-3xl">
+              Transaction Records
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-400">
+              Live ledger of coin purchases, UPI references, and verification statuses.
+            </p>
+          </div>
           <Button
             variant="soft"
+            size="sm"
             onClick={() => router.push("/post-ad")}
-            className="!text-black"
+            className="border border-white/10 text-slate-300 hover:text-white"
           >
-            Back
+            Back to Hub
           </Button>
         </div>
 
         {loading ? (
-          <PaymentHistorySkeleton />
+          <div className="mt-6">
+            <PaymentHistorySkeleton />
+          </div>
         ) : history.length === 0 ? (
-          <p className="mt-6 rounded-[1.5rem] bg-neutral-100 p-5 text-neutral-600">
-            You have no payments yet.
-          </p>
+          <div className="mt-8 rounded-2xl border border-dashed border-white/15 bg-slate-950/40 p-8 text-center sm:p-12">
+            <span className="text-3xl">🧾</span>
+            <p className="mt-2 text-base font-bold text-white">No transactions recorded yet</p>
+            <p className="mt-1 text-xs text-slate-400">When you buy coins, your payment references and approvals will appear here.</p>
+            <div className="mt-5">
+              <Button href="/post-ad/buy-coin" variant="solid" size="sm" className="!text-white font-bold">
+                Buy Coins
+              </Button>
+            </div>
+          </div>
         ) : (
           <div className="mt-6 space-y-4">
             {history.map((item) => (
               <div
                 key={item._id || item.transactionId}
-                className="rounded-[1.5rem] border border-neutral-200 bg-neutral-50 p-5"
+                className="rounded-2xl border border-white/10 bg-slate-950/70 p-5 shadow-lg transition hover:border-amber-500/30"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-2 text-sm text-neutral-800 min-w-0 flex-1">
+                  <div className="space-y-2 text-xs sm:text-sm text-slate-300 min-w-0 flex-1">
                     <p className="break-all">
-                      <span className="font-semibold text-neutral-900">Transaction ID:</span> {item.transactionId}
+                      <span className="font-bold text-slate-400 uppercase tracking-wider text-[11px]">UTR / Txn ID:</span>{" "}
+                      <span className="font-mono text-white font-bold">{item.transactionId}</span>
                     </p>
-                    <p>
-                      <span className="font-semibold text-neutral-900">Money Paid:</span> ₹{Number(item.amount || 0).toFixed(2)}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-neutral-900">Coins:</span> {item.coins}
-                    </p>
-                    <p>
-                      <span className="font-semibold text-neutral-900">Status:</span>{" "}
+                    <div className="flex flex-wrap items-center gap-4">
+                      <p>
+                        <span className="text-slate-400 text-xs">Amount:</span>{" "}
+                        <strong className="text-white font-black">₹{Number(item.amount || 0).toFixed(2)}</strong>
+                      </p>
+                      <p>
+                        <span className="text-slate-400 text-xs">Coins:</span>{" "}
+                        <strong className="text-amber-400 font-black">{item.coins}</strong>
+                      </p>
+                    </div>
+                    <div>
                       <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide inline-flex items-center gap-1 ${
+                        className={`rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm ${
                           item.status === "confirmed"
-                            ? "bg-emerald-600 text-white"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
                             : item.status === "declined"
-                              ? "bg-red-100 text-red-700 border border-red-200"
-                              : "bg-amber-100 text-amber-800 border border-amber-200"
+                              ? "bg-rose-500/10 text-rose-400 border border-rose-500/30"
+                              : "bg-amber-500/10 text-amber-300 border border-amber-500/30"
                         }`}
                       >
+                        <span className={`size-1.5 rounded-full ${
+                          item.status === "confirmed"
+                            ? "bg-emerald-400"
+                            : item.status === "declined"
+                              ? "bg-rose-400"
+                              : "bg-amber-400 animate-pulse"
+                        }`} />
                         {item.status === "confirmed"
                           ? "Confirmed"
                           : item.status === "declined"
                             ? "Declined"
-                            : "Pending"}
+                            : "Pending Verification"}
                       </span>
-                    </p>
+                    </div>
                     {item.status === "declined" && (
-                      <div className="mt-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800">
-                        <span className="font-bold text-red-950">Decline Reason: </span>
+                      <div className="mt-2 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300">
+                        <span className="font-bold text-rose-200">Decline Reason: </span>
                         {item.declinedReason || "Wrong Transaction ID"}
                       </div>
                     )}
                   </div>
 
-                  <div className="text-sm text-neutral-500">
+                  <div className="text-xs text-slate-400 sm:text-right space-y-0.5">
                     <p>
-                      <span className="font-semibold text-neutral-700">Date:</span>{" "}
-                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "—"}
+                      Date: <span className="text-white font-medium">{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-GB") : "—"}</span>
                     </p>
                     <p>
-                      <span className="font-semibold text-neutral-700">Time:</span>{" "}
-                      {item.createdAt ? new Date(item.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—"}
+                      Time: <span className="text-white font-medium">{item.createdAt ? new Date(item.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "—"}</span>
                     </p>
                   </div>
                 </div>

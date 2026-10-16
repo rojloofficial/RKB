@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import Button from "@/components/ui/button";
 import { TextInput } from "@/components/ui/field";
 import { serviceNames } from "@/lib/services";
@@ -402,35 +403,49 @@ function AuthPage() {
   const expiresSecs = String(expiresIn % 60).padStart(2, "0");
 
   return (
-    <main className="flex min-h-[80vh] items-center justify-center px-4 py-8 sm:py-10">
-      <section className="w-full max-w-md rounded-3xl border border-neutral-200/90 bg-white p-6 sm:p-8 shadow-sm">
-        <div className="mb-6 flex gap-2">
-          <Button
-            variant="soft"
-            active={mode === "login"}
+    <main className="relative flex min-h-[85vh] items-center justify-center px-4 py-12 sm:py-16">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-hidden">
+        <div className="h-96 w-96 rounded-full bg-gradient-to-tr from-amber-500/10 via-orange-500/5 to-transparent blur-3xl" />
+      </div>
+
+      <section className="relative w-full max-w-md rounded-3xl border border-white/10 bg-gradient-to-b from-slate-900/90 to-slate-950/95 p-6 sm:p-8 shadow-2xl backdrop-blur-xl">
+        {/* Mode Toggle Switcher */}
+        <div className="mb-6 flex rounded-2xl border border-white/10 bg-slate-950/80 p-1">
+          <button
+            type="button"
             onClick={() => switchMode("login")}
-            className={mode === "login" ? "!bg-neutral-900 !text-white" : "!text-neutral-700 !bg-neutral-100"}
+            className={`flex-1 rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+              mode === "login"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
-            Login
-          </Button>
-          <Button
-            variant="soft"
-            active={mode === "signup"}
+            Log In
+          </button>
+          <button
+            type="button"
             onClick={() => switchMode("signup")}
-            className={mode === "signup" ? "!bg-neutral-900 !text-white" : "!text-neutral-700 !bg-neutral-100"}
+            className={`flex-1 rounded-xl py-2.5 text-xs sm:text-sm font-bold transition-all duration-200 cursor-pointer ${
+              mode === "signup"
+                ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20"
+                : "text-slate-400 hover:text-white"
+            }`}
           >
-            Sign up
-          </Button>
+            Create Account
+          </button>
         </div>
 
-        <h1 className="text-2xl font-black text-neutral-900">
-          {mode === "login" ? "Welcome back" : "Create your account"}
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600">
-          {mode === "login"
-            ? "Log in to manage your ads and profile."
-            : "Enter your details, verify your email, and create your account."}
-        </p>
+        <div className="text-center sm:text-left">
+          <h1 className="text-2xl font-black text-white sm:text-3xl">
+            {mode === "login" ? "Welcome Back" : "Create Account"}
+          </h1>
+          <p className="mt-2 text-xs sm:text-sm text-slate-400">
+            {mode === "login"
+              ? "Access your dashboard to manage listings, credits, and profile."
+              : "Verify your email to post ads and reach verified clients across India."}
+          </p>
+        </div>
 
         <form
           onSubmit={mode === "login" ? handleLogin : handleSignup}
@@ -438,22 +453,22 @@ function AuthPage() {
         >
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">
-                Name
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Full Name
               </label>
               <TextInput
                 onlyLetters
                 value={name}
                 onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z\s]/g, ""))}
-                placeholder="Your name"
+                placeholder="e.g. Rahul Sharma"
                 required
               />
             </div>
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
-              Email
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+              Email Address
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
               <TextInput
@@ -482,22 +497,22 @@ function AuthPage() {
                     e.preventDefault();
                     void handleSendCode();
                   }}
-                  className={`inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 px-4 py-2 text-sm shadow-sm whitespace-nowrap w-full sm:w-auto shrink-0 select-none cursor-pointer ${
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold shadow-md transition-all whitespace-nowrap w-full sm:w-auto shrink-0 select-none cursor-pointer ${
                     sending || resendIn > 0 || Boolean(emailWarning)
-                      ? "!bg-neutral-700 !text-white opacity-70 cursor-not-allowed"
-                      : "!bg-black !text-white hover:!bg-neutral-800 active:scale-[0.98]"
+                      ? "border border-white/10 bg-slate-800 text-slate-400 opacity-60 cursor-not-allowed"
+                      : "bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:bg-amber-500/25 active:scale-95"
                   }`}
                 >
                   {sending ? (
                     <span className="flex items-center gap-2">
-                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-3.5 w-3.5 text-amber-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
                       Sending...
                     </span>
                   ) : resendIn > 0 ? (
-                    `Resend in ${resendIn}s`
+                    `Resend (${resendIn}s)`
                   ) : otpSent ? (
                     "Resend OTP"
                   ) : (
@@ -506,22 +521,23 @@ function AuthPage() {
                 </button>
               )}
             </div>
+
             {mode === "signup" && emailWarning && (
               <div
                 role="alert"
-                className="mt-2.5 flex items-start gap-3 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-amber-900 shadow-xs animate-in fade-in"
+                className="mt-2.5 flex items-start gap-2.5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-200 text-xs sm:text-sm animate-in fade-in"
               >
-                <span className="text-xl shrink-0 select-none" aria-hidden="true">⚠️</span>
-                <div className="text-xs sm:text-sm">
-                  <p className="font-bold text-amber-950">
-                    Use other email, this email already have account.
+                <span className="text-lg shrink-0 select-none" aria-hidden="true">⚠️</span>
+                <div>
+                  <p className="font-bold text-amber-300">
+                    Account Already Exists
                   </p>
-                  <p className="mt-1 text-amber-800 leading-relaxed">
-                    This email is already associated with an account. Please use another email address to register, or{" "}
+                  <p className="mt-0.5 text-xs text-amber-200/80 leading-relaxed">
+                    This email is already associated with an account. Please{" "}
                     <button
                       type="button"
                       onClick={() => switchMode("login")}
-                      className="font-bold underline hover:text-amber-950 cursor-pointer"
+                      className="font-bold text-amber-400 underline hover:text-amber-300 cursor-pointer"
                     >
                       click here to log in
                     </button>.
@@ -529,19 +545,20 @@ function AuthPage() {
                 </div>
               </div>
             )}
+
             {mode === "signup" && !emailWarning && (
               <div className="mt-1.5">
                 {otpSent ? (
-                  <p className="text-xs font-semibold text-emerald-700">
+                  <p className="text-xs font-semibold text-emerald-400">
                     ✓ OTP sent to {otpEmail}. Check your inbox or spam folder.
                   </p>
                 ) : (
-                  <p className="text-xs text-neutral-600">
+                  <p className="text-xs text-slate-400">
                     Click <strong>&quot;Send OTP&quot;</strong> to receive your 6-digit verification code.
                   </p>
                 )}
                 {otpError && (
-                  <p className="mt-1 text-xs font-semibold text-red-700">
+                  <p className="mt-1 text-xs font-semibold text-red-400">
                     {otpError}
                   </p>
                 )}
@@ -550,11 +567,11 @@ function AuthPage() {
           </div>
 
           {mode === "signup" && (
-            <div>
-              <label className="mb-2 block text-sm font-medium text-neutral-800">
-                Enter verification code
+            <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+              <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300 text-center">
+                Enter 6-Digit OTP Code
               </label>
-              <div className="flex justify-between gap-1 sm:gap-2">
+              <div className="flex justify-center gap-1.5 sm:gap-2">
                 {digits.map((digit, index) => (
                   <input
                     key={index}
@@ -570,26 +587,26 @@ function AuthPage() {
                     onKeyDown={(e) => handleDigitKeyDown(index, e)}
                     onPaste={(e) => handleDigitPaste(index, e)}
                     aria-label={`Digit ${index + 1}`}
-                    className="h-12 w-9 sm:h-14 sm:w-12 rounded-xl border border-neutral-300 bg-white text-center text-xl sm:text-2xl font-bold text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-900 focus:ring-1 focus:ring-neutral-900 transition"
+                    className="h-12 w-10 sm:h-14 sm:w-12 rounded-xl border border-white/15 bg-slate-900 text-center text-xl sm:text-2xl font-black text-amber-400 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   />
                 ))}
               </div>
-              <div className="mt-2 flex items-center justify-center gap-2 text-sm text-neutral-600">
+              <div className="mt-3 flex items-center justify-center gap-2 text-xs text-slate-400">
                 {otpSent ? (
                   expiresIn > 0 ? (
                     <span>
-                      Code expires in:{" "}
-                      <span className="font-bold text-neutral-900 font-mono">
+                      Expires in:{" "}
+                      <span className="font-bold text-amber-400 font-mono">
                         {expiresMins}:{expiresSecs}
                       </span>
                     </span>
                   ) : (
-                    <span className="font-semibold text-rose-600">
+                    <span className="font-semibold text-rose-400">
                       Code has expired.
                     </span>
                   )
                 ) : (
-                  <span>Code will be valid for 10 minutes once sent</span>
+                  <span>Code will be valid for 10 minutes</span>
                 )}
                 {otpSent && (
                   <>
@@ -597,14 +614,14 @@ function AuthPage() {
                     {sending ? (
                       <span>Sending...</span>
                     ) : resendIn > 0 ? (
-                      <span className="font-medium text-neutral-600 font-mono">
+                      <span className="font-medium text-slate-400 font-mono">
                         Resend in {resendIn}s
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={(e) => handleSendCode(e as unknown as React.MouseEvent)}
-                        className="font-semibold text-neutral-900 underline underline-offset-2 hover:text-black cursor-pointer"
+                        className="font-bold text-amber-400 underline underline-offset-2 hover:text-amber-300 cursor-pointer"
                       >
                         Resend OTP
                       </button>
@@ -616,7 +633,7 @@ function AuthPage() {
           )}
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-neutral-800">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
               Password
             </label>
             <div className="relative">
@@ -632,7 +649,7 @@ function AuthPage() {
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-500 hover:text-neutral-900"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-amber-400 cursor-pointer"
               >
                 {showPassword ? "Hide" : "Show"}
               </button>
@@ -641,7 +658,7 @@ function AuthPage() {
 
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
                 Confirm Password
               </label>
               <div className="relative">
@@ -657,7 +674,7 @@ function AuthPage() {
                   type="button"
                   onClick={() => setShowConfirmPassword((v) => !v)}
                   aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-neutral-500 hover:text-neutral-900"
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-400 hover:text-amber-400 cursor-pointer"
                 >
                   {showConfirmPassword ? "Hide" : "Show"}
                 </button>
@@ -667,8 +684,8 @@ function AuthPage() {
 
           {mode === "signup" && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-neutral-800">
-                Service
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                Primary Service Offering
               </label>
               <div ref={serviceRef} className="relative">
                 <button
@@ -676,11 +693,11 @@ function AuthPage() {
                   onClick={() => setServiceOpen((v) => !v)}
                   aria-haspopup="listbox"
                   aria-expanded={serviceOpen}
-                  className="flex w-full items-center justify-between rounded-xl border border-neutral-300 bg-white px-4 py-3 text-left text-neutral-900 outline-none focus:border-neutral-900"
+                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-left text-sm text-white outline-none focus:border-amber-500 focus:ring-1 focus:ring-amber-500 cursor-pointer"
                 >
                   <span>{service}</span>
                   <span
-                    className={`text-neutral-500 transition-transform ${
+                    className={`text-slate-400 transition-transform ${
                       serviceOpen ? "rotate-180" : ""
                     }`}
                     aria-hidden="true"
@@ -691,7 +708,7 @@ function AuthPage() {
                 {serviceOpen && (
                   <ul
                     role="listbox"
-                    className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-lg"
+                    className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-white/10 bg-slate-900 shadow-2xl"
                   >
                     {serviceOptions.map((name) => (
                       <li
@@ -707,8 +724,8 @@ function AuthPage() {
                           setService(name);
                           setServiceOpen(false);
                         }}
-                        className={`cursor-pointer px-4 py-3 text-neutral-900 hover:bg-neutral-100 ${
-                          service === name ? "bg-neutral-100 font-semibold" : ""
+                        className={`cursor-pointer px-4 py-2.5 text-xs sm:text-sm text-slate-200 hover:bg-white/10 ${
+                          service === name ? "bg-amber-500/20 font-bold text-amber-400" : ""
                         }`}
                       >
                         {name}
@@ -721,12 +738,12 @@ function AuthPage() {
           )}
 
           {otpSent && otpError && (
-            <p className="text-sm font-medium text-neutral-800" role="alert">
+            <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-semibold text-red-400" role="alert">
               {otpError}
             </p>
           )}
           {error && (
-            <p className="text-sm font-medium text-neutral-800" role="alert">
+            <p className="rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-xs font-semibold text-red-400" role="alert">
               {error}
             </p>
           )}
@@ -735,13 +752,20 @@ function AuthPage() {
             type="submit"
             variant="solid"
             fullWidth
+            size="lg"
             disabled={busy}
             loading={busy}
             loadingText={mode === "login" ? "Logging in..." : "Creating account..."}
-            className="!text-white"
+            className="mt-2 !font-black !text-white"
           >
-            {mode === "login" ? "Log in" : "Create account"}
+            {mode === "login" ? "Sign In to RKB" : "Complete Registration"}
           </Button>
+
+          <p className="text-center text-xs text-slate-400">
+            By proceeding, you confirm that you are at least 18 years of age and agree to our{" "}
+            <Link href="/terms" className="text-amber-400 underline hover:text-amber-300">Terms of Service</Link> &{" "}
+            <Link href="/privacy-policy" className="text-amber-400 underline hover:text-amber-300">Privacy Policy</Link>.
+          </p>
         </form>
       </section>
     </main>

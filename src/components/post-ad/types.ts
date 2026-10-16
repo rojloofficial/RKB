@@ -34,6 +34,7 @@ export type ProfileUser = {
   email: string;
   phone?: string;
   service?: string;
+  coins?: number;
   createdAt?: string | Date;
 };
 

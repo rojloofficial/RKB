@@ -334,28 +334,34 @@ function PaymentView() {
   const defaultQrSrc = "/surajkumar40407@ybl.jpeg";
 
   return (
-    <main className="px-4 py-10 sm:px-6 lg:px-8">
-      <SectionPanel>
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-3xl font-black text-red-950 sm:text-4xl">
-            Complete Payment
-          </h1>
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+      <SectionPanel className="p-6 sm:p-8 lg:p-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
+          <div>
+            <h1 className="text-2xl font-black text-white sm:text-3xl">
+              Complete Payment
+            </h1>
+            <p className="mt-1 text-xs sm:text-sm text-slate-400">
+              Scan the verified UPI QR code or transfer directly to recharge your wallet.
+            </p>
+          </div>
           <Button
             variant="soft"
+            size="sm"
             onClick={() => router.push("/post-ad/buy-coin")}
-            className="!text-black"
+            className="border border-white/10 text-slate-300 hover:text-white"
           >
-            Back
+            Back to Packs
           </Button>
         </div>
 
-        <div className="mt-6 rounded-[1.75rem] bg-white p-6 text-center sm:p-8">
-          {/* 24h Cooldown Alert Banner - Visible whenever cooldown is active */}
+        <div className="mt-6">
+          {/* 24h Cooldown Alert Banner */}
           {eligibility && !eligibility.allowed && (
-            <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-4 text-left text-amber-950 shadow-xs">
+            <div className="mb-6 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-left text-amber-200 shadow-sm">
               <div className="flex items-start gap-3">
-                <div className="shrink-0 rounded-full bg-amber-200 p-2 text-amber-800">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="shrink-0 rounded-full bg-amber-500/20 p-2 text-amber-300">
+                  <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -366,17 +372,17 @@ function PaymentView() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5">
-                    <h3 className="text-sm sm:text-base font-bold text-amber-950">
-                      24-Hour Purchase Limit Active
+                    <h3 className="text-sm sm:text-base font-bold text-white">
+                      24-Hour Purchase Cooldown Active
                     </h3>
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-200/90 border border-amber-300 px-2.5 py-0.5 text-xs font-black text-amber-950 w-fit">
-                      <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/20 px-2.5 py-0.5 text-xs font-black text-amber-300 w-fit">
+                      <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
                       Next purchase in: {liveCountdown || eligibility.remainingFormatted}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs sm:text-sm text-amber-900 leading-relaxed">
-                    An email can only purchase coins once in 24 hours. Your last coin purchase was recorded on{" "}
-                    <strong className="font-semibold text-amber-950">
+                  <p className="mt-1 text-xs text-amber-200/80 leading-relaxed">
+                    Accounts can only purchase coins once every 24 hours. Your last transaction was recorded on{" "}
+                    <strong className="text-white">
                       {eligibility.lastPurchaseAt
                         ? new Date(eligibility.lastPurchaseAt).toLocaleString("en-IN", {
                             dateStyle: "medium",
@@ -384,7 +390,7 @@ function PaymentView() {
                           })
                         : "recently"}
                     </strong>
-                    . New payment submissions are temporarily paused until the cooldown timer expires.
+                    . Submissions are temporarily paused until the timer finishes.
                   </p>
                 </div>
               </div>
@@ -392,48 +398,52 @@ function PaymentView() {
           )}
 
           {!submitted && (
-            <>
-              <p className="text-lg font-bold text-neutral-900">
-                Pay {price || "—"} &nbsp;·&nbsp; Get {coins} coins
+            <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 text-center sm:p-6 mb-6">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Selected Package</span>
+              <p className="mt-1 text-2xl font-black text-white sm:text-3xl">
+                Pay ₹{finalAmount.toFixed(2)} &nbsp;•&nbsp; Receive <span className="text-amber-400">{coins} Coins</span>
               </p>
-              <p className="mt-1 text-sm text-neutral-600">
-                Scan the QR code with any UPI app or use the UPI ID below.
+              <p className="mt-1 text-xs text-slate-400">
+                Scan with PhonePe, Google Pay, Paytm, BHIM, or any UPI banking app.
               </p>
-            </>
+            </div>
           )}
 
           {submitted && submittedStatus === "pending" && (
-            <div className="rounded-[1.5rem] border border-neutral-200 bg-neutral-50 p-6 text-center">
-              <p className="text-xl font-black text-neutral-900">Payment submitted</p>
-              <p className="mt-2 text-base text-neutral-700">
-                Don&apos;t pay again. Please wait to confirm the payment.
+            <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-6 text-center sm:p-8">
+              <span className="text-4xl">⏳</span>
+              <p className="mt-3 text-xl font-black text-white">Transaction Under Verification</p>
+              <p className="mt-2 text-sm text-slate-300">
+                Your payment has been logged (ID: <strong className="text-amber-400 font-mono">{submittedTxId}</strong>). Our verification system confirms payments automatically within a few minutes.
               </p>
+              <p className="mt-1 text-xs text-amber-300">Please do not submit duplicate payments.</p>
               {eligibility && !eligibility.allowed && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs sm:text-sm font-bold text-amber-950">
-                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
-                  Next purchase allowed in: {liveCountdown || eligibility.remainingFormatted}
+                <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/20 px-4 py-1.5 text-xs font-bold text-amber-300">
+                  <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+                  Next purchase in: {liveCountdown || eligibility.remainingFormatted}
                 </div>
               )}
-              <div className="mt-5 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <Button
                   type="button"
                   variant="solid"
                   onClick={() => router.push("/post-ad/payment-history")}
-                  className="!text-white"
+                  className="!text-white font-bold"
                 >
-                  Show payment history
+                  View Transaction History
                 </Button>
               </div>
             </div>
           )}
 
           {submitted && submittedStatus === "declined" && (
-            <div className="rounded-[1.5rem] border border-neutral-200 bg-neutral-50 p-6 text-center">
-              <p className="text-xl font-black text-neutral-900">Payment Declined</p>
-              <p className="mt-2 text-base font-semibold text-neutral-700">
-                {declineReason || "Wrong Transaction ID"}
+            <div className="rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-center sm:p-8">
+              <span className="text-4xl">❌</span>
+              <p className="mt-3 text-xl font-black text-white">Payment Declined</p>
+              <p className="mt-2 text-sm font-semibold text-rose-300">
+                Reason: {declineReason || "Invalid or Unmatched Transaction Reference"}
               </p>
-              <div className="mt-5 flex flex-col sm:flex-row justify-center gap-3">
+              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
                 <Button
                   type="button"
                   variant="solid"
@@ -443,127 +453,120 @@ function PaymentView() {
                     setSubmittedStatus("pending");
                     setDeclineReason("");
                   }}
-                  className="!text-white"
+                  className="!text-white font-bold"
                 >
-                  Try Again
+                  Re-enter Reference ID
                 </Button>
                 <Button
                   type="button"
                   variant="soft"
                   onClick={() => router.push("/post-ad/payment-history")}
-                  className="!text-black"
+                  className="border border-white/10 text-slate-300 hover:text-white"
                 >
-                  Show payment history
+                  Show History
                 </Button>
               </div>
             </div>
           )}
 
           {submitted && submittedStatus === "confirmed" && (
-            <div className="rounded-[1.5rem] border border-neutral-200 bg-neutral-50 p-6 text-center">
-              <p className="text-xl font-black text-neutral-900">Payment Confirmed!</p>
-              <p className="mt-2 text-base text-neutral-700">
-                Coins have been added to your wallet.
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center sm:p-8">
+              <span className="text-4xl">🎉</span>
+              <p className="mt-3 text-xl font-black text-white">Payment Confirmed!</p>
+              <p className="mt-2 text-sm text-emerald-300">
+                {coins} coins have been successfully added to your wallet!
               </p>
-              {eligibility && !eligibility.allowed && (
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-100 border border-amber-300 px-4 py-1.5 text-xs sm:text-sm font-bold text-amber-950">
-                  <span className="h-2 w-2 rounded-full bg-amber-600 animate-pulse" />
-                  Next purchase allowed in: {liveCountdown || eligibility.remainingFormatted}
-                </div>
-              )}
-              <div className="mt-5 flex justify-center">
+              <div className="mt-6 flex justify-center">
                 <Button
                   type="button"
                   variant="solid"
-                  onClick={() => router.push("/post-ad/payment-history")}
-                  className="!text-white"
+                  onClick={() => router.push("/post-ad/your-ads")}
+                  className="!text-white font-bold"
                 >
-                  Show payment history
+                  Go to Your Ads
                 </Button>
               </div>
             </div>
           )}
 
           {!submitted && (
-            <>
+            <div className="space-y-6">
               {/* Coupon Section */}
-              <div className="mt-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-4 sm:p-5">
+                <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Have a Promo / Coupon Code?
+                </label>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <input
                     type="text"
                     value={couponCode}
                     disabled={applyingCoupon}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="Enter coupon code (optional)"
-                    className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 focus:border-neutral-900 focus:outline-none disabled:opacity-60"
+                    placeholder="ENTER CODE (OPTIONAL)"
+                    className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none disabled:opacity-60 font-mono"
                   />
                   <button
                     type="button"
                     onClick={applyCoupon}
                     disabled={applyingCoupon}
-                    className="w-full sm:w-auto rounded-lg bg-neutral-950 px-4 py-2 font-semibold text-white hover:bg-neutral-800 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                    className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-5 py-2.5 text-xs font-bold text-white shadow-md transition hover:opacity-95 disabled:opacity-60 cursor-pointer flex items-center justify-center gap-2"
                   >
-                    {applyingCoupon && (
-                      <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                    )}
-                    {applyingCoupon ? "Applying..." : "Apply"}
+                    {applyingCoupon ? "Verifying..." : "Apply Discount"}
                   </button>
                 </div>
                 {discountError && (
-                  <p className="mt-2 text-sm text-neutral-800 text-left font-medium">{discountError}</p>
+                  <p className="mt-2 text-xs font-semibold text-rose-400">{discountError}</p>
                 )}
                 {discount > 0 && (
-                  <div className="mt-2 flex items-center justify-between rounded-lg bg-neutral-200 p-3">
-                    <p className="font-semibold text-neutral-900">Discount Applied</p>
-                    <p className="text-lg font-bold text-neutral-900">-₹{discount.toFixed(2)}</p>
+                  <div className="mt-3 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs sm:text-sm">
+                    <p className="font-semibold text-emerald-300">Discount Applied</p>
+                    <p className="font-bold text-emerald-400">-₹{discount.toFixed(2)}</p>
                   </div>
                 )}
-                {discount > 0 && (
-                  <p className="mt-2 text-sm font-semibold text-neutral-900">
-                    Final Amount: ₹{finalAmount.toFixed(2)}
-                  </p>
-                )}
               </div>
+
+              {/* QR and Payment Details Container */}
               {loading ? (
                 <PaymentOptionsSkeleton />
               ) : upis.length > 0 ? (
-                <div className="mt-6 space-y-6">
+                <div className="space-y-6">
                   {upis.map((upi) => (
-                    <div key={upi._id} className="rounded-xl border border-neutral-200 bg-neutral-50 p-6">
-                      <div className="mt-4 flex justify-center">
-                        {upi.qrCode ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={upi.qrCode}
-                            alt={`UPI payment QR code for ${upi.upiId}`}
-                            width={240}
-                            height={240}
-                            className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-neutral-200 bg-white p-2 object-contain"
-                          />
-                        ) : (
-                          <div className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-neutral-200 bg-white p-2 flex items-center justify-center text-neutral-600">
-                            No QR Code
-                          </div>
-                        )}
+                    <div key={upi._id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 sm:p-8">
+                      {/* White backdrop container for QR to ensure scannability */}
+                      <div className="flex justify-center">
+                        <div className="rounded-2xl bg-white p-3 shadow-xl">
+                          {upi.qrCode ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={upi.qrCode}
+                              alt={`UPI payment QR code for ${upi.upiId}`}
+                              width={240}
+                              height={240}
+                              className="h-52 w-52 sm:h-60 sm:w-60 max-w-full object-contain"
+                            />
+                          ) : (
+                            <div className="h-52 w-52 sm:h-60 sm:w-60 flex items-center justify-center text-slate-600 text-xs">
+                              No QR Code
+                            </div>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="mt-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                          UPI ID
+                      <div className="mt-6 text-center">
+                        <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                          Official UPI ID
                         </p>
-                        <p className="mt-1 text-base sm:text-lg font-black text-neutral-900 break-all">
+                        <p className="mt-1 text-base sm:text-lg font-black text-amber-400 font-mono break-all">
                           {upi.upiId}
                         </p>
                       </div>
 
-                      <div className="mt-4">
+                      <div className="mt-5 flex justify-center">
                         <Button
                           type="button"
                           variant="solid"
-                          className="!text-white w-full"
+                          size="md"
+                          className="!text-white font-bold w-full sm:w-auto"
                           onClick={() => {
                             const link = `upi://pay?pa=${encodeURIComponent(
                               upi.upiId
@@ -575,15 +578,15 @@ function PaymentView() {
                             window.location.href = link;
                           }}
                         >
-                          Pay via UPI App
+                          📲 Open UPI App Directly
                         </Button>
                       </div>
 
-                      <div className="mt-4">
-                        <label className="block text-sm font-semibold text-neutral-900 text-left">
-                          Transaction ID
+                      <div className="mt-8 border-t border-white/10 pt-6">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                          Enter 12-Digit UPI Transaction Reference (UTR)
                         </label>
-                        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                        <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
                           <input
                             type="text"
                             inputMode="numeric"
@@ -594,15 +597,8 @@ function PaymentView() {
                                 e.ctrlKey ||
                                 e.metaKey ||
                                 [
-                                  "Backspace",
-                                  "Delete",
-                                  "Tab",
-                                  "Escape",
-                                  "Enter",
-                                  "ArrowLeft",
-                                  "ArrowRight",
-                                  "Home",
-                                  "End",
+                                  "Backspace", "Delete", "Tab", "Escape", "Enter",
+                                  "ArrowLeft", "ArrowRight", "Home", "End"
                                 ].includes(e.key)
                               ) return;
                               if (!/^[0-9]$/.test(e.key)) e.preventDefault();
@@ -611,75 +607,72 @@ function PaymentView() {
                               setTransactionId(e.target.value.replace(/\D/g, ""));
                               if (submitError) setSubmitError("");
                             }}
-                            placeholder="Enter 12-digit UPI reference / transaction ID"
-                            className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 focus:border-neutral-900 focus:outline-none disabled:opacity-60"
+                            placeholder="e.g. 412345678901"
+                            className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none font-mono"
                           />
                           <button
                             type="button"
                             onClick={handleSubmitTransaction}
                             disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
-                            className="w-full sm:w-auto rounded-lg bg-neutral-950 px-4 py-2 font-semibold text-white hover:bg-neutral-800 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
+                            className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:opacity-95 disabled:opacity-60 cursor-pointer sm:whitespace-nowrap"
                           >
-                            {submitting && (
-                              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                            )}
                             {submitting
                               ? "Submitting..."
                               : eligibility && !eligibility.allowed
                               ? `Cooldown (${liveCountdown || eligibility.remainingFormatted})`
-                              : "Submit"}
+                              : "Submit Verification"}
                           </button>
                         </div>
                         {submitError && (
-                          <p className="mt-2 text-sm text-neutral-800 font-medium text-left">{submitError}</p>
+                          <p className="mt-2 text-xs font-semibold text-rose-400">{submitError}</p>
                         )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <>
-                  <div className="mt-6 flex justify-center">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={defaultQrSrc}
-                      alt="UPI payment QR code"
-                      width={240}
-                      height={240}
-                      className="h-52 w-52 sm:h-60 sm:w-60 max-w-full rounded-2xl border-2 border-neutral-200 bg-white p-2 object-contain"
-                    />
+                <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 sm:p-8">
+                  <div className="flex justify-center">
+                    <div className="rounded-2xl bg-white p-3 shadow-xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={defaultQrSrc}
+                        alt="UPI payment QR code"
+                        width={240}
+                        height={240}
+                        className="h-52 w-52 sm:h-60 sm:w-60 max-w-full object-contain"
+                      />
+                    </div>
                   </div>
 
-                  <div className="mt-6">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  <div className="mt-6 text-center">
+                    <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
                       UPI ID
                     </p>
-                    <p className="mt-1 text-base sm:text-lg font-black text-neutral-900 break-all">
+                    <p className="mt-1 text-base sm:text-lg font-black text-amber-400 font-mono break-all">
                       {paymentInfo.upiId}
                     </p>
                   </div>
 
-                  <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                  <div className="mt-5 flex justify-center">
                     <Button
                       type="button"
                       variant="solid"
-                      className="!text-white"
+                      size="md"
+                      className="!text-white font-bold w-full sm:w-auto"
                       onClick={() => {
                         window.location.href = upiLink;
                       }}
                     >
-                      Pay via UPI App
+                      📲 Open UPI App Directly
                     </Button>
                   </div>
 
-                  <div className="mt-4">
-                    <label className="block text-sm font-semibold text-neutral-900 text-left">
-                      Transaction ID
+                  <div className="mt-8 border-t border-white/10 pt-6">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                      Enter 12-Digit UPI Transaction Reference (UTR)
                     </label>
-                    <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">
                       <input
                         type="text"
                         inputMode="numeric"
@@ -690,15 +683,8 @@ function PaymentView() {
                             e.ctrlKey ||
                             e.metaKey ||
                             [
-                              "Backspace",
-                              "Delete",
-                              "Tab",
-                              "Escape",
-                              "Enter",
-                              "ArrowLeft",
-                              "ArrowRight",
-                              "Home",
-                              "End",
+                              "Backspace", "Delete", "Tab", "Escape", "Enter",
+                              "ArrowLeft", "ArrowRight", "Home", "End"
                             ].includes(e.key)
                           ) return;
                           if (!/^[0-9]$/.test(e.key)) e.preventDefault();
@@ -707,40 +693,33 @@ function PaymentView() {
                           setTransactionId(e.target.value.replace(/\D/g, ""));
                           if (submitError) setSubmitError("");
                         }}
-                        placeholder="Enter 12-digit UPI reference / transaction ID"
-                        className="min-w-0 flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-neutral-900 placeholder-neutral-400 focus:border-neutral-900 focus:outline-none disabled:opacity-60"
+                        placeholder="e.g. 412345678901"
+                        className="min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none font-mono"
                       />
                       <button
                         type="button"
                         onClick={handleSubmitTransaction}
                         disabled={submitting || Boolean(eligibility && !eligibility.allowed)}
-                        className="w-full sm:w-auto rounded-lg bg-neutral-950 px-4 py-2 font-semibold text-white hover:bg-neutral-800 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 sm:whitespace-nowrap cursor-pointer"
+                        className="rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md transition hover:opacity-95 disabled:opacity-60 cursor-pointer sm:whitespace-nowrap"
                       >
-                        {submitting && (
-                          <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        )}
                         {submitting
                           ? "Submitting..."
                           : eligibility && !eligibility.allowed
                           ? `Cooldown (${liveCountdown || eligibility.remainingFormatted})`
-                          : "Submit"}
+                          : "Submit Verification"}
                       </button>
                     </div>
                     {submitError && (
-                      <p className="mt-2 text-sm text-neutral-800 font-medium text-left">{submitError}</p>
+                      <p className="mt-2 text-xs font-semibold text-rose-400">{submitError}</p>
                     )}
                   </div>
-                </>
+                </div>
               )}
 
-              <p className="mt-6 text-sm text-neutral-600">
-                After paying, your coins will be added once the payment is verified.
-                Keep the payment screenshot for reference.
+              <p className="text-center text-xs text-slate-400">
+                Please retain your UPI transfer screenshot until verification completes.
               </p>
-            </>
+            </div>
           )}
         </div>
       </SectionPanel>

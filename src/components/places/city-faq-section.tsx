@@ -12,10 +12,8 @@ export default function CityFaqSection({
   faqs: FaqItem[];
   cityName: string;
 }) {
-  // openId holds the ID of the currently expanded FAQ item (single-expand mutex accordion)
   const [openId, setOpenId] = useState<string | null>(null);
 
-  // Filter out any empty FAQs
   const validFaqs = (faqs || []).filter(
     (f) => f.question?.trim() || f.answer?.trim()
   );
@@ -23,22 +21,21 @@ export default function CityFaqSection({
   if (validFaqs.length === 0) return null;
 
   const handleToggle = (id: string) => {
-    // If user clicks currently open question, close it. If clicking next question, previous closes and clicked opens.
     setOpenId((prev) => (prev === id ? null : id));
   };
 
   return (
-    <section className="px-4 py-10 sm:px-6">
+    <section className="px-4 py-8 sm:px-6">
       <SectionPanel>
-        <Eyebrow>FAQ</Eyebrow>
-        <h2 className="mt-3 text-2xl font-black text-neutral-900 sm:text-3xl">
+        <Eyebrow>City FAQ & Guides</Eyebrow>
+        <h2 className="mt-3 text-2xl font-extrabold text-slate-900 tracking-tight sm:text-3xl">
           Frequently Asked Questions in {cityName}
         </h2>
-        <p className="mt-1 text-xs sm:text-sm text-neutral-600 font-medium">
-          Got questions? Click any question below to view the solution.
+        <p className="mt-1 text-sm text-slate-600">
+          Essential details and helpful answers about local services in {cityName}.
         </p>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-8 space-y-3.5">
           {validFaqs.map((faq, index) => {
             const isOpen = openId === faq.id;
             return (
@@ -46,8 +43,8 @@ export default function CityFaqSection({
                 key={faq.id || index}
                 className={`rounded-2xl border transition-all duration-200 overflow-hidden ${
                   isOpen
-                    ? "border-neutral-900 bg-neutral-50 shadow-xs ring-1 ring-neutral-900/10"
-                    : "border-neutral-200 bg-white hover:border-neutral-300 hover:bg-neutral-50/50"
+                    ? "border-amber-400 bg-amber-50/20 shadow-xs ring-1 ring-amber-400/30"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                 }`}
               >
                 <button
@@ -56,18 +53,18 @@ export default function CityFaqSection({
                   aria-expanded={isOpen}
                   className="flex w-full items-center justify-between gap-3 p-4 sm:p-5 text-left cursor-pointer transition select-none"
                 >
-                  <span className="flex items-center gap-3 text-sm sm:text-base font-bold text-neutral-900 pr-2">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-neutral-100 text-xs font-black text-neutral-900 border border-neutral-300">
+                  <span className="flex items-center gap-3 text-sm sm:text-base font-bold text-slate-900 pr-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-xs font-black text-amber-900 border border-amber-200/80">
                       Q{index + 1}
                     </span>
                     <span className="leading-snug">{faq.question}</span>
                   </span>
 
                   <span
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-black transition-all duration-200 ${
+                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-transform duration-200 ${
                       isOpen
-                        ? "rotate-180 bg-black text-white border-black"
-                        : "border-neutral-200 bg-neutral-100 text-neutral-800"
+                        ? "rotate-180 bg-amber-500 text-white border-amber-500"
+                        : "border-slate-200 bg-slate-100 text-slate-600"
                     }`}
                     aria-hidden="true"
                   >
@@ -76,13 +73,13 @@ export default function CityFaqSection({
                 </button>
 
                 {isOpen && (
-                  <div className="border-t border-neutral-200 px-4 pb-5 pt-3.5 sm:px-5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="border-t border-amber-200/60 bg-white px-5 pb-5 pt-4 animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="flex items-start gap-3">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-neutral-900 text-[11px] font-black text-white border border-neutral-900 mt-0.5">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-slate-900 text-[11px] font-black text-white mt-0.5">
                         A
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs sm:text-sm text-neutral-700 leading-relaxed font-medium whitespace-pre-line">
+                        <div className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
                           {faq.answer}
                         </div>
                       </div>

@@ -421,10 +421,10 @@ export default function PlacesExplorer({
   }
 
   return (
-    <div className="mt-4 space-y-6">
-      {/* Search Bar */}
+    <div className="mt-6 space-y-6">
+      {/* Search Input Bar */}
       <div className="relative w-full max-w-2xl">
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-neutral-400">
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-amber-500">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="20"
@@ -432,7 +432,7 @@ export default function PlacesExplorer({
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth="2"
+            strokeWidth="2.5"
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden="true"
@@ -447,14 +447,14 @@ export default function PlacesExplorer({
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
           placeholder="Search city (e.g. Mumbai) or local area (e.g. Andheri, Koramangala)..."
-          className="w-full rounded-2xl border border-neutral-300 bg-white py-3.5 pl-11 pr-11 text-base text-neutral-900 shadow-xs placeholder:text-neutral-400 focus:border-neutral-900 focus:outline-none focus:ring-1 focus:ring-neutral-900 sm:text-sm"
+          className="w-full rounded-2xl border border-slate-300 bg-white py-3.5 pl-11 pr-11 text-base text-slate-900 shadow-xs placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 sm:text-sm transition-all"
         />
 
         {search && (
           <button
             type="button"
             onClick={() => handleSearchChange("")}
-            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+            className="absolute inset-y-0 right-0 flex items-center pr-3.5 text-slate-400 hover:text-slate-700 cursor-pointer"
             aria-label="Clear search"
           >
             <svg
@@ -478,13 +478,13 @@ export default function PlacesExplorer({
       {/* Suggested Quick Filters */}
       {!search.trim() && (
         <div className="flex flex-wrap items-center gap-2 pt-1 text-xs">
-          <span className="font-bold text-neutral-900">Popular Searches:</span>
+          <span className="font-bold text-slate-700">Popular Searches:</span>
           {SUGGESTED_SEARCHES.map((item) => (
             <button
               key={item}
               type="button"
               onClick={() => handleSearchChange(item)}
-              className="rounded-full border border-neutral-200 bg-neutral-100 px-3 py-1 font-medium text-neutral-800 transition hover:bg-neutral-900 hover:text-white"
+              className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 font-medium text-slate-700 transition hover:bg-amber-50 hover:border-amber-300 hover:text-amber-900 cursor-pointer"
             >
               {item}
             </button>
@@ -494,34 +494,34 @@ export default function PlacesExplorer({
 
       {/* Filter Status Summary */}
       {search.trim() && (
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-neutral-600">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600 bg-slate-50 px-4 py-2.5 rounded-xl border border-slate-200">
           {mode === "state" && matchedTarget ? (
             <p>
-              Showing all {filteredCities.length}{" "}
+              Showing all <strong className="text-slate-900">{filteredCities.length}</strong>{" "}
               {filteredCities.length === 1 ? "city" : "cities"} in{" "}
-              <span className="font-bold text-neutral-900">{matchedTarget}</span>
+              <span className="font-bold text-amber-700">{matchedTarget}</span>
             </p>
           ) : mode === "area" && matchedTarget ? (
             <p>
-              Found {filteredAreas.length} local areas matching &ldquo;
-              <span className="font-bold text-neutral-900">{search.trim()}</span>&rdquo;
+              Found <strong className="text-slate-900">{filteredAreas.length}</strong> local areas matching &ldquo;
+              <span className="font-bold text-amber-700">{search.trim()}</span>&rdquo;
             </p>
           ) : mode === "city" && matchedTarget ? (
             <p>
-              Showing {filteredCities.length}{" "}
+              Showing <strong className="text-slate-900">{filteredCities.length}</strong>{" "}
               {filteredCities.length === 1 ? "city" : "cities"} matching &ldquo;
-              <span className="font-bold text-neutral-900">{matchedTarget}</span>&rdquo;
+              <span className="font-bold text-amber-700">{matchedTarget}</span>&rdquo;
             </p>
           ) : (
             <p>
-              Found {filteredCities.length} cities and {filteredAreas.length} local areas
+              Found <strong className="text-slate-900">{filteredCities.length}</strong> cities and <strong className="text-slate-900">{filteredAreas.length}</strong> local areas
             </p>
           )}
 
           <button
             type="button"
             onClick={() => handleSearchChange("")}
-            className="font-medium text-neutral-900 underline hover:text-black"
+            className="font-semibold text-amber-600 hover:text-amber-700 underline cursor-pointer text-xs"
           >
             Reset filter
           </button>
@@ -530,31 +530,47 @@ export default function PlacesExplorer({
 
       {/* ALL LOCATIONS (CITIES & LOCAL AREAS TOGETHER IN ONE GRID) */}
       {filteredCities.length === 0 && filteredAreas.length === 0 ? (
-        <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-8 text-center">
-          <p className="text-base font-semibold text-neutral-900">
+        <div className="rounded-3xl border border-slate-200 bg-slate-50 p-12 text-center">
+          <div className="mx-auto w-12 h-12 rounded-2xl bg-slate-200/60 flex items-center justify-center text-2xl mb-3">
+            🔍
+          </div>
+          <p className="text-base font-bold text-slate-900">
             No locations found matching &ldquo;{search.trim()}&rdquo;
           </p>
+          <p className="mt-1 text-sm text-slate-500">
+            Try searching for another Indian state, city name, or popular neighborhood.
+          </p>
+          <button
+            type="button"
+            onClick={() => handleSearchChange("")}
+            className="mt-4 rounded-xl bg-slate-900 text-white px-4 py-2 text-xs font-semibold hover:bg-slate-800 transition"
+          >
+            View All Cities
+          </button>
         </div>
       ) : (
-        <div className="grid w-full min-w-0 gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid w-full min-w-0 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredCities.map((city, idx) => (
             <Link
               key={`city-${city.slug}-${city.state ?? ""}-${idx}`}
               href={`/places/${city.slug}`}
-              className="group flex w-full min-w-0 flex-col justify-between rounded-2xl border border-neutral-200/90 bg-white p-4 transition-all hover:bg-neutral-950 hover:border-neutral-950 hover:shadow-md cursor-pointer text-left block"
+              className="group flex w-full min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all hover:border-amber-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer text-left block"
             >
-              <div className="flex w-full min-w-0 items-start justify-between gap-2">
+              <div className="flex w-full min-w-0 items-start justify-between gap-2.5">
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base font-black text-neutral-900 transition-colors group-hover:text-white break-words">
-                    {city.name}
-                  </h3>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-amber-500">📍</span>
+                    <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-amber-700 break-words">
+                      {city.name}
+                    </h3>
+                  </div>
                   {city.state && (
-                    <p className="mt-0.5 text-xs font-medium text-neutral-500 transition-colors group-hover:text-neutral-300 truncate">
+                    <p className="mt-1 pl-4 text-xs font-medium text-slate-500 truncate">
                       {city.state}
                     </p>
                   )}
                 </div>
-                <span className="inline-flex shrink-0 items-center rounded-full bg-neutral-100 border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-neutral-700 transition-colors group-hover:bg-neutral-800 group-hover:border-neutral-700 group-hover:text-white whitespace-nowrap">
+                <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 border border-slate-200/80 px-2.5 py-0.5 text-xs font-bold text-slate-700 transition-colors group-hover:bg-amber-100 group-hover:text-amber-900 group-hover:border-amber-200 whitespace-nowrap">
                   {city.adCount} {city.adCount === 1 ? "ad" : "ads"}
                 </span>
               </div>
@@ -568,19 +584,22 @@ export default function PlacesExplorer({
               <Link
                 key={`area-${area.citySlug}-${area.slug}-${idx}`}
                 href={`/places/${area.citySlug}/${area.slug}`}
-                className="group flex w-full min-w-0 flex-col justify-between rounded-2xl border border-neutral-200/90 bg-white p-4 transition-all hover:bg-neutral-950 hover:border-neutral-950 hover:shadow-md cursor-pointer text-left block"
+                className="group flex w-full min-w-0 flex-col justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-xs transition-all hover:border-indigo-400 hover:shadow-md hover:-translate-y-0.5 cursor-pointer text-left block"
               >
-                <div className="flex w-full min-w-0 items-start justify-between gap-2">
+                <div className="flex w-full min-w-0 items-start justify-between gap-2.5">
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-base font-black text-neutral-900 transition-colors group-hover:text-white break-words">
-                      {area.name}
-                    </h3>
-                    <p className="mt-0.5 text-xs font-medium text-neutral-500 transition-colors group-hover:text-neutral-300 truncate">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-indigo-500">🏘️</span>
+                      <h3 className="text-base font-bold text-slate-900 transition-colors group-hover:text-indigo-700 break-words">
+                        {area.name}
+                      </h3>
+                    </div>
+                    <p className="mt-1 pl-4 text-xs font-medium text-slate-500 truncate">
                       {area.cityName}
                       {parentCity?.state ? `, ${parentCity.state}` : ""}
                     </p>
                   </div>
-                  <span className="inline-flex shrink-0 items-center rounded-full bg-neutral-100 border border-neutral-200 px-2.5 py-0.5 text-xs font-semibold text-neutral-700 transition-colors group-hover:bg-neutral-800 group-hover:border-neutral-700 group-hover:text-white whitespace-nowrap">
+                  <span className="inline-flex shrink-0 items-center rounded-full bg-indigo-50 border border-indigo-200/80 px-2.5 py-0.5 text-xs font-bold text-indigo-700 transition-colors group-hover:bg-indigo-100 whitespace-nowrap">
                     Local Area
                   </span>
                 </div>

@@ -6,32 +6,42 @@ import React, {
 } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "solid" | "soft" | "outline" | "ghost" | "light";
-type Size = "sm" | "md" | "lg";
+export type ButtonVariant = "solid" | "soft" | "outline" | "ghost" | "light" | "gradient" | "danger";
+export type ButtonSize = "xs" | "sm" | "md" | "lg";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-150 focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed select-none";
+  "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/70 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none cursor-pointer";
 
-const variants: Record<Variant, string> = {
-  solid: "bg-black text-white hover:bg-neutral-800 active:scale-[0.98] shadow-sm",
-  soft: "border border-neutral-300 bg-neutral-100 text-neutral-900 hover:bg-neutral-200 active:scale-[0.98]",
-  outline: "border border-neutral-300 bg-white text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
-  ghost: "text-neutral-900 hover:bg-neutral-100 active:scale-[0.98]",
-  light: "bg-white text-neutral-900 hover:bg-neutral-100 border border-neutral-200 active:scale-[0.98]",
+const variants: Record<ButtonVariant, string> = {
+  solid:
+    "bg-slate-900 text-white hover:bg-slate-800 active:scale-[0.98] shadow-sm hover:shadow border border-slate-800",
+  gradient:
+    "bg-gradient-to-r from-amber-500 via-amber-600 to-orange-600 text-white hover:from-amber-600 hover:to-orange-700 active:scale-[0.98] shadow-md shadow-amber-500/25 border border-amber-400/30",
+  soft:
+    "border border-slate-200/80 bg-slate-100/80 text-slate-800 hover:bg-slate-200/70 hover:border-slate-300 active:scale-[0.98]",
+  outline:
+    "border border-slate-300/90 bg-white text-slate-800 hover:bg-slate-50/90 hover:border-slate-400 active:scale-[0.98] shadow-xs",
+  ghost:
+    "text-slate-700 hover:text-slate-950 hover:bg-slate-100/80 active:scale-[0.98]",
+  light:
+    "bg-white text-slate-800 hover:bg-slate-50 border border-slate-200 active:scale-[0.98] shadow-xs",
+  danger:
+    "bg-rose-600 text-white hover:bg-rose-700 active:scale-[0.98] shadow-sm shadow-rose-600/20 border border-rose-500",
 };
 
-const sizes: Record<Size, string> = {
-  sm: "px-4 py-2 text-sm",
-  md: "px-6 py-3 text-sm",
-  lg: "px-6 py-3 text-base",
+const sizes: Record<ButtonSize, string> = {
+  xs: "px-3 py-1.5 text-xs rounded-lg gap-1.5",
+  sm: "px-4 py-2 text-xs sm:text-sm rounded-lg gap-2",
+  md: "px-5 py-2.5 text-sm rounded-xl gap-2",
+  lg: "px-6 py-3.5 text-base rounded-xl gap-2.5 font-bold",
 };
 
 const activeClass =
-  "bg-black text-white shadow-sm hover:bg-neutral-800";
+  "bg-amber-600 text-white shadow-md shadow-amber-500/20 hover:bg-amber-700 border border-amber-500";
 
 type CommonProps = {
-  variant?: Variant;
-  size?: Size;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   fullWidth?: boolean;
   active?: boolean;
   loading?: boolean;
@@ -95,21 +105,13 @@ export default function Button(props: ButtonProps) {
 
   const isDisabled = Boolean(disabled || loading);
 
-  const hasLightBg = className && /(bg-white|bg-neutral-100|bg-neutral-200|bg-transparent)/.test(className);
-  const isDark =
-    !hasLightBg &&
-    (variant === "solid" ||
-      active ||
-      Boolean(className && /(bg-(black|neutral-950|neutral-900|neutral-800|red-950))/.test(className)));
-
   const classes = cn(
     base,
     active ? activeClass : variants[variant],
     sizes[size],
     fullWidth && "w-full",
-    loading && "pointer-events-none opacity-70",
-    className,
-    isDark && "!text-white text-white"
+    loading && "pointer-events-none opacity-75",
+    className
   );
 
   const content = (
@@ -125,7 +127,7 @@ export default function Button(props: ButtonProps) {
     return (
       <Link
         href={href!}
-        className={cn(classes, isDisabled && "pointer-events-none opacity-60")}
+        className={cn(classes, isDisabled && "pointer-events-none opacity-50")}
         aria-disabled={isDisabled || undefined}
         tabIndex={isDisabled ? -1 : undefined}
         {...(onClick ? { onClick } : {})}
