@@ -264,8 +264,8 @@ async function CityContent({
           <div className="mt-4">
             <Eyebrow>City Directory</Eyebrow>
           </div>
-          <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl lg:text-5xl">
-            {city.name} {city.state && <span className="text-xl sm:text-2xl font-bold text-amber-400">({city.state})</span>}
+          <h1 className="mt-3 text-3xl font-black text-black sm:text-4xl lg:text-5xl">
+            {city.name} {city.state && <span className="text-xl sm:text-2xl font-bold text-amber-600">({city.state})</span>}
           </h1>
 
           <CityNearbyAreasAds
@@ -281,7 +281,7 @@ async function CityContent({
           <SectionPanel className="p-6 sm:p-8">
             <Eyebrow>City Guide</Eyebrow>
             {seo.featuredImage && (
-              <div className="relative mt-5 h-64 sm:h-80 w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl">
+              <div className="relative mt-5 h-64 sm:h-80 w-full overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
                 <Image
                   src={seo.featuredImage}
                   alt={seo.imageAlt || `${city.name} guide`}
@@ -296,7 +296,7 @@ async function CityContent({
                 return (
                   <h2
                     key={block.id}
-                    className="mt-6 text-xl sm:text-2xl font-bold text-white"
+                    className="mt-6 text-xl sm:text-2xl font-bold text-black"
                   >
                     {block.text}
                   </h2>
@@ -304,7 +304,7 @@ async function CityContent({
               return (
                 <p
                   key={block.id}
-                  className="mt-3 text-sm sm:text-base leading-relaxed text-slate-300"
+                  className="mt-3 text-sm sm:text-base leading-relaxed text-slate-800"
                 >
                   {block.text}
                 </p>
@@ -322,14 +322,14 @@ async function CityContent({
         <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <SectionPanel className="p-6 text-center sm:p-8">
             <Eyebrow className="mx-auto">Popular Searches</Eyebrow>
-            <h2 className="mt-3 text-xl sm:text-2xl font-black text-white">
+            <h2 className="mt-3 text-xl sm:text-2xl font-black text-black">
               Most Searched in {city.name}
             </h2>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               {popularKeywords.map((keyword, index) => (
                 <span
                   key={`${keyword}-${index}`}
-                  className="rounded-full border border-white/10 bg-slate-900/60 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-300 transition hover:border-amber-500/30 hover:text-amber-300"
+                  className="rounded-full border border-slate-200 bg-slate-100 px-3.5 py-1.5 text-xs sm:text-sm font-semibold text-slate-800 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 shadow-2xs"
                 >
                   {keyword}
                 </span>
@@ -343,7 +343,7 @@ async function CityContent({
         <section className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
           <SectionPanel className="p-6 sm:p-8">
             <Eyebrow>Regional Directory</Eyebrow>
-            <h2 className="mt-3 text-xl font-bold text-white sm:text-2xl">
+            <h2 className="mt-3 text-xl font-bold text-black sm:text-2xl">
               More Cities in {city.state}
             </h2>
             <div className="mt-4 flex flex-wrap gap-2">
@@ -351,7 +351,7 @@ async function CityContent({
                 <Link
                   key={sibling.slug}
                   href={`/places/${sibling.slug}`}
-                  className="rounded-full border border-white/10 bg-slate-900/60 px-3.5 py-1.5 text-xs font-semibold text-slate-300 transition hover:border-amber-500/30 hover:bg-slate-800 hover:text-white"
+                  className="rounded-full border border-slate-200 bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-800 transition hover:border-amber-400 hover:bg-amber-50 hover:text-amber-900 shadow-2xs"
                 >
                   {sibling.name}
                 </Link>

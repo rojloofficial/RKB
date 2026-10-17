@@ -26,7 +26,7 @@ export default function CityNearbyAreasAds({
           <p className="text-base font-bold text-slate-900">
             No services posted in {cityName} yet.
           </p>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-slate-700">
             Be the first provider to publish a verified listing in {cityName}.
           </p>
           <Link
@@ -65,14 +65,14 @@ export default function CityNearbyAreasAds({
                       {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
                     </span>
                   ) : (
-                    <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-600 uppercase tracking-wide">
+                    <span className="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-800 uppercase tracking-wide">
                       Verified Listing
                     </span>
                   )}
 
                   {/* City Pill */}
                   {ad.city && (
-                    <span className="inline-flex max-w-[11rem] items-center truncate rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                    <span className="inline-flex max-w-[11rem] items-center truncate rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-semibold text-slate-800">
                       📍 {ad.city}
                     </span>
                   )}
@@ -84,7 +84,7 @@ export default function CityNearbyAreasAds({
                 </h2>
 
                 {ad.about && (
-                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 line-clamp-2">
+                  <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-800 line-clamp-2">
                     {ad.about}
                   </p>
                 )}

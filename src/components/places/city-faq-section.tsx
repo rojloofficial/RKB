@@ -31,7 +31,7 @@ export default function CityFaqSection({
         <h2 className="mt-3 text-2xl font-extrabold text-slate-900 tracking-tight sm:text-3xl">
           Frequently Asked Questions in {cityName}
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-slate-700 font-medium">
           Essential details and helpful answers about local services in {cityName}.
         </p>
 
@@ -64,7 +64,7 @@ export default function CityFaqSection({
                     className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-bold transition-transform duration-200 ${
                       isOpen
                         ? "rotate-180 bg-amber-500 text-white border-amber-500"
-                        : "border-slate-200 bg-slate-100 text-slate-600"
+                        : "border-slate-200 bg-slate-100 text-slate-800"
                     }`}
                     aria-hidden="true"
                   >
@@ -79,7 +79,7 @@ export default function CityFaqSection({
                         A
                       </span>
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm text-slate-700 leading-relaxed font-medium whitespace-pre-line">
+                        <div className="text-sm text-slate-800 leading-relaxed font-medium whitespace-pre-line">
                           {faq.answer}
                         </div>
                       </div>

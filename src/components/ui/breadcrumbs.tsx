@@ -18,7 +18,7 @@ export function Breadcrumbs({
   return (
     <nav
       aria-label="Breadcrumb"
-      className={cn("mb-5 flex items-center text-xs font-medium text-slate-500", className)}
+      className={cn("mb-5 flex items-center text-xs font-semibold text-slate-700", className)}
     >
       <ol className="flex flex-wrap items-center gap-1.5 sm:gap-2" itemScope itemType="https://schema.org/BreadcrumbList">
         {items.map((item, idx) => {
@@ -33,7 +33,7 @@ export function Breadcrumbs({
             >
               {idx > 0 && (
                 <svg
-                  className="h-3.5 w-3.5 text-slate-400 shrink-0 select-none"
+                  className="h-3.5 w-3.5 text-slate-500 shrink-0 select-none"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"

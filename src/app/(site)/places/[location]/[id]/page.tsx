@@ -202,7 +202,7 @@ async function AdContent({
           )}
 
           {/* Ad Header */}
-          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-6">
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-6">
             <div>
               <div className="flex flex-wrap items-center gap-2.5">
                 <Eyebrow>{ad.category}</Eyebrow>
@@ -211,14 +211,14 @@ async function AdContent({
                     {getTierRankInfo(ad.promoTier, ad.promoPackage).badge}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-slate-300">
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-800">
                   📍 {cityName}
                 </span>
               </div>
-              <h1 className="mt-3 flex flex-wrap items-baseline gap-3 text-2xl font-black text-white sm:text-3xl lg:text-4xl">
+              <h1 className="mt-3 flex flex-wrap items-baseline gap-3 text-2xl font-black text-black sm:text-3xl lg:text-4xl">
                 <span>{ad.name}</span>
                 {ad.age && (
-                  <span className="text-lg font-semibold text-amber-400/90 sm:text-xl">
+                  <span className="text-lg font-semibold text-amber-600 sm:text-xl">
                     ({ad.age} yrs)
                   </span>
                 )}
