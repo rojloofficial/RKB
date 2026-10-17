@@ -51,6 +51,12 @@ export const adminNavItems: NavItem[] = [
     icon: "M16 21v-2a4 4 0 00-8 0v2M12 11a4 4 0 100-8 4 4 0 000 8z",
   },
   {
+    name: "Blog",
+    href: "/admin/blog",
+    key: "blog",
+    icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z",
+  },
+  {
     name: "UPI",
     href: "/admin/upi",
     key: "upi",
@@ -115,12 +121,6 @@ export const adminNavItems: NavItem[] = [
     href: "/admin/sub-admins",
     key: "sub-admins",
     icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
-  },
-  {
-    name: "Blog",
-    href: "/admin/blog",
-    key: "blog",
-    icon: "M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z",
   },
 ];
 

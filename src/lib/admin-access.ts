@@ -16,6 +16,7 @@ export const ADMIN_SECTIONS = [
   { key: "city-seo", name: "City SEO" },
   { key: "ads", name: "Ads" },
   { key: "users", name: "Users" },
+  { key: "blog", name: "Blog Posts" },
   { key: "upi", name: "UPI" },
   { key: "coupon", name: "Coupon" },
   { key: "payment-request", name: "Payment Request" },
@@ -27,7 +28,6 @@ export const ADMIN_SECTIONS = [
   { key: "not-found", name: "404 Pages" },
   { key: "admin-control", name: "Admin Control" },
   { key: "sub-admins", name: "Sub Admin List" },
-  { key: "blog", name: "Blog Posts" },
 ] as const;
 
 export function sectionFromHref(href: string): string | null {
