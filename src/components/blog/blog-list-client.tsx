@@ -67,7 +67,7 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
   // Identify featured post for hero showcase on first page when not actively searching
   const featuredPost = useMemo(() => {
     if (safePage === 1 && !searchQuery.trim() && selectedCategory === "All") {
-      return initialPosts.find((p) => p.featured) || initialPosts[0];
+      return initialPosts.find((p) => p.featured) || null;
     }
     return null;
   }, [initialPosts, safePage, searchQuery, selectedCategory]);

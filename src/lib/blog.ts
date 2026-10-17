@@ -124,69 +124,6 @@ export function getCategoryBadgeColor(category: string): {
 
 export const STATIC_FALLBACK_POSTS: BlogPost[] = [
   {
-    _id: "blog_seed_1",
-    title: "How to Safely Discover Local Classifieds & Verified Services in Major Indian Metros",
-    slug: "safely-discover-local-classifieds-and-services",
-    excerpt:
-      "A complete guide on navigating city-wide classified directories safely, identifying verified listings, and directly contacting local providers with confidence.",
-    category: "Safety & Tips",
-    coverImage:
-      "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80",
-    coverImageAlt: "Modern digital marketplace security and safety tips",
-    author: {
-      name: "RKB Editorial",
-      role: "Platform Safety & Trust",
-    },
-    readTime: "4 min read",
-    tags: ["Safety", "Classifieds", "Verification", "Tips"],
-    status: "published",
-    featured: true,
-    views: 1420,
-    metaTitle: "Safety Tips for Online Classifieds & Local Services | RKB",
-    metaDescription:
-      "Learn best practices for contacting local service providers, verifying listings, and avoiding scams across online classified portals in India.",
-    publishedAt: "2026-03-15T09:00:00.000Z",
-    createdAt: "2026-03-15T09:00:00.000Z",
-    updatedAt: "2026-03-15T09:00:00.000Z",
-    sections: [
-      {
-        id: "s1",
-        heading: "Prioritize Verified Listings with Direct Contact Options",
-        content:
-          "When exploring local city portals, prioritize service listings that feature direct verified contact options—such as telephone calls, WhatsApp business accounts, and transparent descriptions. Always read the ad description thoroughly and check whether the pricing and terms are clearly stated before initiating contact.",
-        type: "text",
-      },
-      {
-        id: "s2",
-        heading: "Important Safety Rule of Thumb",
-        content:
-          "Never send advance payments or wire transfers before confirming service details in person or through mutual agreement. Reliable providers are transparent about their cancellation policies and service expectations.",
-        type: "callout",
-      },
-      {
-        id: "s3",
-        heading: "Leveraging Local Area Filtering",
-        content:
-          "Metropolitan hubs like Mumbai, Delhi, Bengaluru, and Pune span vast geographic areas. Utilizing precise locality filters—such as Andheri East, Indiranagar, or Connaught Place—ensures prompt response times and minimal transit delays.",
-        type: "text",
-      },
-    ],
-    faqs: [
-      {
-        id: "f1",
-        question: "How do I know if a listing on RKB is genuine?",
-        answer:
-          "Look for listings with complete contact information, clear service descriptions, and active presence. You can contact providers directly via phone or WhatsApp to clarify requirements before proceeding.",
-      },
-      {
-        id: "f2",
-        question: "What should I do if a provider asks for unusual payment methods?",
-        answer:
-          "Exercise caution and refuse any untraceable gift cards or upfront deposits for unverified bookings. Report suspicious profiles to the RKB moderation team.",
-      },
-    ],
-  },
-  {
     _id: "blog_seed_2",
     title: "Top City Hotspots and Nightlife Destinations in Mumbai & Delhi NCR",
     slug: "top-city-hotspots-nightlife-mumbai-delhi",

@@ -96,7 +96,10 @@ export async function listAllBlogPostsRaw(): Promise<BlogPost[]> {
   const col = await getBlogCollection();
   if (col) {
     try {
-      const docs = await col.find({}).sort({ createdAt: -1 }).toArray();
+      const docs = await col
+        .find({ slug: { $ne: "safely-discover-local-classifieds-and-services" } } as Record<string, unknown>)
+        .sort({ createdAt: -1 })
+        .toArray();
       if (docs && docs.length > 0) {
         return docs.map((d) => normalizeBlogPostDoc(d as unknown as Record<string, unknown>));
       }
@@ -106,7 +109,9 @@ export async function listAllBlogPostsRaw(): Promise<BlogPost[]> {
   }
 
   const store = await readStore();
-  const rawList = (store.blogs ?? []) as unknown as Record<string, unknown>[];
+  const rawList = ((store.blogs ?? []) as unknown as Record<string, unknown>[]).filter(
+    (b) => b.slug !== "safely-discover-local-classifieds-and-services" && b._id !== "blog_seed_1"
+  );
   if (rawList.length === 0) {
     return STATIC_FALLBACK_POSTS;
   }
@@ -185,6 +190,9 @@ export async function listBlogPosts(options: ListBlogPostsOptions = {}): Promise
 
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   const safeSlug = slugify(slug);
+  if (safeSlug === "safely-discover-local-classifieds-and-services") {
+    return null;
+  }
   const col = await getBlogCollection();
   if (col) {
     try {
