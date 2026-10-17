@@ -2,10 +2,9 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { uploadImage } from "@/lib/compress";
 import { AdminCitySeoSkeleton } from "@/components/skeletons/admin-skeletons";
-import { formatDisplayDate } from "@/lib/date";
 
 type BlockType = "h2" | "h3" | "p";
 
@@ -183,13 +182,11 @@ type SeoEntry = {
 
 function CitySeoContent() {
   const params = useSearchParams();
-  const router = useRouter();
   const queryCity = params.get("city") || "";
 
   const [allCities, setAllCities] = useState<CityEntry[]>([]);
   const [allSeo, setAllSeo] = useState<SeoEntry[]>([]);
   const [activeSlug, setActiveSlug] = useState<string>(queryCity);
-  const [lastSavedDate, setLastSavedDate] = useState<string | undefined>(undefined);
 
   const [name, setName] = useState("");
   const [stateName, setStateName] = useState("");
@@ -204,7 +201,6 @@ function CitySeoContent() {
   const [imageAlt, setImageAlt] = useState("");
   const [content, setContent] = useState<ContentBlock[]>([]);
   const [faqs, setFaqs] = useState<FaqItem[]>([]);
-  const [status, setStatus] = useState<"draft" | "published">("draft");
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -300,8 +296,6 @@ function CitySeoContent() {
               ]
         );
         setFaqs(Array.isArray(seo.faqs) ? seo.faqs : []);
-        setStatus(seo.status === "published" ? "published" : "draft");
-        setLastSavedDate(seo.updatedAt);
       } else {
         // Fresh state for unconfigured city
         setTitle("");
@@ -318,8 +312,6 @@ function CitySeoContent() {
           { id: uid(), type: "p", text: "" },
         ]);
         setFaqs([]);
-        setStatus("draft");
-        setLastSavedDate(undefined);
       }
     },
     [findSeoForCity]
@@ -587,8 +579,6 @@ function CitySeoContent() {
       });
 
       setActiveSlug(slug);
-      setStatus(newStatus);
-      setLastSavedDate(updatedRecord.updatedAt || new Date().toISOString());
 
       // Update URL to current city slug
       window.history.replaceState(
@@ -751,50 +741,7 @@ function CitySeoContent() {
         </div>
       </div>
 
-      {/* Draft / Live Status Banner */}
-      <div className="mt-4">
-        {status === "draft" && lastSavedDate ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm text-amber-200">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-block h-3 w-3 rounded-full bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.8)] shrink-0" />
-              <div>
-                <strong className="text-amber-300">Saved Draft Loaded:</strong> Last saved on{" "}
-                <span className="font-semibold text-white">{formatDisplayDate(lastSavedDate)}</span>.
-                You are currently editing this draft. Click &ldquo;Save Draft&rdquo; to update it or &ldquo;Publish Live&rdquo; to launch it.
-              </div>
-            </div>
-            <span className="hidden sm:inline-block rounded-md bg-amber-500/20 px-2 py-0.5 text-xs font-bold text-amber-300 uppercase tracking-wide">
-              Draft
-            </span>
-          </div>
-        ) : status === "published" ? (
-          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm text-emerald-200">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
-              <div>
-                <strong className="text-emerald-300">Published Live:</strong> This city page is live on the public website
-                {lastSavedDate ? ` (Last updated ${formatDisplayDate(lastSavedDate)})` : ""}. Any changes saved will update the live site.
-              </div>
-            </div>
-            <span className="hidden sm:inline-block rounded-md bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-300 uppercase tracking-wide">
-              Live
-            </span>
-          </div>
-        ) : (
-          <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 flex items-center justify-between gap-3 text-xs sm:text-sm text-rose-200">
-            <div className="flex items-center gap-2.5">
-              <span className="inline-block h-3 w-3 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)] shrink-0" />
-              <div>
-                <strong className="text-rose-300">New Setup:</strong> No SEO content has been saved for &ldquo;{name || "this city"}&rdquo; yet.
-                Fill in the details below and save as draft or publish live.
-              </div>
-            </div>
-            <span className="hidden sm:inline-block rounded-md bg-rose-500/20 px-2 py-0.5 text-xs font-bold text-rose-300 uppercase tracking-wide">
-              Not Set
-            </span>
-          </div>
-        )}
-      </div>
+
 
       {error && (
         <div className="mt-4 rounded-xl bg-rose-500/10 border border-rose-500/30 p-3.5 text-sm font-semibold text-rose-300" role="alert">
