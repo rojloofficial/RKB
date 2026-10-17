@@ -253,7 +253,23 @@ function CitySeoContent() {
    */
   const loadCityIntoForm = useCallback(
     (target: string, cities: CityEntry[], seoList: SeoEntry[]) => {
-      if (!target.trim()) return;
+      if (!target.trim()) {
+        setName("");
+        setStateName("");
+        setActiveSlug("");
+        setTitle("");
+        setDescription("");
+        setUrlSlug("");
+        setSlugManual(false);
+        setPrimaryKeyword("");
+        setPopularSearches([]);
+        setCanonicalUrl("");
+        setFeaturedImage("");
+        setImageAlt("");
+        setContent([]);
+        setFaqs([]);
+        return;
+      }
 
       const { city, seo } = findSeoForCity(target, cities, seoList);
 
@@ -290,14 +306,11 @@ function CitySeoContent() {
         setContent(
           Array.isArray(seo.content) && seo.content.length > 0
             ? normalizeBlocks(seo.content)
-            : [
-                { id: uid(), type: "h2", text: "" },
-                { id: uid(), type: "p", text: "" },
-              ]
+            : []
         );
         setFaqs(Array.isArray(seo.faqs) ? seo.faqs : []);
       } else {
-        // Fresh state for unconfigured city
+        // Fresh state for unconfigured city - keep inputs empty, NO demo data
         setTitle("");
         setDescription("");
         setUrlSlug(resolvedSlug);
@@ -307,17 +320,14 @@ function CitySeoContent() {
         setCanonicalUrl("");
         setFeaturedImage("");
         setImageAlt("");
-        setContent([
-          { id: uid(), type: "h2", text: "" },
-          { id: uid(), type: "p", text: "" },
-        ]);
+        setContent([]);
         setFaqs([]);
       }
     },
     [findSeoForCity]
   );
 
-  // Initial load of all cities and SEO entries
+  // Initial load of all cities and SEO entries (runs once on mount)
   useEffect(() => {
     let cancelled = false;
 
@@ -347,10 +357,9 @@ function CitySeoContent() {
         const fetchedSeo = (seoRes.seo ?? []) as SeoEntry[];
         setAllSeo(fetchedSeo);
 
-        // Load targeted city from query param if available, otherwise first city or empty
-        const initialTarget = queryCity || (uniqueCities[0]?.slug ?? "");
-        if (initialTarget) {
-          loadCityIntoForm(initialTarget, uniqueCities, fetchedSeo);
+        // Only load if an explicit city was passed in the initial URL query param
+        if (queryCity) {
+          loadCityIntoForm(queryCity, uniqueCities, fetchedSeo);
         }
       } catch {
         setError("Failed to load city SEO details. Please refresh.");
@@ -362,15 +371,20 @@ function CitySeoContent() {
     return () => {
       cancelled = true;
     };
-  }, [queryCity, loadCityIntoForm]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
-   * Handle switching city from dropdown selector
+   * Handle switching city from dropdown selector without full page reload
    */
   function handleSelectCity(targetSlug: string) {
-    if (!targetSlug) return;
     setError("");
     setSuccess("");
+    if (!targetSlug) {
+      loadCityIntoForm("", allCities, allSeo);
+      window.history.replaceState({}, "", "/admin/city-seo");
+      return;
+    }
     loadCityIntoForm(targetSlug, allCities, allSeo);
     // Sync browser URL without full re-render
     window.history.replaceState(
@@ -852,7 +866,7 @@ function CitySeoContent() {
                   className={inputClass}
                   value={title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  placeholder={`Best Places & Services in ${name || "City"} | RKB`}
+                  placeholder={name ? `Best Places & Services in ${name} | RKB` : "e.g. Best Places & Services in City | RKB"}
                 />
               </div>
 
@@ -887,7 +901,7 @@ function CitySeoContent() {
                   className={inputClass}
                   value={primaryKeyword}
                   onChange={(e) => setPrimaryKeyword(e.target.value)}
-                  placeholder={`e.g. ${name ? name.toLowerCase() : "city"} services`}
+                  placeholder={name ? `e.g. ${name.toLowerCase()} services` : "e.g. city services"}
                 />
               </Field>
 
