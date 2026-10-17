@@ -254,16 +254,21 @@ export default function AdminAds() {
                 <tr key={ad._id} className="hover:bg-slate-800/30 transition-colors">
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-3">
-                      {ad.images?.[0] ? (
-                        <Image
-                          src={ad.images[0]}
-                          alt={ad.name}
-                          width={48}
-                          height={48}
-                          className="h-12 w-12 rounded-xl object-cover border border-white/10 shadow-sm"
-                        />
+                      {ad.images && ad.images.length > 0 ? (
+                        <div className="flex items-center gap-1.5 shrink-0 flex-wrap max-w-[170px]">
+                          {ad.images.map((img, idx) => (
+                            <Image
+                              key={idx}
+                              src={img}
+                              alt={`${ad.name} ${idx + 1}`}
+                              width={32}
+                              height={32}
+                              className="h-8 w-8 shrink-0 aspect-square rounded-lg object-cover border border-white/10 shadow-2xs"
+                            />
+                          ))}
+                        </div>
                       ) : (
-                        <div className="h-12 w-12 rounded-xl bg-slate-800 border border-white/10 flex items-center justify-center text-slate-500 text-xs font-bold">
+                        <div className="h-8 w-8 shrink-0 aspect-square rounded-lg bg-slate-800 border border-white/10 flex items-center justify-center text-slate-500 text-[10px] font-bold">
                           RKB
                         </div>
                       )}
