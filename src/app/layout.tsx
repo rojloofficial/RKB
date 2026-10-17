@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
 import "./globals.css";
@@ -114,6 +115,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={`${sansFont.className} min-h-full bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
