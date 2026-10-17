@@ -330,7 +330,7 @@ export default function AdminBlogPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <main className="p-4 sm:p-6 lg:p-8 space-y-6 min-w-0 max-w-7xl mx-auto w-full">
       {/* Top Banner & Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
@@ -954,6 +954,6 @@ export default function AdminBlogPage() {
           </div>
         </div>
       )}
-    </div>
+    </main>
   );
 }

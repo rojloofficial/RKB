@@ -158,21 +158,34 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
         </div>
       )}
 
-      {/* Filter Tabs & Search Bar Bar */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 border-b border-slate-200/80 pb-4">
+      {/* Filter Tabs & Search Bar Toolbar */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-2 sm:p-2.5 shadow-sm space-y-3 lg:space-y-0 lg:flex lg:items-center lg:justify-between gap-4">
         {/* Category Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-1 px-1 -mx-1 sm:mx-0">
           <button
             type="button"
             onClick={() => handleCategorySelect("All")}
-            className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all border shadow-sm ${
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
               selectedCategory === "All"
-                ? "bg-amber-500 text-slate-950 border-amber-500 shadow-amber-500/20"
-                : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                ? "bg-slate-950 text-white shadow-md shadow-slate-950/10"
+                : "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80"
             }`}
           >
-            All Articles ({initialPosts.length})
+            {selectedCategory === "All" && (
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+            )}
+            <span>All Articles</span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-colors ${
+                selectedCategory === "All"
+                  ? "bg-white/20 text-white"
+                  : "bg-slate-100 text-slate-500"
+              }`}
+            >
+              {initialPosts.length}
+            </span>
           </button>
+
           {BLOG_CATEGORIES.map((cat) => {
             const count = initialPosts.filter((p) => p.category === cat).length;
             const isActive = selectedCategory === cat;
@@ -181,20 +194,32 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
                 key={cat}
                 type="button"
                 onClick={() => handleCategorySelect(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border shadow-sm ${
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? "bg-amber-500 text-slate-950 border-amber-500 shadow-amber-500/20 font-bold"
-                    : "bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                    ? "bg-slate-950 text-white font-bold shadow-md shadow-slate-950/10"
+                    : "text-slate-600 hover:text-slate-950 hover:bg-slate-100/80"
                 }`}
               >
-                {cat} <span className="opacity-70 text-[11px]">({count})</span>
+                {isActive && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                )}
+                <span>{cat}</span>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-md font-semibold transition-colors ${
+                    isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
         </div>
 
         {/* Live Search Input */}
-        <div className="relative min-w-[240px] max-w-md w-full md:w-auto">
+        <div className="relative w-full lg:w-72 shrink-0">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -205,13 +230,13 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
             value={searchQuery}
             onChange={handleSearchChange}
             placeholder="Search articles, topics..."
-            className="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-9 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 shadow-sm"
+            className="w-full rounded-xl border border-slate-200/90 bg-slate-50/80 pl-9 pr-8 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/20 font-medium transition-all"
           />
           {searchQuery && (
             <button
               type="button"
               onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -219,6 +244,27 @@ export default function BlogListClient({ initialPosts }: BlogListClientProps) {
             </button>
           )}
         </div>
+      </div>
+
+      {/* Quick Status Sub-bar */}
+      <div className="flex items-center justify-between text-xs text-slate-500 px-1 pt-0.5">
+        <p>
+          Showing <span className="font-bold text-slate-900">{filteredPosts.length}</span> {filteredPosts.length === 1 ? "article" : "articles"}
+          {selectedCategory !== "All" && (
+            <span> in <strong className="text-amber-600">{selectedCategory}</strong></span>
+          )}
+        </p>
+
+        {(selectedCategory !== "All" || searchQuery.trim()) && (
+          <button
+            type="button"
+            onClick={handleClearFilters}
+            className="text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer flex items-center gap-1"
+          >
+            <span>Reset filters</span>
+            <span>✕</span>
+          </button>
+        )}
       </div>
 
       {/* Articles Grid */}
