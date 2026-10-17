@@ -158,14 +158,6 @@ export default function NavBar() {
               Login
             </Link>
           )}
-
-          {/* Post Ad Button */}
-          <Link
-            href="/post-ad/new"
-            className="rounded-xl bg-white text-slate-900 px-4 py-2 text-xs md:text-sm font-extrabold shadow-sm transition-all hover:bg-slate-100 active:scale-95 border border-white"
-          >
-            + Post Ad
-          </Link>
         </nav>
 
         {/* Mobile Viewport Header Controls */}
