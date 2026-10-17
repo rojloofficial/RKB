@@ -9,6 +9,13 @@ import { useAuth } from "@/lib/auth-context";
 
 const dashboardLinks = [
   {
+    href: "/post-ad/profile",
+    title: "Account Profile",
+    desc: "View your registration details, primary service, and join date.",
+    icon: "👤",
+    badge: "Settings",
+  },
+  {
     href: "/post-ad/your-ads",
     title: "Your Ads",
     desc: "Manage, edit, suspend, or promote your active and saved listings.",
@@ -35,13 +42,6 @@ const dashboardLinks = [
     desc: "Track transaction IDs, approval statuses, and coin invoices.",
     icon: "🧾",
     badge: "Records",
-  },
-  {
-    href: "/post-ad/profile",
-    title: "Account Profile",
-    desc: "View your registration details, primary service, and join date.",
-    icon: "👤",
-    badge: "Settings",
   },
 ];
 
