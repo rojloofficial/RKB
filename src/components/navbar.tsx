@@ -40,8 +40,10 @@ export default function NavBar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user, refreshAuth, isLoading } = useAuth();
-
   const isLoggedIn = Boolean(user);
+  const visibleNavLinks = navLinks.filter(
+    (link) => !(isLoggedIn && (link.href === "/post-ad" || link.name.toLowerCase() === "post ad"))
+  );
 
   useEffect(() => {
     if (isLoading || !isLoggedIn) return;
@@ -110,7 +112,7 @@ export default function NavBar() {
 
         {/* Desktop Navigation Links */}
         <nav className="ml-auto hidden items-center gap-2 lg:gap-3 sm:flex">
-          {navLinks.map((link) => {
+          {visibleNavLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -144,10 +146,14 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex items-center gap-2 rounded-full border border-slate-700/80 bg-slate-900 px-3 py-1 text-xs md:text-sm font-semibold text-white transition-all hover:bg-slate-800 hover:border-slate-600"
+              className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs md:text-sm font-semibold transition-all ${
+                pathname === "/post-ad" || pathname.startsWith("/post-ad/")
+                  ? "border-amber-500/60 bg-slate-800 text-amber-400 shadow-xs"
+                  : "border-slate-700/80 bg-slate-900 text-white hover:bg-slate-800 hover:border-slate-600"
+              }`}
             >
               <ProfileIcon name={user?.name} />
-              <span className="hidden md:inline max-w-[120px] truncate">{user?.name || "Dashboard"}</span>
+              <span className="hidden md:inline max-w-[120px] truncate">{user?.name || "Profile"}</span>
             </Link>
           ) : (
             <Link
@@ -175,7 +181,11 @@ export default function NavBar() {
             <Link
               href="/post-ad"
               aria-label="Profile"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-800 text-white"
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-all ${
+                pathname === "/post-ad" || pathname.startsWith("/post-ad/")
+                  ? "bg-slate-800 ring-2 ring-amber-500/60 text-amber-400"
+                  : "bg-slate-800 text-white hover:bg-slate-700"
+              }`}
             >
               <ProfileIcon name={user?.name} />
             </Link>
@@ -214,7 +224,7 @@ export default function NavBar() {
       {/* Mobile Drawer Menu */}
       {menuOpen && (
         <nav className="absolute left-0 right-0 top-full z-50 flex flex-col gap-1.5 border-b border-slate-800 bg-slate-950/98 px-4 py-4 shadow-2xl backdrop-blur-xl sm:hidden animate-in fade-in slide-in-from-top-2 duration-150">
-          {navLinks.map((link) => {
+          {visibleNavLinks.map((link) => {
             const active =
               pathname === link.href || pathname.startsWith(`${link.href}/`);
             return (
@@ -234,15 +244,36 @@ export default function NavBar() {
             );
           })}
 
-          <div className="mt-2 pt-2 border-t border-slate-800/80 flex flex-col gap-2">
+          {/* User Profile in mobile menu when logged in */}
+          {isLoggedIn && (
             <Link
-              href="/post-ad/new"
+              href="/post-ad"
               onClick={() => setMenuOpen(false)}
-              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-orange-600/20"
+              className={`flex items-center justify-between rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                pathname === "/post-ad" || pathname.startsWith("/post-ad/")
+                  ? "bg-slate-800 text-amber-400"
+                  : "text-slate-300 hover:bg-slate-900 hover:text-white"
+              }`}
             >
-              <span>+ Post a New Ad</span>
+              <div className="flex items-center gap-2.5">
+                <ProfileIcon name={user?.name} />
+                <span>{user?.name || "Profile"}</span>
+              </div>
+              <span className="text-slate-500">→</span>
             </Link>
-          </div>
+          )}
+
+          {!isLoggedIn && (
+            <div className="mt-2 pt-2 border-t border-slate-800/80 flex flex-col gap-2">
+              <Link
+                href="/post-ad"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 px-4 py-3 text-sm font-bold text-white shadow-md shadow-orange-600/20"
+              >
+                <span>+ Post a New Ad</span>
+              </Link>
+            </div>
+          )}
         </nav>
       )}
     </header>

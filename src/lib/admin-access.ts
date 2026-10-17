@@ -27,6 +27,7 @@ export const ADMIN_SECTIONS = [
   { key: "not-found", name: "404 Pages" },
   { key: "admin-control", name: "Admin Control" },
   { key: "sub-admins", name: "Sub Admin List" },
+  { key: "blog", name: "Blog Posts" },
 ] as const;
 
 export function sectionFromHref(href: string): string | null {

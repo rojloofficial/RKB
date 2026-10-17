@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/config/site";
 import { listAllCities } from "@/lib/models/city";
 import { listAllAds, filterVisibleCityAds } from "@/lib/models/ad";
+import { listAllBlogPostsRaw } from "@/lib/models/blog";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly",
       priority: 0.8,
+    },
+    {
+      url: `${base}/blog`,
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.85,
     },
     {
       url: `${base}/about`,
@@ -150,11 +157,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     console.error("[sitemap] Failed to load ads:", error);
   }
 
+  const blogRoutes: MetadataRoute.Sitemap = [];
+  try {
+    const blogs = await listAllBlogPostsRaw();
+    for (const post of blogs) {
+      if (post.status !== "published") continue;
+      blogRoutes.push({
+        url: `${base}/blog/${post.slug}`,
+        lastModified: getValidDate(post.updatedAt ?? post.publishedAt, now),
+        changeFrequency: "weekly",
+        priority: 0.75,
+      });
+    }
+  } catch (error) {
+    console.error("[sitemap] Failed to load blog posts:", error);
+  }
+
   // Combine and deduplicate all routes by normalized lowercase URL
   const allRoutes = [
     ...staticRoutes,
     ...cityRoutes,
     ...adRoutes,
+    ...blogRoutes,
   ];
 
   const uniqueRoutesMap = new Map<string, MetadataRoute.Sitemap[number]>();

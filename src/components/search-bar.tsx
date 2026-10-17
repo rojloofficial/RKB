@@ -234,7 +234,7 @@ export default function SearchBar() {
           <Link
             key={tag}
             href={`/places?q=${encodeURIComponent(tag)}`}
-            className="rounded-full bg-slate-100/90 border border-slate-200/80 px-2.5 py-1 text-slate-700 font-medium hover:bg-amber-50 hover:text-amber-800 hover:border-amber-200 transition"
+            className="rounded-full bg-slate-100/90 border border-slate-200/80 px-2.5 py-1 text-black font-medium hover:bg-amber-50 hover:text-black hover:border-amber-200 transition"
           >
             {tag}
           </Link>
