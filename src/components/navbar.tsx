@@ -97,7 +97,6 @@ export default function NavBar() {
               className="h-9 w-9 rounded-full object-cover shadow-md ring-2 ring-amber-500/30 group-hover:ring-amber-500/70 transition-all"
               priority
             />
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-slate-950" />
           </div>
           <div className="flex flex-col">
             <span className="tracking-tight font-black text-lg bg-gradient-to-r from-white via-slate-100 to-amber-200 bg-clip-text text-transparent">
