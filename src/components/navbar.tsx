@@ -137,7 +137,6 @@ export default function NavBar() {
             >
               <span className="text-sm">🪙</span>
               <span>{Number(user?.coins ?? 0)}</span>
-              <span className="text-[10px] uppercase font-semibold text-amber-400/80 ml-0.5">+Add</span>
             </Link>
           )}
 
