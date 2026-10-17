@@ -194,6 +194,37 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex flex-1 flex-col gap-1 px-3 py-4 overflow-y-auto scrollbar-hide">
+          <Link
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="flex items-center justify-between gap-2.5 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/15 to-orange-500/10 px-3 py-2.5 text-xs font-bold text-amber-300 hover:border-amber-400 hover:bg-amber-500/20 hover:text-white transition-all shadow-xs mb-2 group"
+          >
+            <div className="flex items-center gap-2.5">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="text-amber-400 group-hover:scale-110 transition-transform"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              <span>Go to Site</span>
+            </div>
+            <span className="text-xs font-extrabold text-amber-400 group-hover:translate-x-0.5 transition-transform">
+              ↗
+            </span>
+          </Link>
+
           {visibleItems.map((item) => {
             const active =
               item.href === "/admin"
