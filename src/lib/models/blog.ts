@@ -206,7 +206,7 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   const col = await getBlogCollection();
   if (col) {
     try {
-      const doc = await col.findOne({ _id: id } as Record<string, unknown>);
+      const doc = await col.findOne({ _id: id } as any);
       if (doc) {
         return normalizeBlogPostDoc(doc as unknown as Record<string, unknown>);
       }
@@ -289,7 +289,7 @@ export async function createBlogPost(data: Partial<BlogPost>): Promise<BlogPost>
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.insertOne(newPost as Record<string, unknown>);
+      await col.insertOne(newPost as any);
     } catch (err) {
       console.error("[blog] Mongo insert error:", err);
     }
@@ -336,7 +336,7 @@ export async function updateBlogPost(
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.updateOne({ _id: id } as Record<string, unknown>, { $set: updated as Record<string, unknown> });
+      await col.updateOne({ _id: id } as any, { $set: updated } as any);
     } catch (err) {
       console.error("[blog] Mongo update error:", err);
     }
@@ -360,7 +360,7 @@ export async function deleteBlogPost(id: string): Promise<boolean> {
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.deleteOne({ _id: id } as Record<string, unknown>);
+      await col.deleteOne({ _id: id } as any);
     } catch (err) {
       console.error("[blog] Mongo delete error:", err);
     }
@@ -384,7 +384,7 @@ export async function incrementBlogPostViews(slug: string): Promise<void> {
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.updateOne({ slug: safeSlug }, { $inc: { views: 1 } });
+      await col.updateOne({ slug: safeSlug } as any, { $inc: { views: 1 } } as any);
       return;
     } catch (err) {
       console.error("[blog] Increment views failed:", err);
