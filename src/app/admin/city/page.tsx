@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatDisplayDate } from "@/lib/date";
 import { AdminTableSkeleton } from "@/components/skeletons/admin-skeletons";
 import { useAdminContext } from "@/components/admin/use-admin-context";
@@ -236,15 +236,6 @@ export default function AdminCities() {
 
     return sorted;
   }, [cities, statusFilter, selectedState, debouncedSearch, sortBy]);
-
-  // Index in filteredAndSortedCities where Updated SEO (published) cities start
-  const firstUpdatedIndex = useMemo(() => {
-    if (statusFilter !== "all") return -1;
-    const hasPending = filteredAndSortedCities.some((c) => c.seo.status !== "published");
-    const hasPublished = filteredAndSortedCities.some((c) => c.seo.status === "published");
-    if (!hasPending || !hasPublished) return -1;
-    return filteredAndSortedCities.findIndex((c) => c.seo.status === "published");
-  }, [filteredAndSortedCities, statusFilter]);
 
   // Pagination calculation
   const totalItems = filteredAndSortedCities.length;
@@ -770,7 +761,7 @@ export default function AdminCities() {
             "City Name",
             "State",
             "Country",
-            "SEO Status",
+            "Last update",
             "Actions",
           ]}
           minWidth="min-w-[760px]"
@@ -815,36 +806,19 @@ export default function AdminCities() {
                   <th className="px-4 py-3.5">City Name &amp; SEO Dot</th>
                   <th className="px-4 py-3.5">State</th>
                   <th className="px-4 py-3.5">Country</th>
-                  <th className="px-4 py-3.5">SEO Status &amp; Updated</th>
+                  <th className="px-4 py-3.5">Last update</th>
                   <th className="px-4 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {paginatedCities.map((item, idx) => {
+                {paginatedCities.map((item) => {
                   const seoStatus = item.seo.status;
-                  const globalIndex = pageSize === -1 ? idx : (currentPage - 1) * pageSize + idx;
-                  const isFirstUpdatedRow = globalIndex === firstUpdatedIndex;
 
                   return (
-                    <Fragment key={item.id}>
-                      {isFirstUpdatedRow && (
-                        <tr className="bg-gradient-to-r from-emerald-950/60 via-emerald-900/40 to-slate-900/60 border-y border-emerald-500/30">
-                          <td colSpan={6} className="px-4 py-3">
-                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-emerald-300">
-                              <div className="flex items-center gap-2.5">
-                                <span className="inline-block h-3 w-3 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0 animate-pulse" />
-                                <span>Updated SEO Cities (SEO Done &amp; Published &mdash; Placed at the End of the List)</span>
-                              </div>
-                              <span className="text-[11px] font-semibold text-emerald-400/90 rounded-md bg-emerald-500/20 px-2 py-0.5">
-                                {publishedCount} {publishedCount === 1 ? "City" : "Cities"} Completed
-                              </span>
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                      <tr
-                        className="hover:bg-slate-800/40 transition-colors group"
-                      >
+                    <tr
+                      key={item.id}
+                      className="hover:bg-slate-800/40 transition-colors group"
+                    >
                       {/* Checkbox */}
                       <td className="px-4 py-3.5">
                         <input
@@ -907,37 +881,12 @@ export default function AdminCities() {
                         {item.country || "India"}
                       </td>
 
-                      {/* SEO Status & Date */}
-                      <td className="px-4 py-3.5">
-                        {seoStatus === "published" ? (
-                          <div className="flex flex-col">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                              SEO Done
-                            </span>
-                            {item.seo.updatedAt && (
-                              <span className="mt-0.5 text-[11px] text-slate-500">
-                                {formatDisplayDate(item.seo.updatedAt)}
-                              </span>
-                            )}
-                          </div>
-                        ) : seoStatus === "draft" ? (
-                          <div className="flex flex-col">
-                            <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                              In Draft
-                            </span>
-                            {item.seo.updatedAt && (
-                              <span className="mt-0.5 text-[11px] text-slate-500">
-                                {formatDisplayDate(item.seo.updatedAt)}
-                              </span>
-                            )}
-                          </div>
+                      {/* Last update */}
+                      <td className="px-4 py-3.5 text-slate-300 text-xs">
+                        {item.seo.updatedAt ? (
+                          formatDisplayDate(item.seo.updatedAt)
                         ) : (
-                          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 px-2.5 py-0.5 text-xs font-semibold text-rose-300">
-                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                            Not Done
-                          </span>
+                          <span className="text-slate-500">&mdash;</span>
                         )}
                       </td>
 
@@ -978,7 +927,6 @@ export default function AdminCities() {
                         </div>
                       </td>
                     </tr>
-                  </Fragment>
                 );
               })}
               </tbody>
