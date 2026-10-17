@@ -101,7 +101,7 @@ const POPULAR_SEARCH_TARGETS = [
   "Massage & Spa",
 ];
 
-const QUICK_TAGS = ["Mumbai", "Delhi", "Bengaluru", "Escort Services", "Massage & Spa", "Pune"];
+const QUICK_TAGS = ["Mumbai", "Delhi", "Bengaluru", "Hyderabad", "Pune", "Ahmedabad", "Jaipur", "Kolkata"];
 
 export default function SearchBar() {
   const router = useRouter();
@@ -234,9 +234,12 @@ export default function SearchBar() {
           <Link
             key={tag}
             href={`/places?q=${encodeURIComponent(tag)}`}
-            className="rounded-full bg-slate-100/90 border border-slate-200/80 px-2.5 py-1 text-black font-medium hover:bg-amber-50 hover:text-black hover:border-amber-200 transition"
+            style={{ color: "#000000" }}
+            className="rounded-full bg-white/95 border border-slate-200/90 px-3 py-1 !text-black text-black font-semibold hover:bg-amber-50 hover:!text-black hover:border-amber-300 transition-all shadow-xs"
           >
-            {tag}
+            <span style={{ color: "#000000" }} className="!text-black text-black font-semibold">
+              {tag}
+            </span>
           </Link>
         ))}
       </div>
