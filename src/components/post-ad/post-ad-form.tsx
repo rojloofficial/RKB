@@ -212,12 +212,12 @@ export default function PostAdForm({ adId }: { adId?: string }) {
   return (
     <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <SectionPanel className="p-6 sm:p-8 lg:p-10">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/10 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-6">
           <div>
-            <h1 className="text-2xl font-black text-white sm:text-3xl">
+            <h1 className="text-2xl font-black text-slate-900 sm:text-3xl">
               {editingId ? "Edit Advertisement" : "Create New Advertisement"}
             </h1>
-            <p className="mt-1 text-xs sm:text-sm text-slate-400">
+            <p className="mt-1 text-xs sm:text-sm text-slate-900 font-medium">
               Provide complete, accurate details to reach verified clients across your city.
             </p>
           </div>
@@ -225,7 +225,7 @@ export default function PostAdForm({ adId }: { adId?: string }) {
             variant="soft"
             size="sm"
             onClick={() => router.push("/post-ad")}
-            className="border border-white/10 text-slate-300 hover:text-white"
+            className="border border-slate-300 text-slate-900 font-bold hover:bg-slate-100"
           >
             Back to Hub
           </Button>

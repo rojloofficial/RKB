@@ -177,10 +177,10 @@ export default function PostAdSection({
       {/* Free Ad Policy Banner */}
       {!editingId && (
         <div
-          className={`rounded-2xl border p-4 sm:p-5 shadow-sm ${
+          className={`rounded-2xl border p-4 sm:p-5 shadow-xs ${
             hasExistingFreeAd
-              ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
-              : "border-emerald-500/30 bg-emerald-500/10 text-emerald-200"
+              ? "border-amber-200 bg-amber-50 text-amber-950"
+              : "border-emerald-200 bg-emerald-50 text-emerald-950"
           }`}
         >
           <div className="flex items-start gap-3">
@@ -188,12 +188,12 @@ export default function PostAdSection({
               {hasExistingFreeAd ? "⚠️" : "🎁"}
             </span>
             <div className="space-y-1">
-              <h4 className="font-bold text-sm sm:text-base text-white">
+              <h4 className="font-bold text-sm sm:text-base text-slate-950">
                 {hasExistingFreeAd
                   ? "Free Ad Slot (1/1) Already In Use"
                   : "1 Free Ad Included With Account"}
               </h4>
-              <p className="text-xs sm:text-sm leading-relaxed text-slate-300">
+              <p className="text-xs sm:text-sm leading-relaxed text-slate-900">
                 {hasExistingFreeAd
                   ? `You already have an active free listing ${existingFreeAdTitle ? `("${existingFreeAdTitle}")` : ""} visible on the city page. You can post this new listing, but you will need to activate a promotion package to display it on the city directory.`
                   : "Every account can post 1 completely free ad! It will be published and immediately visible in city listings without any payment."}
@@ -204,12 +204,12 @@ export default function PostAdSection({
       )}
 
       {/* Personal Information */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-white">Profile Basics</h3>
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+        <h3 className="text-lg font-bold text-slate-900">Profile Basics</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Display Name <span className="text-amber-400">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+              Display Name <span className="text-amber-500">*</span>
             </label>
             <TextInput
               onlyLetters
@@ -221,7 +221,7 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
               Age
             </label>
             <TextInput
@@ -235,8 +235,8 @@ export default function PostAdSection({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Advertisement Title <span className="text-amber-400">*</span>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+            Advertisement Title <span className="text-amber-500">*</span>
           </label>
           <TextInput
             value={form.title ?? ""}
@@ -247,8 +247,8 @@ export default function PostAdSection({
         </div>
 
         <div>
-          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-            About Yourself <span className="text-amber-400">*</span>
+          <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+            About Yourself <span className="text-amber-500">*</span>
           </label>
           <TextArea
             value={form.about}
@@ -261,12 +261,12 @@ export default function PostAdSection({
       </section>
 
       {/* Location */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-white">Location Details</h3>
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+        <h3 className="text-lg font-bold text-slate-900">Location Details</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              State <span className="text-amber-400">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+              State <span className="text-amber-500">*</span>
             </label>
             {stateOptions.length > 0 ? (
               <Select
@@ -298,8 +298,8 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              City <span className="text-amber-400">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+              City <span className="text-amber-500">*</span>
             </label>
             <div className="relative">
               {!form.state?.trim() && (
@@ -350,7 +350,7 @@ export default function PostAdSection({
               </Select>
             </div>
             {showStatePrompt && !form.state?.trim() && (
-              <p className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-amber-400 animate-pulse">
+              <p className="mt-1.5 flex items-center gap-1 text-xs font-bold text-amber-600 animate-pulse">
                 <span>⚠️</span>
                 <span>Please select a state first to view cities.</span>
               </p>
@@ -358,7 +358,7 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
               Pin Code
             </label>
             <TextInput
@@ -373,11 +373,11 @@ export default function PostAdSection({
       </section>
 
       {/* Services */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-white">Category & Service Offering</h3>
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+        <h3 className="text-lg font-bold text-slate-900">Category & Service Offering</h3>
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
-            Primary Category <span className="text-amber-400">*</span>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-900">
+            Primary Category <span className="text-amber-500">*</span>
           </label>
           <div className="flex flex-wrap gap-2">
             {SERVICES.map((svc) => (
@@ -387,8 +387,8 @@ export default function PostAdSection({
                 onClick={() => update("category", svc)}
                 className={`rounded-xl px-3.5 py-2 text-xs font-bold transition-all cursor-pointer ${
                   form.category === svc
-                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md shadow-orange-500/20"
-                    : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                    ? "bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-xs"
+                    : "border border-slate-300 bg-slate-100 text-slate-900"
                 }`}
               >
                 {svc}
@@ -398,7 +398,7 @@ export default function PostAdSection({
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-900">
             To Serve
           </label>
           <div className="flex flex-wrap gap-2">
@@ -416,10 +416,10 @@ export default function PostAdSection({
                         : [...(form.toServe ?? []), svc]
                     )
                   }
-                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                     selected
-                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"
-                      : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                      ? "border border-amber-500 bg-amber-50 text-amber-950 shadow-xs"
+                      : "border border-slate-300 bg-slate-100 text-slate-900"
                   }`}
                 >
                   {selected ? "✓ " : ""}{svc}
@@ -430,7 +430,7 @@ export default function PostAdSection({
         </div>
 
         <div>
-          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-300">
+          <label className="mb-2 block text-xs font-bold uppercase tracking-wider text-slate-900">
             Place Of Service
           </label>
           <div className="flex flex-wrap gap-2">
@@ -448,10 +448,10 @@ export default function PostAdSection({
                         : [...(form.placeOfService ?? []), svc]
                     )
                   }
-                  className={`rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all cursor-pointer ${
                     selected
-                      ? "border border-amber-500/40 bg-amber-500/15 text-amber-300 shadow-sm"
-                      : "border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white"
+                      ? "border border-amber-500 bg-amber-50 text-amber-950 shadow-xs"
+                      : "border border-slate-300 bg-slate-100 text-slate-900"
                   }`}
                 >
                   {selected ? "📍 " : ""}{svc}
@@ -463,30 +463,30 @@ export default function PostAdSection({
       </section>
 
       {/* Service Rates */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-white">Service Rates</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-lg font-bold text-slate-900">Service Rates</h3>
+            <p className="text-xs text-slate-900 font-medium">
               Enter transparent session prices in INR (₹) displayed on your public profile.
             </p>
           </div>
-          <span className="text-xs font-semibold text-amber-400">INR (₹)</span>
+          <span className="text-xs font-bold text-amber-700">INR (₹)</span>
         </div>
 
-        <div className="mt-3 overflow-hidden rounded-xl border border-white/10 bg-slate-950/60">
+        <div className="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[320px] text-left text-xs sm:text-sm">
-            <thead className="border-b border-white/10 bg-white/5 text-slate-300">
+            <thead className="border-b border-slate-200 bg-slate-50 text-slate-900">
               <tr>
-                <th className="px-4 py-3 font-semibold">Duration</th>
-                <th className="px-4 py-3 font-semibold">Incall Rate (₹)</th>
-                <th className="px-4 py-3 font-semibold">Outcall Rate (₹)</th>
+                <th className="px-4 py-3 font-bold">Duration</th>
+                <th className="px-4 py-3 font-bold">Incall Rate (₹)</th>
+                <th className="px-4 py-3 font-bold">Outcall Rate (₹)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100">
               {(form.serviceRates ?? DEFAULT_SERVICE_RATES).map((rate, i) => (
-                <tr key={rate.duration} className="transition hover:bg-white/[0.02]">
-                  <td className="px-4 py-3 font-medium text-white">
+                <tr key={rate.duration}>
+                  <td className="px-4 py-3 font-semibold text-slate-900">
                     {rate.duration}
                   </td>
                   <td className="px-4 py-3">
@@ -494,7 +494,7 @@ export default function PostAdSection({
                       onlyNumbers
                       value={rate.incall}
                       onChange={(e) => updateRate(i, "incall", e.target.value.replace(/\D/g, ""))}
-                      className="!w-28 text-center"
+                      className="!w-28 text-center font-bold"
                     />
                   </td>
                   <td className="px-4 py-3">
@@ -502,7 +502,7 @@ export default function PostAdSection({
                       onlyNumbers
                       value={rate.outcall}
                       onChange={(e) => updateRate(i, "outcall", e.target.value.replace(/\D/g, ""))}
-                      className="!w-28 text-center"
+                      className="!w-28 text-center font-bold"
                     />
                   </td>
                 </tr>
@@ -513,12 +513,12 @@ export default function PostAdSection({
       </section>
 
       {/* Contact */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
-        <h3 className="text-lg font-bold text-white">Direct Contact Channels</h3>
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
+        <h3 className="text-lg font-bold text-slate-900">Direct Contact Channels</h3>
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              Phone Number <span className="text-amber-400">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+              Phone Number <span className="text-amber-500">*</span>
             </label>
             <TextInput
               onlyNumbers
@@ -531,8 +531,8 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
-              WhatsApp Number <span className="text-amber-400">*</span>
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
+              WhatsApp Number <span className="text-amber-500">*</span>
             </label>
             <TextInput
               onlyNumbers
@@ -545,7 +545,7 @@ export default function PostAdSection({
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-300">
+            <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-900">
               Telegram Username (Optional)
             </label>
             <TextInput
@@ -558,13 +558,13 @@ export default function PostAdSection({
       </section>
 
       {/* Images */}
-      <section className="space-y-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 sm:p-6 shadow-xl">
+      <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 shadow-xs">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-bold text-white">Photos & Media</h3>
-            <p className="text-xs text-slate-400">High quality photos generate up to 5x more inquiries.</p>
+            <h3 className="text-lg font-bold text-slate-900">Photos & Media</h3>
+            <p className="text-xs text-slate-900 font-medium">High quality photos generate up to 5x more inquiries.</p>
           </div>
-          <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs font-bold text-amber-400">
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-900">
             {form.images.length}/{MAX_IMAGES} uploaded
           </span>
         </div>
@@ -575,16 +575,16 @@ export default function PostAdSection({
           multiple
           disabled={imageUploading || form.images.length >= MAX_IMAGES}
           onChange={onImageChange}
-          className="file:!text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="disabled:cursor-not-allowed disabled:opacity-60"
         />
 
         {/* Upload Loading Progress Bar */}
         {imageUploading && (
-          <div className="mt-3 space-y-2 rounded-2xl border border-amber-500/30 bg-slate-950/80 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-xs font-semibold text-white">
+          <div className="mt-3 space-y-2 rounded-2xl border border-amber-300 bg-amber-50 p-4 shadow-xs">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-900">
               <span className="flex items-center gap-2">
                 <svg
-                  className="h-4 w-4 animate-spin text-amber-400"
+                  className="h-4 w-4 animate-spin text-amber-600"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -608,20 +608,20 @@ export default function PostAdSection({
                   Uploading {uploadingCount > 1 ? `${uploadingCount} images` : "image"}...
                 </span>
               </span>
-              <span className="font-mono font-bold text-amber-400">
+              <span className="font-mono font-bold text-amber-700">
                 {Math.round(uploadProgress)}%
               </span>
             </div>
 
             {/* Visual Progress Bar Track & Indicator */}
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-600 transition-all duration-300 ease-out"
                 style={{ width: `${Math.max(6, Math.min(100, uploadProgress))}%` }}
               />
             </div>
 
-            <p className="text-[11px] text-slate-400">
+            <p className="text-[11px] text-slate-900 font-medium">
               {uploadProgress < 30
                 ? "Compressing image..."
                 : uploadProgress < 95
@@ -636,13 +636,13 @@ export default function PostAdSection({
             {form.images.map((src, i) => (
               <div
                 key={i}
-                className="group relative h-40 overflow-hidden rounded-xl border border-white/10 bg-slate-950 sm:h-48"
+                className="relative h-40 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 sm:h-48"
               >
                 <Image
                   src={src}
                   alt={`Preview ${i + 1}`}
                   fill
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover"
                   sizes="(min-width: 640px) 33vw, 50vw"
                 />
                 <button
@@ -660,12 +660,12 @@ export default function PostAdSection({
       </section>
 
       {formError && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs sm:text-sm font-semibold text-red-400" role="alert">
+        <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-3.5 text-xs sm:text-sm font-semibold text-red-600" role="alert">
           ⚠️ {formError}
         </div>
       )}
 
-      <div className="flex items-start gap-3 rounded-xl border border-white/10 bg-slate-900/40 p-4">
+      <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
         <input
           type="checkbox"
           id="terms-accepted"
@@ -673,14 +673,14 @@ export default function PostAdSection({
           checked={form.termsAccepted ?? false}
           onChange={(e) => update("termsAccepted", e.target.checked)}
           required
-          className="mt-1 h-4 w-4 rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500"
+          className="mt-1 h-4 w-4 rounded border-slate-300 bg-white text-amber-500 focus:ring-amber-500"
         />
-        <label htmlFor="terms-accepted" className="text-xs sm:text-sm text-slate-300">
+        <label htmlFor="terms-accepted" className="text-xs sm:text-sm text-slate-900">
           I confirm that all information provided is accurate and agree to the{" "}
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-400 underline hover:text-amber-300">
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-amber-600 font-bold underline">
             Terms and Conditions
           </a>{" "}
-          <span className="text-amber-400 font-bold">*</span>
+          <span className="text-amber-500 font-bold">*</span>
         </label>
       </div>
 
