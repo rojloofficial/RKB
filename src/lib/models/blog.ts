@@ -1,3 +1,4 @@
+import { ObjectId } from "mongodb";
 import { getDb } from "../db";
 import { readStore, writeStore } from "../persist";
 import {
@@ -51,7 +52,7 @@ function normalizeBlogPostDoc(raw: Record<string, unknown>): BlogPost {
           answer: String(f.answer || "").trim(),
         }))
         .filter((f) => f.question || f.answer)
-    : [];
+      : [];
 
   const authorRaw = (raw.author as Record<string, unknown>) || {};
   const author = {
@@ -68,7 +69,7 @@ function normalizeBlogPostDoc(raw: Record<string, unknown>): BlogPost {
   const readTime = raw.readTime ? String(raw.readTime) : calculateReadTime(sections);
 
   return {
-    _id: String(raw._id || ""),
+    _id: String(raw._id || raw.slug || ""),
     title,
     slug: String(raw.slug || slugify(title)),
     excerpt: String(raw.excerpt || ""),
@@ -93,29 +94,54 @@ function normalizeBlogPostDoc(raw: Record<string, unknown>): BlogPost {
 }
 
 export async function listAllBlogPostsRaw(): Promise<BlogPost[]> {
+  const store = await readStore();
+  const deleted = new Set(
+    (store.deletedBlogs ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+  deleted.add("safely-discover-local-classifieds-and-services");
+  deleted.add("blog_seed_1");
+
   const col = await getBlogCollection();
   if (col) {
     try {
       const docs = await col
-        .find({ slug: { $ne: "safely-discover-local-classifieds-and-services" } } as Record<string, unknown>)
+        .find({})
         .sort({ createdAt: -1 })
         .toArray();
       if (docs && docs.length > 0) {
-        return docs.map((d) => normalizeBlogPostDoc(d as unknown as Record<string, unknown>));
+        const filteredDocs = docs
+          .map((d) => normalizeBlogPostDoc(d as unknown as Record<string, unknown>))
+          .filter((p) => {
+            const idLower = p._id.toLowerCase();
+            const slugLower = p.slug.toLowerCase();
+            return !deleted.has(idLower) && !deleted.has(slugLower);
+          });
+        return filteredDocs;
       }
     } catch (err) {
       console.error("[blog] Mongo list failed:", err);
     }
   }
 
-  const store = await readStore();
-  const rawList = ((store.blogs ?? []) as unknown as Record<string, unknown>[]).filter(
-    (b) => b.slug !== "safely-discover-local-classifieds-and-services" && b._id !== "blog_seed_1"
-  );
-  if (rawList.length === 0) {
-    return STATIC_FALLBACK_POSTS;
+  const rawList = ((store.blogs ?? []) as unknown as Record<string, unknown>[])
+    .map((b) => normalizeBlogPostDoc(b as Record<string, unknown>))
+    .filter((p) => {
+      const idLower = p._id.toLowerCase();
+      const slugLower = p.slug.toLowerCase();
+      return !deleted.has(idLower) && !deleted.has(slugLower);
+    });
+
+  if (rawList.length > 0) {
+    return rawList;
   }
-  return rawList.map(normalizeBlogPostDoc);
+
+  const filteredFallbacks = STATIC_FALLBACK_POSTS.filter((p) => {
+    const idLower = p._id.toLowerCase();
+    const slugLower = p.slug.toLowerCase();
+    return !deleted.has(idLower) && !deleted.has(slugLower);
+  });
+
+  return filteredFallbacks;
 }
 
 export type ListBlogPostsOptions = {
@@ -193,12 +219,25 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
   if (safeSlug === "safely-discover-local-classifieds-and-services") {
     return null;
   }
+
+  const store = await readStore();
+  const deleted = new Set(
+    (store.deletedBlogs ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+  if (deleted.has(safeSlug.toLowerCase())) {
+    return null;
+  }
+
   const col = await getBlogCollection();
   if (col) {
     try {
       const doc = await col.findOne({ slug: safeSlug });
       if (doc) {
-        return normalizeBlogPostDoc(doc as unknown as Record<string, unknown>);
+        const post = normalizeBlogPostDoc(doc as unknown as Record<string, unknown>);
+        if (!deleted.has(post._id.toLowerCase()) && !deleted.has(post.slug.toLowerCase())) {
+          return post;
+        }
+        return null;
       }
     } catch (err) {
       console.error("[blog] Find by slug failed:", err);
@@ -211,12 +250,35 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
 }
 
 export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+  const trimmed = (id || "").trim();
+  if (!trimmed) return null;
+
+  const store = await readStore();
+  const deleted = new Set(
+    (store.deletedBlogs ?? []).map((s: string) => s.trim().toLowerCase())
+  );
+  if (deleted.has(trimmed.toLowerCase())) {
+    return null;
+  }
+
   const col = await getBlogCollection();
   if (col) {
     try {
-      const doc = await col.findOne({ _id: id } as any);
+      const candidates: Array<string | ObjectId> = [trimmed];
+      if (ObjectId.isValid(trimmed)) {
+        try {
+          candidates.push(new ObjectId(trimmed));
+        } catch {}
+      }
+      const doc = await col.findOne({
+        $or: [{ _id: { $in: candidates } }, { slug: trimmed }],
+      } as any);
       if (doc) {
-        return normalizeBlogPostDoc(doc as unknown as Record<string, unknown>);
+        const post = normalizeBlogPostDoc(doc as unknown as Record<string, unknown>);
+        if (!deleted.has(post._id.toLowerCase()) && !deleted.has(post.slug.toLowerCase())) {
+          return post;
+        }
+        return null;
       }
     } catch (err) {
       console.error("[blog] Find by id failed:", err);
@@ -224,7 +286,7 @@ export async function getBlogPostById(id: string): Promise<BlogPost | null> {
   }
 
   const all = await listAllBlogPostsRaw();
-  const match = all.find((p) => p._id === id);
+  const match = all.find((p) => p._id === trimmed || p.slug === trimmed);
   return match || null;
 }
 
@@ -304,6 +366,12 @@ export async function createBlogPost(data: Partial<BlogPost>): Promise<BlogPost>
   }
 
   const store = await readStore();
+  // Un-tombstone if re-created
+  if (store.deletedBlogs && store.deletedBlogs.length > 0) {
+    store.deletedBlogs = store.deletedBlogs.filter(
+      (d) => d !== candidateSlug.toLowerCase() && d !== id.toLowerCase()
+    );
+  }
   const blogs = (store.blogs ?? []) as unknown as Record<string, unknown>[];
   blogs.unshift(newPost);
   store.blogs = blogs;
@@ -334,7 +402,7 @@ export async function updateBlogPost(
   const updated: BlogPost = {
     ...existing,
     ...data,
-    _id: id,
+    _id: existing._id || id,
     slug: nextSlug,
     readTime,
     sections,
@@ -344,7 +412,31 @@ export async function updateBlogPost(
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.updateOne({ _id: id } as any, { $set: updated } as any);
+      const candidates: Array<string | ObjectId> = [id.trim()];
+      if (ObjectId.isValid(id.trim())) {
+        try {
+          candidates.push(new ObjectId(id.trim()));
+        } catch {}
+      }
+      if (existing._id && existing._id !== id) {
+        candidates.push(existing._id);
+        if (ObjectId.isValid(existing._id)) {
+          try {
+            candidates.push(new ObjectId(existing._id));
+          } catch {}
+        }
+      }
+
+      await col.updateOne(
+        {
+          $or: [
+            { _id: { $in: candidates } },
+            { slug: id.trim() },
+            { slug: existing.slug },
+          ],
+        } as any,
+        { $set: updated } as any
+      );
     } catch (err) {
       console.error("[blog] Mongo update error:", err);
     }
@@ -352,7 +444,13 @@ export async function updateBlogPost(
 
   const store = await readStore();
   const blogs = (store.blogs ?? []) as unknown as Record<string, unknown>[];
-  const idx = blogs.findIndex((b) => b._id === id);
+  const idx = blogs.findIndex(
+    (b) =>
+      b._id === id ||
+      b._id === existing._id ||
+      b.slug === id ||
+      b.slug === existing.slug
+  );
   if (idx !== -1) {
     blogs[idx] = updated;
   } else {
@@ -365,25 +463,73 @@ export async function updateBlogPost(
 }
 
 export async function deleteBlogPost(id: string): Promise<boolean> {
+  const trimmed = (id || "").trim();
+  if (!trimmed) return false;
+
+  // 1. Try finding existing post to get both _id and slug
+  const existing =
+    (await getBlogPostById(trimmed).catch(() => null)) ||
+    (await getBlogPostBySlug(trimmed).catch(() => null));
+
+  const targetId = existing?._id || trimmed;
+  const targetSlug = existing?.slug || slugify(trimmed);
+
+  // 2. Delete from MongoDB collection
   const col = await getBlogCollection();
   if (col) {
     try {
-      await col.deleteOne({ _id: id } as any);
+      const candidates: Array<string | ObjectId> = [targetId, trimmed];
+      if (ObjectId.isValid(targetId)) {
+        try {
+          candidates.push(new ObjectId(targetId));
+        } catch {}
+      }
+      if (ObjectId.isValid(trimmed)) {
+        try {
+          candidates.push(new ObjectId(trimmed));
+        } catch {}
+      }
+
+      await col.deleteMany({
+        $or: [
+          { _id: { $in: candidates } },
+          { slug: targetSlug },
+          { slug: trimmed },
+          { slug: slugify(trimmed) },
+        ],
+      } as any);
     } catch (err) {
       console.error("[blog] Mongo delete error:", err);
     }
   }
 
+  // 3. Mark in store.deletedBlogs and remove from store.blogs
   const store = await readStore();
-  const blogs = (store.blogs ?? []) as unknown as Record<string, unknown>[];
-  const idx = blogs.findIndex((b) => b._id === id);
-  if (idx !== -1) {
-    blogs.splice(idx, 1);
-    store.blogs = blogs;
-    await writeStore(store);
-    return true;
+  store.deletedBlogs = store.deletedBlogs ?? [];
+
+  const toTombstone = Array.from(
+    new Set([
+      targetId.toLowerCase(),
+      targetSlug.toLowerCase(),
+      trimmed.toLowerCase(),
+      slugify(trimmed).toLowerCase(),
+    ])
+  ).filter(Boolean);
+
+  for (const item of toTombstone) {
+    if (!store.deletedBlogs.includes(item)) {
+      store.deletedBlogs.push(item);
+    }
   }
 
+  const blogs = (store.blogs ?? []) as unknown as Record<string, unknown>[];
+  store.blogs = blogs.filter((b) => {
+    const bId = String(b._id || "").toLowerCase();
+    const bSlug = String(b.slug || "").toLowerCase();
+    return !toTombstone.includes(bId) && !toTombstone.includes(bSlug);
+  });
+
+  await writeStore(store);
   return true;
 }
 

@@ -17,8 +17,9 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  const decodedId = decodeURIComponent(id || "").trim();
   try {
-    const post = await getBlogPostById(id);
+    const post = await getBlogPostById(decodedId);
     if (!post) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
@@ -39,9 +40,10 @@ export async function PUT(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  const decodedId = decodeURIComponent(id || "").trim();
   try {
     const body = await req.json();
-    const updated = await updateBlogPost(id, body);
+    const updated = await updateBlogPost(decodedId, body);
     if (!updated) {
       return NextResponse.json({ error: "Blog post not found" }, { status: 404 });
     }
@@ -62,8 +64,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
   }
 
   const { id } = await params;
+  const decodedId = decodeURIComponent(id || "").trim();
   try {
-    const deleted = await deleteBlogPost(id);
+    const deleted = await deleteBlogPost(decodedId);
     return NextResponse.json({ success: deleted });
   } catch (err) {
     console.error("[api/admin/blogs/[id]] DELETE error:", err);

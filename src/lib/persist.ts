@@ -50,6 +50,7 @@ type StoreData = {
   deletedCities: string[];
   deletedStates?: string[];
   deletedLocalAreas?: string[];
+  deletedBlogs?: string[];
   admins: StoreRecord[];
   upiRotation: {
     index: number;
@@ -95,6 +96,7 @@ function defaults(): StoreData {
     deletedCities: [],
     deletedStates: [],
     deletedLocalAreas: [],
+    deletedBlogs: [],
     admins: [],
     upiRotation: {
       index: 0,
@@ -130,6 +132,7 @@ function normalize(raw: Partial<StoreData>): StoreData {
     allPackagesCoins: raw.allPackagesCoins !== undefined && Number(raw.allPackagesCoins) > 0 ? Number(raw.allPackagesCoins) : 55,
     deletedCities: raw.deletedCities ?? [],
     deletedStates: raw.deletedStates ?? [],
+    deletedBlogs: raw.deletedBlogs ?? [],
     admins: raw.admins ?? [],
     upiRotation: raw.upiRotation ?? {
       index: 0,

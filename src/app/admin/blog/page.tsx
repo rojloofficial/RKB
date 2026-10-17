@@ -310,17 +310,21 @@ export default function AdminBlogPage() {
 
   // Delete Post
   const handleDeletePost = async (id: string, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
+    const targetId = (id || "").trim();
+    if (!targetId) return;
+
+    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) {
       return;
     }
 
     try {
-      const res = await fetch(`/api/admin/blogs/${id}`, {
+      const res = await fetch(`/api/admin/blogs/${encodeURIComponent(targetId)}`, {
         method: "DELETE",
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        setPosts((prev) => prev.filter((p) => p._id !== id));
+        setPosts((prev) => prev.filter((p) => p._id !== targetId && p.slug !== targetId));
+        fetchPosts();
       } else {
         alert(data.error || "Failed to delete post.");
       }
@@ -528,7 +532,7 @@ export default function AdminBlogPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDeletePost(post._id, post.title)}
+                          onClick={() => handleDeletePost(post._id || post.slug, post.title)}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition-colors cursor-pointer"
                           title="Delete Article"
                         >
@@ -934,21 +938,43 @@ export default function AdminBlogPage() {
               </div>
 
               {/* Submit Buttons Bar */}
-              <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-5">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSaving}
-                  className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 text-xs transition-all shadow-md shadow-amber-500/10 disabled:opacity-50 cursor-pointer"
-                >
-                  {isSaving ? "Saving..." : editingPostId ? "Update Article" : "Publish Article"}
-                </button>
+              <div className="flex items-center justify-between gap-3 border-t border-slate-800 pt-5">
+                {editingPostId ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const target = posts.find((p) => p._id === editingPostId || p.slug === formSlug);
+                      if (target) {
+                        setIsModalOpen(false);
+                        await handleDeletePost(target._id || target.slug, target.title);
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 px-3.5 py-2 text-xs font-semibold text-rose-400 transition-colors cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Article
+                  </button>
+                ) : (
+                  <div />
+                )}
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-xs font-semibold text-slate-300 hover:text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSaving}
+                    className="rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-2.5 text-xs transition-all shadow-md shadow-amber-500/10 disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSaving ? "Saving..." : editingPostId ? "Update Article" : "Publish Article"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

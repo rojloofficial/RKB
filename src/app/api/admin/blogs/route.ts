@@ -3,6 +3,7 @@ import { getAdminContext, canAccess } from "@/lib/admin-access";
 import {
   listBlogPosts,
   createBlogPost,
+  deleteBlogPost,
 } from "@/lib/models/blog";
 
 export async function GET(req: NextRequest) {
@@ -61,5 +62,26 @@ export async function POST(req: NextRequest) {
       { error: "Failed to create blog post" },
       { status: 500 }
     );
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const ctx = await getAdminContext(req);
+  if (!ctx || !canAccess(ctx, "blog")) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) {
+    return NextResponse.json({ error: "ID query parameter is required" }, { status: 400 });
+  }
+
+  try {
+    const deleted = await deleteBlogPost(id);
+    return NextResponse.json({ success: deleted });
+  } catch (err) {
+    console.error("[api/admin/blogs] DELETE error:", err);
+    return NextResponse.json({ error: "Failed to delete blog post" }, { status: 500 });
   }
 }
