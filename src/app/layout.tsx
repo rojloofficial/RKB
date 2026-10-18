@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { siteConfig } from "@/lib/config/site";
 import { JsonLd } from "@/components/seo/json-ld";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const sansFont = Plus_Jakarta_Sans({
@@ -114,6 +115,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={`${sansFont.className} min-h-full bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
